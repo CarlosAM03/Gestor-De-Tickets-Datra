@@ -8,7 +8,8 @@ export class TicketService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateTicketDto, userId: number) {
-    return this.prisma.ticket.create({
+    // 1. Crear ticket sin código
+    const ticket = await this.prisma.ticket.create({
       data: {
         ...data,
         createdById: userId,
@@ -17,7 +18,17 @@ export class TicketService {
           ? new Date(data.estimatedStart)
           : undefined,
         closedAt: data.closedAt ? new Date(data.closedAt) : undefined,
+        code: 'TEMP', // requerido momentáneamente
       },
+    });
+
+    // 2. generar código tipo T-0001
+    const formattedCode = `TT-${ticket.id.toString().padStart(6, '0')}`;
+
+    // 3. actualizar ticket con el code real
+    return this.prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { code: formattedCode },
     });
   }
 

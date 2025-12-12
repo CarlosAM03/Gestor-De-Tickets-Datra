@@ -4,6 +4,7 @@ import {
   Body,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Delete,
   UseGuards,
@@ -31,17 +32,17 @@ export class TicketController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ticketService.findOne(Number(id));
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.ticketService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: UpdateTicketDto) {
-    return this.ticketService.update(Number(id), body);
+  update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateTicketDto) {
+    return this.ticketService.update(id, body);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ticketService.remove(Number(id));
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.ticketService.remove(id);
   }
 }

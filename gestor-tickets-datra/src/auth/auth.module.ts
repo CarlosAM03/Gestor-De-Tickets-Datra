@@ -9,6 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 @Module({
   imports: [
     UserModule,
+    ConfigModule,
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -16,8 +17,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: (config: ConfigService) => ({
         global: true,
         secret: config.get('JWT_SECRET'),
-
-        // Nest a acepta strings como "7d", "1h", etc.
         signOptions: {
           expiresIn: config.get('JWT_EXPIRES'),
         },

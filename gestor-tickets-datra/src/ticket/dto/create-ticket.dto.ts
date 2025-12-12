@@ -1,17 +1,11 @@
-import {
-  IsBoolean,
-  IsDateString,
-  IsOptional,
-  IsString,
-  IsInt,
-} from 'class-validator';
+import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class CreateTicketDto {
-  @IsString()
-  code!: string;
+  // code eliminado, se genera automáticamente
 
+  @IsOptional()
   @IsDateString()
-  openedAt!: string;
+  openedAt?: string;
 
   @IsOptional()
   @IsString()
@@ -72,17 +66,4 @@ export class CreateTicketDto {
   @IsOptional()
   @IsBoolean()
   correctiveAction?: boolean;
-
-  // relaciones (IDs numéricos)
-  @IsOptional()
-  @IsInt()
-  createdById?: number;
-
-  @IsOptional()
-  @IsInt()
-  preliminaryById?: number;
-
-  @IsOptional()
-  @IsInt()
-  closingTechnicianId?: number;
 }

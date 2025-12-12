@@ -2,15 +2,19 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { ConfigService } from '@nestjs/config';
+import type { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwt: JwtService,
+    private config: ConfigService,
   ) {}
 
-  async validateUser(email: string, password: string) {
+  // devuelve el usuario completo (incluye password para comparar)
+  async validateUser(email: string, password: string): Promise<User> {
     const user = await this.userService.findByEmail(email);
     if (!user) throw new UnauthorizedException('Usuario no encontrado');
 
@@ -33,7 +37,8 @@ export class AuthService {
 
     return {
       message: 'Login exitoso',
-      token,
+      access_token: token,
+      expires_in: this.config.get<string>('JWT_EXPIRES') ?? '',
     };
   }
 }
