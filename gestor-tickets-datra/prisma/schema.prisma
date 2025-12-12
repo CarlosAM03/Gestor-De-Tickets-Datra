@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("tecnico")
+  active    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones inversas
+  ticketsCreated       Ticket[] @relation("TicketCreatedBy")
+  ticketsClosed        Ticket[] @relation("TicketClosedBy")
+  ticketsPreliminar    Ticket[] @relation("TicketPreliminaryBy")
+}
+
+model Ticket {
+  id                Int      @id @default(autoincrement())
+  code              String   @unique
+
+  // Información general
+  openedAt          DateTime
+  requestedBy       String?
+  contact           String?
+  clientType        String?
+
+  // Datos del incidente
+  serviceAffected   String?
+  problemDesc       String?
+  eventLocation     String?
+  estimatedStart    DateTime?
+  impactLevel       String?
+
+  // Diagnóstico inicial
+  initialFindings   String?
+  probableRootCause String?
+
+  // Acciones y cierre
+  actionsTaken      String?
+  closedAt          DateTime?
+  serviceStatus     String?
+  additionalNotes   String?
+  correctiveAction  Boolean?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // ============================
+  //    Relaciones importantes
+  // ============================
+
+  // Quién creó el ticket
+  createdById       Int?
+  createdBy         User?     @relation("TicketCreatedBy", fields: [createdById], references: [id])
+
+  // Quién hizo diagnóstico preliminar
+  preliminaryById   Int?
+  preliminaryBy     User?     @relation("TicketPreliminaryBy", fields: [preliminaryById], references: [id])
+
+  // Quién cerró el ticket
+  closingTechnicianId Int?
+  closingTechnician   User?   @relation("TicketClosedBy", fields: [closingTechnicianId], references: [id])
+}
