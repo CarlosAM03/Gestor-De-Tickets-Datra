@@ -1,5 +1,50 @@
-node_modules
-# Keep environment variables out of version control
-.env
+# ⛔ Archivos y Carpetas generadas automáticamente
+node_modules/
+dist/
+build/
+tmp/
+temp/
+.cache/
 
+# ⛔ Entornos y claves
+.env
+.env.*.local
+.env.local
+
+# Prisma
 /generated/prisma
+prisma/dev.db
+prisma/dev.db-journal
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Compilación TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+test-results/
+
+# Configuración del editor
+.vscode/
+.idea/
+*.swp
+
+# Archivos comprimidos
+*.zip
+*.tar
+*.tar.gz
+
+# Archivos generados por el SO
+ehthumbs.db
+Icon?
