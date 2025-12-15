@@ -57,10 +57,6 @@ export class CreateTicketDto {
 
   @IsOptional()
   @IsString()
-  serviceStatus?: string;
-
-  @IsOptional()
-  @IsString()
   additionalNotes?: string;
 
   @IsOptional()

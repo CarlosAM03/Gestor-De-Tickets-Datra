@@ -13,6 +13,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//Estados de Ticket
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+  CANCELLED
+}
+
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -37,6 +47,8 @@ model Ticket {
 
   // Información general
   openedAt          DateTime
+  status            TicketStatus @default(OPEN)
+
   requestedBy       String?
   contact           String?
   clientType        String?
