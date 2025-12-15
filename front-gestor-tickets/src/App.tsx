@@ -13,6 +13,7 @@ import Unauthorized from './pages/Unautorized';
 export default function App() {
   return (
     <>
+      {/* Floating logo removed per request */}
       <AppNavbar />
       <Container fluid className="pt-4">
         <Routes>

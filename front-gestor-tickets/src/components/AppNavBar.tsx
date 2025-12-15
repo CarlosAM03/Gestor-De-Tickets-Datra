@@ -15,13 +15,11 @@ export default function AppNavbar() {
   return (
     <Navbar bg="light" expand="lg" className="shadow-sm">
       <Container fluid>
-        <Navbar.Brand as={Link} to="/">
-          Datra — Gestor de Tickets (MVP)
-        </Navbar.Brand>
+        <Navbar.Brand as={Link} to="/">Datra — Gestor de Tickets (MVP)</Navbar.Brand>
         <Navbar.Toggle />
         <Navbar.Collapse>
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/tickets">
+            <Nav.Link as={Link} to="/tickets" className="tickets-btn">
               Tickets
             </Nav.Link>
           </Nav>

@@ -27,10 +27,10 @@ export default function TicketsList() {
       <div className="d-flex justify-content-between mb-3">
         <h4>Tickets</h4>
         <div>
-          <Button variant="primary" className="me-2" onClick={() => nav('/tickets/new')}>
+          <Button variant="primary" className="me-2 btn-new-ticket" onClick={() => nav('/tickets/new')}>
             Nuevo ticket
           </Button>
-          <Button variant="outline-secondary" onClick={load}>
+          <Button variant="primary" className="btn-refresh" onClick={load}>
             Refrescar
           </Button>
         </div>
@@ -61,7 +61,7 @@ export default function TicketsList() {
                 <td>{t.serviceStatus}</td>
                 <td>{new Date(t.createdAt || t.openedAt).toLocaleString()}</td>
                 <td>
-                  <Button size="sm" onClick={() => nav(`/tickets/${t.id}`)}>
+                  <Button size="sm" className="btn-view" onClick={() => nav(`/tickets/${t.id}`)}>
                     Ver
                   </Button>
                 </td>

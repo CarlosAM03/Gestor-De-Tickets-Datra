@@ -4,6 +4,9 @@ import { AuthContext } from '../contexts/AuthContext';
 
 export default function Dashboard() {
   const auth = React.useContext(AuthContext);
+
+
+
   return (
     <div>
       <h2>Resumen</h2>
