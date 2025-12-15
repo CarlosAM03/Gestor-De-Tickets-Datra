@@ -17,18 +17,24 @@ import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { StatusUpdateTicketDto } from './dto/status-update-ticket.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { RequestWithUser } from '../types/request-with-user';
-import { TICKET_STATUSES, TicketStatus } from './dto/ticket-status.type';
+import { TICKET_STATUSES, TicketStatus } from './types/ticket-status.type';
 
 @Controller('tickets')
 @UseGuards(JwtAuthGuard)
 export class TicketController {
   constructor(private readonly ticketService: TicketService) {}
 
+  // =========================
+  // CREATE
+  // =========================
   @Post()
   create(@Body() body: CreateTicketDto, @Req() req: RequestWithUser) {
     return this.ticketService.create(body, req.user.id);
   }
 
+  // =========================
+  // FIND ALL
+  // =========================
   @Get()
   findAll(
     @Req() req: RequestWithUser,
@@ -39,7 +45,6 @@ export class TicketController {
     @Query('to') to?: string,
     @Query('search') search?: string,
   ) {
-    // Convertir status a tipo TicketStatus
     const validStatus = TICKET_STATUSES.includes(status as TicketStatus)
       ? (status as TicketStatus)
       : undefined;
@@ -55,17 +60,25 @@ export class TicketController {
     });
   }
 
+  // =========================
+  // FIND ONE
+  // =========================
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.ticketService.findOne(id);
   }
 
+  // =========================
+  // UPDATE
+  // =========================
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateTicketDto) {
     return this.ticketService.update(id, body);
   }
 
-  // ✅ CAMBIO DE ESTADO
+  // =========================
+  // UPDATE STATUS
+  // =========================
   @Patch(':id/status')
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
@@ -74,8 +87,14 @@ export class TicketController {
     return this.ticketService.updateStatus(id, body.status);
   }
 
+  // =========================
+  // REQUEST DELETE (SOFT)
+  // =========================
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.ticketService.remove(id);
+  requestDelete(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.ticketService.requestDelete(id, req.user.id);
   }
 }

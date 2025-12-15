@@ -23,70 +23,94 @@ enum TicketStatus {
   CANCELLED
 }
 
+enum UserRole {
+  ADMIN
+  TECNICO
+  INGENIERO
+}
+
+enum ImpactLevel {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum ClientType {
+  INTERNO
+  EXTERNO
+}
 
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
   password  String
-  role      String   @default("tecnico")
+  role      UserRole @default(TECNICO)
   active    Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relaciones inversas
-  ticketsCreated       Ticket[] @relation("TicketCreatedBy")
-  ticketsClosed        Ticket[] @relation("TicketClosedBy")
-  ticketsPreliminar    Ticket[] @relation("TicketPreliminaryBy")
+  // Relaciones
+  ticketsCreated    Ticket[] @relation("TicketCreatedBy")
+  ticketsClosed     Ticket[] @relation("TicketClosedBy")
+  ticketsPreliminar Ticket[] @relation("TicketPreliminaryBy")
+  ticketsDeleted    Ticket[] @relation("TicketDeletedBy")
 }
 
+
 model Ticket {
-  id                Int      @id @default(autoincrement())
-  code              String   @unique
+  id        Int    @id @default(autoincrement())
+  code      String @unique
 
   // Información general
-  openedAt          DateTime
-  status            TicketStatus @default(OPEN)
+  openedAt  DateTime     @default(now())
+  status    TicketStatus @default(OPEN)
 
-  requestedBy       String?
-  contact           String?
-  clientType        String?
+  requestedBy String?
+  contact    String?
+  clientType ClientType?
 
-  // Datos del incidente
-  serviceAffected   String?
-  problemDesc       String?
-  eventLocation     String?
-  estimatedStart    DateTime?
-  impactLevel       String?
+  // Incidente
+  serviceAffected String?
+  problemDesc     String?
+  eventLocation   String?
+  estimatedStart  DateTime?
+  impactLevel     ImpactLevel?
 
-  // Diagnóstico inicial
+  // Diagnóstico
   initialFindings   String?
   probableRootCause String?
 
-  // Acciones y cierre
-  actionsTaken      String?
-  closedAt          DateTime?
-  serviceStatus     String?
-  additionalNotes   String?
-  correctiveAction  Boolean?
+  // Cierre
+  actionsTaken    String?
+  closedAt        DateTime?
+  serviceStatus   String?
+  additionalNotes String?
+  correctiveAction Boolean?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // ============================
-  //    Relaciones importantes
-  // ============================
+  // =========================
+  // Soft delete & control
+  // =========================
+  deleteRequested Boolean   @default(false)
+  deletedAt       DateTime?
+  deletedById     Int?
+  deletedBy       User? @relation("TicketDeletedBy", fields: [deletedById], references: [id])
 
-  // Quién creó el ticket
-  createdById       Int?
-  createdBy         User?     @relation("TicketCreatedBy", fields: [createdById], references: [id])
+  // =========================
+  // Relaciones
+  // =========================
+  createdById Int?
+  createdBy   User? @relation("TicketCreatedBy", fields: [createdById], references: [id])
 
-  // Quién hizo diagnóstico preliminar
-  preliminaryById   Int?
-  preliminaryBy     User?     @relation("TicketPreliminaryBy", fields: [preliminaryById], references: [id])
+  preliminaryById Int?
+  preliminaryBy   User? @relation("TicketPreliminaryBy", fields: [preliminaryById], references: [id])
 
-  // Quién cerró el ticket
   closingTechnicianId Int?
-  closingTechnician   User?   @relation("TicketClosedBy", fields: [closingTechnicianId], references: [id])
+  closingTechnician   User? @relation("TicketClosedBy", fields: [closingTechnicianId], references: [id])
 }

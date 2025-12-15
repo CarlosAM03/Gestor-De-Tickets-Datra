@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { Prisma } from '@prisma/client';
-import { TicketStatus } from './dto/ticket-status.type';
+import { Prisma, ClientType, ImpactLevel } from '@prisma/client';
+import { TicketStatus } from './types/ticket-status.type';
 
 interface FindTicketsParams {
   userId: number;
@@ -25,14 +25,28 @@ export class TicketService {
   async create(data: CreateTicketDto, userId: number) {
     const ticket = await this.prisma.ticket.create({
       data: {
-        ...data,
+        requestedBy: data.requestedBy,
+        contact: data.contact,
+        clientType: data.clientType ? (data.clientType as ClientType) : null,
+        serviceAffected: data.serviceAffected,
+        problemDesc: data.problemDesc,
+        eventLocation: data.eventLocation,
+        impactLevel: data.impactLevel
+          ? (data.impactLevel as ImpactLevel)
+          : null,
+        initialFindings: data.initialFindings,
+        probableRootCause: data.probableRootCause,
+        actionsTaken: data.actionsTaken,
+        additionalNotes: data.additionalNotes,
+        correctiveAction: data.correctiveAction,
+
         createdById: userId,
-        serviceStatus: 'OPEN',
         openedAt: data.openedAt ? new Date(data.openedAt) : new Date(),
         estimatedStart: data.estimatedStart
           ? new Date(data.estimatedStart)
           : null,
         closedAt: data.closedAt ? new Date(data.closedAt) : null,
+
         code: 'TEMP',
       },
     });
@@ -46,23 +60,25 @@ export class TicketService {
   }
 
   // =========================
-  // FIND ALL (con filtros)
+  // FIND ALL
   // =========================
   async findAll(params: FindTicketsParams) {
     const { userId, scope, status, impact, from, to, search } = params;
 
-    const where: Prisma.TicketWhereInput = {};
+    const where: Prisma.TicketWhereInput = {
+      deletedAt: null,
+    };
 
     if (scope === 'mine') {
       where.createdById = userId;
     }
 
     if (status) {
-      where.serviceStatus = status;
+      where.status = status;
     }
 
     if (impact) {
-      where.impactLevel = impact;
+      where.impactLevel = impact as ImpactLevel;
     }
 
     if (from || to) {
@@ -94,8 +110,11 @@ export class TicketService {
   // FIND ONE
   // =========================
   async findOne(id: number) {
-    const ticket = await this.prisma.ticket.findUnique({
-      where: { id },
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
       include: {
         createdBy: true,
         preliminaryBy: true,
@@ -117,7 +136,20 @@ export class TicketService {
     return this.prisma.ticket.update({
       where: { id },
       data: {
-        ...data,
+        requestedBy: data.requestedBy,
+        contact: data.contact,
+        clientType: data.clientType ? (data.clientType as ClientType) : null,
+        serviceAffected: data.serviceAffected,
+        problemDesc: data.problemDesc,
+        eventLocation: data.eventLocation,
+        impactLevel: data.impactLevel
+          ? (data.impactLevel as ImpactLevel)
+          : null,
+        initialFindings: data.initialFindings,
+        probableRootCause: data.probableRootCause,
+        actionsTaken: data.actionsTaken,
+        additionalNotes: data.additionalNotes,
+        correctiveAction: data.correctiveAction,
         estimatedStart: data.estimatedStart
           ? new Date(data.estimatedStart)
           : null,
@@ -138,14 +170,12 @@ export class TicketService {
 
     return this.prisma.ticket.update({
       where: { id },
-      data: {
-        serviceStatus: status,
-      },
+      data: { status },
     });
   }
 
   // =========================
-  // DELETE
+  // DELETE (temporal)
   // =========================
   async remove(id: number) {
     const ticket = await this.prisma.ticket.findUnique({ where: { id } });

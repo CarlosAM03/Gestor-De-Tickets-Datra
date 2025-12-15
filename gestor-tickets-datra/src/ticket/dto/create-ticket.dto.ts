@@ -1,8 +1,14 @@
-import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsIn,
+} from 'class-validator';
+import { CLIENT_TYPES } from '../types/client-type';
+import { IMPACT_LEVELS } from '../types/impact-level.type';
 
 export class CreateTicketDto {
-  // code eliminado, se genera automáticamente
-
   @IsOptional()
   @IsDateString()
   openedAt?: string;
@@ -16,7 +22,7 @@ export class CreateTicketDto {
   contact?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(CLIENT_TYPES)
   clientType?: string;
 
   @IsOptional()
@@ -36,7 +42,7 @@ export class CreateTicketDto {
   estimatedStart?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(IMPACT_LEVELS)
   impactLevel?: string;
 
   @IsOptional()
