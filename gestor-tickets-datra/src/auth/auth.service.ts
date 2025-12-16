@@ -3,7 +3,6 @@ import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
-import type { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -13,17 +12,28 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  // devuelve el usuario completo (incluye password para comparar)
-  async validateUser(email: string, password: string): Promise<User> {
+  // ==========================
+  // Validar credenciales
+  // ==========================
+  private async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Usuario no encontrado');
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new UnauthorizedException('Contraseña incorrecta');
+    if (!user || !user.active) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+
+    if (!validPassword) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
 
     return user;
   }
 
+  // ==========================
+  // Login
+  // ==========================
   async login(email: string, password: string) {
     const user = await this.validateUser(email, password);
 
@@ -33,12 +43,18 @@ export class AuthService {
       role: user.role,
     };
 
-    const token = await this.jwt.signAsync(payload);
+    const accessToken = await this.jwt.signAsync(payload);
 
     return {
       message: 'Login exitoso',
-      access_token: token,
-      expires_in: this.config.get<string>('JWT_EXPIRES') ?? '',
+      access_token: accessToken,
+      expires_in: this.config.get<string>('JWT_EXPIRES') ?? '3600s',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 }
