@@ -2,7 +2,7 @@
 
 Sistema de gestión de tickets desarrollado para la empresa **Datra**, orientado a la administración de solicitudes, incidencias y procesos internos de soporte técnico.
 
-Este repositorio actualmente contiene **el Backend completo (NestJS)**. El **Frontend** se integrará posteriormente dentro de la misma estructura del proyecto.
+Este repositorio actualmente contiene **el Backend completo (NestJS)**. El **Frontend** modo moc en proceso de migracion integrado dentro de la misma estructura del proyecto.
 
 ---
 
@@ -230,7 +230,233 @@ Roles: Diseño y desarrollo del frontend
 
 ---
 
-📌 *Este README describe el estado actual del sistema. Las secciones de Frontend se agregarán cuando se integre esa capa.*
+# 🖥️ Frontend — Aplicación Web (`front-gestor-tickets`)
+
+El **Frontend del Gestor de Tickets Datra** corresponde a la capa de presentación del sistema y es responsable de proporcionar una **interfaz web segura, clara y controlada** para los distintos perfiles de usuario definidos por la organización.
+
+Esta capa se desarrolla con un enfoque **empresarial**, consumiendo exclusivamente la **API oficial del backend** y respetando estrictamente las reglas de negocio, permisos y flujos establecidos del lado servidor.
+
+---
+
+## 📌 Alcance del Frontend
+
+El frontend está diseñado para:
+
+* Permitir el acceso seguro de usuarios mediante autenticación centralizada
+* Visualizar y gestionar tickets de soporte en tiempo real
+* Aplicar control de acceso visual según **rol del usuario**
+* Facilitar la operación diaria de técnicos e ingenieros
+* Proveer herramientas administrativas para supervisión y auditoría
+* Preparar la base para dashboards, métricas y reportes ejecutivos
+
+📌 **Principio arquitectónico**:
+El frontend **no implementa reglas críticas de negocio**.
+Todas las validaciones finales y autorizaciones se realizan en el backend.
+
+---
+
+## 🧱 Stack Tecnológico (Frontend)
+
+* **Node.js**: 18.x
+* **React**: ^18.x
+* **TypeScript**: ^5.x
+* **Gestión de estado**: Context API / Zustand / Redux Toolkit (según evolución del proyecto)
+* **Cliente HTTP**: Axios
+* **Enrutamiento**: React Router DOM
+* **Estilos**: Bootstrap / Tailwind CSS (definición final según lineamientos visuales)
+* **Autenticación**: JWT (consumido desde backend)
+
+Este stack permite un desarrollo **modular, escalable y mantenible**, alineado con estándares actuales de aplicaciones empresariales.
+
+---
+
+## 🔐 Autenticación y Seguridad
+
+### Acceso al sistema
+
+* Endpoint consumido: `POST /auth/login`
+* El frontend **solo expone funcionalidad de login**
+* No existe registro público de usuarios
+* El token JWT se gestiona de forma controlada para proteger la sesión
+
+### Gestión de sesión
+
+* Protección de rutas privadas
+* Manejo automático de sesión expirada (401)
+* Logout controlado
+* Interceptor HTTP para inyección de token y manejo centralizado de errores
+
+📌 **Decisión de seguridad**:
+La creación de usuarios y asignación de roles es responsabilidad exclusiva del **ADMIN**, fuera del alcance del frontend público.
+
+---
+
+## 👤 Roles del Sistema (Vista Frontend)
+
+| Rol           | Funcionalidades visibles                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| **ADMIN**     | Gestión global de tickets, aprobación/rechazo de eliminaciones, auditoría, historial, métricas |
+| **TECNICO**   | Creación, consulta, actualización y cierre de tickets propios. Solicitud de eliminación        |
+| **INGENIERO** | Gestión global de tickets, cierre, solicitud de eliminación y acceso a métricas                |
+
+📌 El frontend **controla la visibilidad de acciones** según rol.
+📌 El backend **valida siempre los permisos reales**.
+
+---
+
+## 🎫 Funcionalidades del Frontend
+
+### Gestión de Tickets
+
+✔ Listado de tickets:
+
+* Tickets propios (`scope=mine`)
+* Tickets globales (`scope=all`)
+
+✔ Filtros operativos:
+
+* Estatus
+* Impacto
+* Rango de fechas
+* Búsqueda textual
+
+✔ Visualización de detalle de ticket
+
+✔ Creación de nuevos tickets
+
+✔ Actualización de información permitida
+
+✔ Cambio de estatus del ticket
+
+✔ Solicitud de eliminación (flujo controlado)
+
+✔ Visualización de historial (ADMIN)
+
+---
+
+### Dashboard Operativo
+
+* Vista inicial con tickets recientes
+* Resumen operativo por rol
+* Espacio preparado para métricas y KPIs
+* Componentes administrativos exclusivos para perfiles autorizados
+
+---
+
+## 🔌 Integración con Backend
+
+El frontend consume **únicamente** la API oficial del backend.
+
+### Endpoints principales utilizados
+
+| Función               | Endpoint                    |
+| --------------------- | --------------------------- |
+| Login                 | POST `/auth/login`          |
+| Listar tickets        | GET `/tickets`              |
+| Ver detalle           | GET `/tickets/:id`          |
+| Crear ticket          | POST `/tickets`             |
+| Actualizar ticket     | PATCH `/tickets/:id`        |
+| Cambiar estatus       | PATCH `/tickets/:id/status` |
+| Solicitar eliminación | DELETE `/tickets/:id`       |
+| Historial             | GET `/tickets/:id/history`  |
+
+📌 Los contratos de datos y tipos se mantienen **alineados con el backend**.
+
+---
+
+## 📁 Arquitectura del Frontend
+
+```
+/src
+├── api            # Cliente HTTP e interceptores
+├── auth           # Login, guards y contexto de sesión
+├── tickets        # Vistas y componentes de tickets
+├── users          # Componentes reutilizables
+├── pages          # Páginas principales
+├── layouts        # Layouts por rol
+├── routes         # Rutas protegidas
+├── types          # Tipos alineados al backend
+└── utils          # Configuración y utilidades
+```
+
+Esta estructura permite **separación clara de responsabilidades** y facilita la evolución del sistema.
+
+---
+
+## 🔧 Instalación y Ejecución del Frontend
+
+### 1️⃣ Requisitos Previos
+
+* Node.js 18+
+* npm 9+
+* Backend operativo
+
+---
+
+### 2️⃣ Instalación
+
+```bash
+cd front-gestor-tickets
+npm install
+```
+
+---
+
+### 3️⃣ Configuración de Entorno
+
+```bash
+cp .env.example .env
+```
+
+Ejemplo:
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+---
+
+### 4️⃣ Ejecución en Desarrollo
+
+```bash
+npm run dev
+```
+
+Frontend disponible en:
+
+```
+http://localhost:5173
+```
+
+---
+
+### 5️⃣ Build de Producción
+
+```bash
+npm run build
+```
+
+---
+
+## 📊 Estado Actual del Frontend
+
+✔ Arquitectura frontend definida
+✔ Plan de desarrollo validado
+✔ Contrato backend claramente establecido
+
+🟡 Integración progresiva en curso
+
+❌ Aún no integrado completamente al repositorio principal
+
+---
+
+## 🎯 Objetivo del Frontend
+
+* Proveer una interfaz profesional y confiable
+* Facilitar la operación diaria del área de soporte
+* Cumplir políticas de seguridad y control de acceso
+* Preparar el sistema para métricas y dashboards ejecutivos
+* Integrarse completamente con el backend Datra
 
 ---
 
@@ -396,3 +622,4 @@ erDiagram
 * ✅ Diseño listo para **escalar y agregar métricas**
 
 ---
+
