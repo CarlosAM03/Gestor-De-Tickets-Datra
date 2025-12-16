@@ -173,19 +173,65 @@ export class TicketService {
       data: { status },
     });
   }
-
   // =========================
-  // DELETE (temporal)
+  // Solicitud de eliminación
   // =========================
-  async remove(id: number) {
-    const ticket = await this.prisma.ticket.findUnique({ where: { id } });
+  async requestDelete(ticketId: number, userId: number) {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        id: ticketId,
+        deletedAt: null,
+      },
+      include: {
+        createdBy: true,
+      },
+    });
 
     if (!ticket) {
-      throw new NotFoundException(`Ticket con id ${id} no existe`);
+      throw new NotFoundException('Ticket no encontrado');
     }
 
-    await this.prisma.ticket.delete({ where: { id } });
+    // 🔒 Regla: solo el creador puede solicitar eliminación
+    if (ticket.createdById !== userId) {
+      throw new NotFoundException(
+        'No tienes permisos para solicitar la eliminación de este ticket',
+      );
+    }
 
-    return { message: `Ticket ${ticket.code} eliminado correctamente` };
+    return this.prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        deleteRequested: true,
+      },
+    });
+  }
+
+  // =========================
+  // Aprobación y soft delete (ADMIN)
+  // =========================
+  async approveDelete(ticketId: number, adminId: number) {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        id: ticketId,
+        deleteRequested: true,
+        deletedAt: null,
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException(
+        'Ticket no encontrado o no tiene solicitud de eliminación',
+      );
+    }
+
+    return this.prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        deletedAt: new Date(),
+        deletedById: adminId,
+        deleteRequested: false,
+        status: 'CANCELLED',
+      },
+    });
   }
 }
