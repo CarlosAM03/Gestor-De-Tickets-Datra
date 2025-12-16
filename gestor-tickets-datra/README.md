@@ -1,191 +1,204 @@
-# 🧭 Estado actual vs Alcance objetivo  
+# 🧭 Estado actual vs Alcance objetivo
+
 ## Gestor de Tickets Datra – Backend
 
-Este documento describe **qué funcionalidades ya existen**, **qué falta implementar** y **el orden recomendado de desarrollo** para llegar a un sistema completo de gestión de trouble tickets, alineado con el frontend (actualmente en modo mock).
+Este documento describe **el estado real del backend**, qué componentes están **listos para conectar con el frontend**, qué partes están **cerradas a nivel de arquitectura**, y qué decisiones técnicas siguen pendientes.
+
+El objetivo es que cualquier desarrollador (backend, frontend o reviewer) pueda responder rápidamente:
+
+> **¿Este backend ya puede conectarse a un frontend real?**
 
 ---
 
-## ✅ 1. ¿Qué está implementado actualmente?
-
-### 🔐 Autenticación
-- Registro de usuarios con contraseña hasheada
-- Login con email + contraseña
-- Generación de JWT por sesión
-- Expiración de token
-- Protección de rutas con `JwtAuthGuard`
-
-👉 **Estado:** funcional y correcto para MVP
+# ✅ CHECKLIST PRE-FRONTEND (BACKEND READY)
 
 ---
 
-### 👤 Usuarios
-- Crear usuario (register)
-- Obtener usuarios
-- Obtener usuario por ID
-- Eliminar usuario (hard delete)
-- Roles guardados como string (`tecnico` por defecto)
+## 🔐 1. Autenticación y Seguridad (OBLIGATORIO)
 
-👉 **Estado:** básico, sin control de permisos
+| Item                   | Estado | Notas                 |
+| ---------------------- | ------ | --------------------- |
+| Registro de usuarios   | ✅      | Contraseñas hasheadas |
+| Login con JWT          | ✅      | Email + password      |
+| Expiración de token    | ✅      | Configurada           |
+| `JwtAuthGuard`         | ✅      | Protege endpoints     |
+| Usuario en request     | ✅      | `RequestWithUser`     |
+| Manejo de errores auth | ✅      |                       |
 
----
-
-### 🎫 Tickets
-- Crear ticket
-- Código de ticket autogenerado (`TT-000001`)
-- Asignación automática del creador (`createdBy`)
-- Obtener todos los tickets
-- Obtener ticket por ID
-- Actualizar ticket
-- Eliminar ticket (hard delete)
-- Relaciones con usuarios:
-  - creador
-  - técnico preliminar
-  - técnico de cierre
-
-👉 **Estado:** CRUD funcional, sin reglas de negocio
+🟢 **LISTO PARA FRONTEND**
 
 ---
 
-## ⚠️ 2. Limitaciones actuales (importante)
+## 👤 2. Roles y Permisos (OBLIGATORIO)
 
-Actualmente el sistema:
-- ❌ No distingue permisos por rol
-- ❌ Permite eliminar tickets directamente
-- ❌ No separa “mis tickets” vs “tickets globales”
-- ❌ No tiene historial de cambios
-- ❌ No soporta filtros avanzados
-- ❌ No tiene estados claros de ciclo de vida
-- ❌ No tiene control administrativo real
+### Roles definidos
 
-👉 **Esto es normal para un MVP**, pero no es sostenible a mediano plazo si no se estructura ahora.
+| Rol           | Capacidades reales                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------------- |
+| **ADMIN**     | Control total, aprobación/rechazo de eliminaciones, auditoría, historial                             |
+| **TECNICO**   | Consultar, crear, editar, cerrar y solicitar eliminación **de sus propios tickets**                  |
+| **INGENIERO** | Consultar, crear, editar, cerrar y solicitar eliminación **de todos los tickets**, acceso a métricas |
 
----
+### Implementación técnica
 
-## 🎯 3. Funcionalidades objetivo 
+| Item                          | Estado |
+| ----------------------------- | ------ |
+| Enum `UserRole`               | ✅      |
+| Decorador `@Roles()`          | ✅      |
+| `RolesGuard`                  | ✅      |
+| Guards aplicados por endpoint | ✅      |
+| Reglas finas en service       | ✅      |
 
-### 👤 Roles de usuario
+📌 **Diseño intencional**: los guards validan *quién puede entrar*; el **service valida reglas de negocio**.
 
-| Rol | Capacidades |
-|----|------------|
-| **Administrador** | Control total, métricas, auditoría, aprobación de eliminaciones |
-| **Técnico** | Crear y actualizar tickets |
-| **Ingeniero** | Crear, actualizar y cerrar tickets |
-
-📌 **Notas clave**
-- El **admin NO se crea por endpoint** (usuario fijo del sistema)
-- Técnicos e ingenieros **NO eliminan tickets ni usuarios**
-- Las eliminaciones son **solicitudes**, no acciones directas
+🟢 **LISTO PARA PRODUCCIÓN**
 
 ---
 
-### 🎫 Gestión de tickets (core del sistema)
+## 🎫 3. Tickets – Core del Sistema
 
-Debe permitir:
-- Ver **mis tickets**
-- Ver **tickets globales**
-- Crear tickets
-- Actualizar tickets
-- Cerrar tickets
-- Buscar y filtrar por:
-  - Fecha
-  - Nivel de urgencia
-  - Cliente / razón social
-  - RFC
-  - Estatus
-- Ver historial de cambios por ticket
+### Funcionalidades implementadas
 
----
+| Funcionalidad                     | Estado            |
+| --------------------------------- | ----------------- |
+| Crear ticket                      | ✅                 |
+| Código autogenerado (`TT-000001`) | ✅                 |
+| Asignación automática de creador  | ✅                 |
+| Ver tickets propios               | ✅ (`scope=mine`)  |
+| Ver tickets globales              | ✅ (`scope=all`)   |
+| Ver detalle                       | ✅                 |
+| Editar información                | ✅                 |
+| Actualizar estatus                | ✅ (tipado seguro) |
+| Cerrar ticket                     | ✅                 |
 
-### 📊 Resumen y consultas
-- Resumen de actividad por usuario
-- Resumen general del sistema
-- Filtros por fecha, estatus y cliente
-- Vista detallada de cada actualización
-
-📌 Métricas y auditoría **no son prioridad inmediata**, pero la estructura debe permitirlas.
+🟢 **LISTO PARA FRONTEND**
 
 ---
 
-## 🧱 4. ¿Qué falta implementar realmente? (por capas)
+## 🔍 4. Filtros y Búsqueda
 
-### 🟢 PRIORIDAD ALTA – Core del sistema
+| Filtro                | Estado                |
+| --------------------- | --------------------- |
+| Fecha (`from` / `to`) | ✅                     |
+| Impacto               | ✅                     |
+| Estatus               | ✅ (valores validados) |
+| Búsqueda texto        | ✅                     |
 
-1. **Consulta de tickets**
-   - Paginacion de consultas
-
-2. **Soft delete**
-   - `deletedAt`
-   - `deletedBy`
-   - `deleteRequested = true`
-
----
-
-### 🟡 PRIORIDAD MEDIA – Control y roles
-
-3. **Roles y permisos reales**
-   - Guards por rol
-   - Decoradores (`@Roles()`)
-
-4. **Flujo de aprobación**
-   - Solicitud de eliminación
-   - Aprobación por admin
-   - Eliminación real
-
-5. **Restricciones**
-   - Técnicos / ingenieros NO eliminan
-   - Admin controla acciones críticas
+🟢 **LISTO PARA FRONTEND**
 
 ---
 
-### 🔵 PRIORIDAD BAJA – Métricas y auditoría
+## 🧹 5. Eliminación Controlada (Soft Delete)
 
-8. **Historial de cambios**
-   - Tabla `TicketHistory`
-   - Quién cambió qué y cuándo
+### Flujo completo
 
-9. **Resumen y métricas**
-   - Tickets por rango de fechas
-   - Tickets por usuario
-   - Tickets por estatus
+1. Usuario solicita eliminación
+2. Ticket queda con `deleteRequested = true`
+3. ADMIN aprueba o rechaza
+4. Si aprueba:
+
+   * `deletedAt`
+   * `deletedBy`
+   * `status = CANCELLED`
+5. Se registra historial
+
+| Item                       | Estado |
+| -------------------------- | ------ |
+| Soft delete (`deletedAt`)  | ✅      |
+| Solicitud de eliminación   | ✅      |
+| Aprobación ADMIN           | ✅      |
+| Rechazo ADMIN              | ✅      |
+| Ocultar tickets eliminados | ✅      |
+
+🟢 **LISTO PARA FRONTEND**
 
 ---
 
-## 🧠 5. ¿Qué conviene hacer primero?
+## 📜 6. Auditoría / Historial
 
-### ❌ NO empezar por métricas
-Eso depende de tener bien modelados:
-- Estados
-- Roles
-- Historial
+| Item                       | Estado |
+| -------------------------- | ------ |
+| Modelo `TicketHistory`     | ✅      |
+| Registro de approve/reject | ✅      |
+| Endpoint historial         | ✅      |
+| Quién / cuándo             | ✅      |
+
+🟢 **LISTO PARA FRONTEND (ADMIN)**
 
 ---
 
-### ✅ ORDEN RECOMENDADO
+## 🧠 7. Reglas de Negocio Críticas
 
-1. **Estados de ticket + filtros** LISTO
-2. **Separar tickets propios vs globales** LISTO
-3. **Soft delete y solicitudes**
-4. **Roles y guards**
-5. **Historial de cambios**
-6. **Métricas y reportes**
+| Regla                            | Estado      |
+| -------------------------------- | ----------- |
+| Técnico elimina solo sus tickets | ✅ (service) |
+| Ingeniero elimina cualquiera     | ✅ (service) |
+| Admin control total              | ✅           |
+| No hard delete desde API         | ✅           |
+| Estados válidos                  | ✅           |
 
-📌 Agregar **roles ahora es rápido**, pero **no sirve** si los tickets aún no tienen reglas claras.
+🟢 **REGLAS IMPLEMENTADAS DONDE CORRESPONDE**
+
 ---
-## 🧩 7. resultados obtenidos
 
-✔️ Crear tickets → Implementado y funcional (POST /tickets).
+## 📡 8. Contrato Backend → Frontend
 
-✔️ Listar global / propios → Implementado (GET /tickets?scope=mine|all).
+| Item                    | Estado | Decisión  |
+| ----------------------- | ------ | --------- |
+| Endpoints estables      | ✅      |           |
+| DTOs claros             | ✅      |           |
+| Tipos consistentes      | 🟡     | Mejorable |
+| Paginación              | ❌      | Pendiente |
+| Respuestas normalizadas | 🟡     | Pendiente |
 
-✔️ Filtros (fecha, impacto, estatus, búsqueda) → Ahora completamente funcional. El estatus ya valida correctamente los valores permitidos, los otros filtros (from, to, impact, search) están listos.
+---
 
-✔️ Ver detalle → Implementado (GET /tickets/:id).
+## 🚦 Decisión Técnica Final
 
-✔️ Actualizar info → Implementado (PATCH /tickets/:id) para campos editables.
+### ✅ El frontend **YA PUEDE CONECTARSE** si:
 
-✔️ Actualizar estatus de forma controlada → Implementado (PATCH /tickets/:id/status) con tipado seguro.
+* Se inicia con listado simple
+* Detalle de ticket
+* Crear / editar / cerrar
+* Flujos reales de eliminación
 
-✔️ Eliminar → Implementado (DELETE /tickets/:id). La restricción por rol aún no se aplica, pero el endpoint funciona.
+### ⏸️ Conviene pausar solo si:
+
+* Se requieren dashboards complejos
+* Se necesitan grandes volúmenes de datos desde día 1
+
+👉 **Recomendación:** conectar frontend ahora y evolucionar en paralelo.
+
+---
+
+## 🔜 Siguientes pasos sugeridos
+
+1. Paginación (`page`, `limit`, `total`)
+2. Normalizar responses (`{ data, meta }`)
+3. Métricas para INGENIERO
+4. Swagger / OpenAPI
+5. Optimización de queries
+
+---
+
+## Project setup
+
+```bash
+npm install
+```
+
+## Run
+
+```bash
+npm run start:dev
+```
+
+---
+
+## License
+
+MIT
+
 ---
 
 ## Description
