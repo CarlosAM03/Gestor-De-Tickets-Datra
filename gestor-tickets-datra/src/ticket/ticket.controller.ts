@@ -23,22 +23,26 @@ import { Roles } from 'src/auth/roles.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 
 @Controller('tickets')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class TicketController {
   constructor(private readonly ticketService: TicketService) {}
 
   // =========================
-  // CREATE
+  // CREATE TICKET
+  // Roles: ADMIN, TECNICO, INGENIERO
   // =========================
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
   create(@Body() body: CreateTicketDto, @Req() req: RequestWithUser) {
     return this.ticketService.create(body, req.user.id);
   }
 
   // =========================
-  // FIND ALL
+  // FIND ALL (global / mine + filtros)
+  // Roles: ADMIN, TECNICO, INGENIERO
   // =========================
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
   findAll(
     @Req() req: RequestWithUser,
     @Query('scope') scope?: 'mine' | 'all',
@@ -65,24 +69,30 @@ export class TicketController {
 
   // =========================
   // FIND ONE
+  // Roles: ADMIN, TECNICO, INGENIERO
   // =========================
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.ticketService.findOne(id);
   }
 
   // =========================
-  // UPDATE
+  // UPDATE TICKET INFO
+  // Roles: ADMIN, TECNICO, INGENIERO
   // =========================
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
   update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateTicketDto) {
     return this.ticketService.update(id, body);
   }
 
   // =========================
-  // UPDATE STATUS
+  // UPDATE STATUS / CLOSE TICKET
+  // Roles: ADMIN, TECNICO, INGENIERO
   // =========================
   @Patch(':id/status')
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: StatusUpdateTicketDto,
@@ -91,29 +101,32 @@ export class TicketController {
   }
 
   // =========================
-  // REQUEST DELETE (SOFT)
+  // REQUEST DELETE (SOFT DELETE)
+  // Roles: ADMIN, TECNICO, INGENIERO
+  // Reglas finas se validan en el SERVICE
   // =========================
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
   requestDelete(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: RequestWithUser,
   ) {
     return this.ticketService.requestDelete(id, req.user.id);
   }
+
   // =========================
-  // LIST DELETE REQUESTS (ADMIN)
+  // ADMIN – LIST DELETE REQUESTS
   // =========================
   @Get('admin/delete-requests')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   findDeleteRequests() {
     return this.ticketService.findDeleteRequests();
   }
+
   // =========================
   // ADMIN – APPROVE DELETE
   // =========================
   @Patch('admin/:id/approve-delete')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   approveDelete(
     @Param('id', ParseIntPipe) id: number,
@@ -121,22 +134,25 @@ export class TicketController {
   ) {
     return this.ticketService.approveDelete(id, req.user.id);
   }
+
   // =========================
-  // ADMIN – TICKET HISTORY
+  // ADMIN – REJECT DELETE
   // =========================
-  @Get(':id/history')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  getHistory(@Param('id', ParseIntPipe) id: number) {
-    return this.ticketService.getHistory(id);
-  }
   @Patch('admin/:id/reject-delete')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   rejectDelete(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: RequestWithUser,
   ) {
     return this.ticketService.rejectDelete(id, req.user.id);
+  }
+
+  // =========================
+  // ADMIN – TICKET HISTORY
+  // =========================
+  @Get(':id/history')
+  @Roles(UserRole.ADMIN)
+  getHistory(@Param('id', ParseIntPipe) id: number) {
+    return this.ticketService.getHistory(id);
   }
 }

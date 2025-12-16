@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
@@ -7,6 +11,7 @@ import {
   ClientType,
   ImpactLevel,
   TicketStatus as PrismaTicketStatus,
+  UserRole,
 } from '@prisma/client';
 import type { TicketStatus } from './types/ticket-status.type';
 
@@ -79,7 +84,7 @@ export class TicketService {
     }
 
     if (status) {
-      where.status = status;
+      where.status = status as PrismaTicketStatus;
     }
 
     if (impact) {
@@ -116,7 +121,10 @@ export class TicketService {
   // =========================
   async findOne(id: number) {
     const ticket = await this.prisma.ticket.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+      },
       include: {
         createdBy: true,
         preliminaryBy: true,
@@ -132,7 +140,7 @@ export class TicketService {
   }
 
   // =========================
-  // UPDATE
+  // UPDATE INFO
   // =========================
   async update(id: number, data: UpdateTicketDto) {
     return this.prisma.ticket.update({
@@ -161,47 +169,71 @@ export class TicketService {
   }
 
   // =========================
-  // UPDATE STATUS
+  // UPDATE STATUS / CLOSE
   // =========================
   async updateStatus(id: number, status: TicketStatus) {
     const ticket = await this.prisma.ticket.findUnique({ where: { id } });
 
     if (!ticket) {
-      throw new NotFoundException(`Ticket con id ${id} no existe`);
+      throw new NotFoundException('Ticket no encontrado');
     }
 
     return this.prisma.ticket.update({
       where: { id },
-      data: { status },
+      data: {
+        status: status as PrismaTicketStatus,
+        closedAt:
+          status === PrismaTicketStatus.CLOSED ? new Date() : ticket.closedAt,
+      },
     });
   }
 
   // =========================
-  // SOLICITUD DE ELIMINACIÓN
+  // REQUEST DELETE
   // =========================
   async requestDelete(ticketId: number, userId: number) {
     const ticket = await this.prisma.ticket.findFirst({
-      where: { id: ticketId, deletedAt: null },
+      where: {
+        id: ticketId,
+        deletedAt: null,
+      },
+      include: {
+        createdBy: true,
+      },
     });
 
     if (!ticket) {
       throw new NotFoundException('Ticket no encontrado');
     }
 
-    if (ticket.createdById !== userId) {
-      throw new NotFoundException(
-        'No tienes permisos para solicitar la eliminación de este ticket',
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Usuario inválido');
+    }
+
+    // 🔐 REGLAS POR ROL
+    if (user.role === UserRole.TECNICO && ticket.createdById !== userId) {
+      throw new ForbiddenException(
+        'Solo puedes solicitar eliminación de tus propios tickets',
       );
     }
 
+    // INGENIERO → puede solicitar cualquiera
+    // ADMIN → puede solicitar cualquiera
+
     return this.prisma.ticket.update({
       where: { id: ticketId },
-      data: { deleteRequested: true },
+      data: {
+        deleteRequested: true,
+      },
     });
   }
 
   // =========================
-  // APROBAR ELIMINACIÓN (ADMIN)
+  // ADMIN – APPROVE DELETE
   // =========================
   async approveDelete(ticketId: number, adminId: number) {
     const ticket = await this.prisma.ticket.findFirst({
@@ -242,7 +274,7 @@ export class TicketService {
   }
 
   // =========================
-  // LISTAR SOLICITUDES (ADMIN)
+  // ADMIN – LIST DELETE REQUESTS
   // =========================
   async findDeleteRequests() {
     return this.prisma.ticket.findMany({
@@ -252,25 +284,30 @@ export class TicketService {
       },
       include: {
         createdBy: true,
-        deletedBy: true,
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: {
+        updatedAt: 'desc',
+      },
     });
   }
 
   // =========================
-  // HISTORIAL DEL TICKET
+  // ADMIN – HISTORY
   // =========================
   async getHistory(ticketId: number) {
     return this.prisma.ticketHistory.findMany({
       where: { ticketId },
-      include: { performedBy: true },
-      orderBy: { createdAt: 'desc' },
+      include: {
+        performedBy: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
   }
 
   // =========================
-  // RECHAZAR ELIMINACIÓN (ADMIN)
+  // ADMIN – REJECT DELETE
   // =========================
   async rejectDelete(ticketId: number, adminId: number) {
     const ticket = await this.prisma.ticket.findFirst({
@@ -288,7 +325,9 @@ export class TicketService {
     return this.prisma.$transaction([
       this.prisma.ticket.update({
         where: { id: ticketId },
-        data: { deleteRequested: false },
+        data: {
+          deleteRequested: false,
+        },
       }),
 
       this.prisma.ticketHistory.create({
