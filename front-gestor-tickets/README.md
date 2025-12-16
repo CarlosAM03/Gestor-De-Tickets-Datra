@@ -158,11 +158,11 @@ Este documento describe el plan, requerimientos y buenas prácticas para desarro
 
 | Fase | Objetivo                                     | Tiempo estimado |
 | ---- | -------------------------------------------- | --------------- |
-| 1    | Integrar Login real y sustituir mockApi      | 1 semana        |
-| 2    | Migrar dashboard y vistas de tickets         | 1–2 semanas     |
-| 3    | Implementar filtros, paginación y métricas   | 1 semana        |
-| 4    | Validaciones finales, UX, pruebas integradas | 1 semana        |
-| 5    | Build de producción y despliegue             | 2–3 días        |
+| 1    | Integrar Login real y sustituir mockApi      | 2-3 dias        |
+| 2    | Migrar dashboard y vistas de tickets         | 1–2 dias        |
+| 3    | Implementar filtros, paginación y métricas   | 1-2 dias        |
+| 4    | Validaciones finales, UX, pruebas integradas | 1-2 dias        |
+| 5    | Build de producción y despliegue             | 2 días          |
 
 ---
 
