@@ -179,6 +179,165 @@ http://localhost:3000
 
 ---
 
+
+📌 Gestor de Tickets – Datra
+Actualizaciones recientes
+
+Este documento resume las mejoras y correcciones realizadas en el frontend del Gestor de Tickets Datra, enfocadas principalmente en autenticación, permisos y edición de tickets.
+
+✅ 1. Autenticación y Contexto (AuthContext)
+
+Se unificó el uso del contexto de autenticación usando el hook:
+
+useAuth()
+
+
+Se corrigieron errores por:
+
+Imports incorrectos
+
+Intentar usar AuthContext sin exportarlo
+
+Ahora el contexto expone correctamente:
+
+user
+
+login
+
+register
+
+logout
+
+📌 Todos los componentes (Navbar, ProtectedRoute, Login, Register, Tickets) consumen el contexto de forma correcta.
+
+🔐 2. Manejo de Roles (Permisos)
+
+Los roles del sistema son:
+
+admin
+
+tecnico
+
+⚠️ Importante:
+
+Los roles se manejan en minúsculas, tal como están definidos en mockApi.
+
+Se implementó una lógica reutilizable para permitir acciones a múltiples roles:
+
+const allowedRoles = ['tecnico', 'admin'];
+
+
+Ejemplo de uso:
+
+allowedRoles.includes(user?.role ?? '')
+
+✏️ 3. Botón Editar Ticket
+📍 Ubicación
+
+El botón Editar se encuentra en TicketView.tsx.
+
+🧠 Lógica aplicada
+
+Solo se muestra si:
+
+El usuario tiene un rol permitido (tecnico o admin)
+
+El ticket no está cerrado
+
+const canEdit =
+  ['tecnico', 'admin'].includes(user?.role ?? '') &&
+  ticket.serviceStatus !== 'Cerrado';
+
+{canEdit && (
+  <Button
+    variant="warning"
+    onClick={() => nav(`/tickets/${ticket.id}/edit`)}
+  >
+    Editar
+  </Button>
+)}
+
+
+✔ Se eliminaron botones duplicados
+✔ Se corrigieron comparaciones incorrectas ("ADMIN" → 'admin')
+
+🆕 4. Botón Nuevo Ticket
+
+Visible solo para roles permitidos
+
+Protegido tanto a nivel UI como a nivel vista (TicketForm)
+
+{['tecnico', 'admin'].includes(user?.role ?? '') && (
+  <Button onClick={() => nav('/tickets/new')}>
+    Nuevo
+  </Button>
+)}
+
+🛡️ 5. Protección de Rutas (ProtectedRoute)
+
+Se corrigieron errores de TypeScript:
+
+Property 'user' does not exist on type '{}'
+
+Ahora el componente valida correctamente:
+
+Usuario autenticado
+
+Redirección a /login o /unauthorized según el caso
+
+🧾 6. TicketView (TicketView.tsx)
+
+Limpieza completa del componente
+
+Eliminación de:
+
+Lógica duplicada
+
+Comparaciones inválidas
+
+Se alineó completamente con los datos reales de mockApi
+
+Estado final:
+
+Código claro
+
+Permisos correctos
+
+Botón Editar funcional
+
+🧪 7. Mock API (mockApi.ts)
+
+Se agregó soporte para actualizar tickets:
+
+updateTicket(id, payload)
+
+
+Se corrigieron inconsistencias de estado y roles
+
+Base sólida para simular backend real
+
+🚀 Estado actual del proyecto
+
+✔ App renderiza correctamente
+✔ Login / Register funcionales
+✔ Navbar estable
+✔ Permisos por rol funcionando
+✔ Vista de ticket estable
+✔ Edición de tickets preparada (pendiente conectar TicketForm)
+
+🔜 Próximo paso recomendado
+
+👉 Conectar TicketForm para edición:
+
+Detectar modo edición (/tickets/:id/edit)
+
+Cargar datos del ticket
+
+Guardar cambios con updateTicket
+
+💙 Proyecto Datra – Frontend en progreso sólido
+Cualquier mejora futura (roles avanzados, estados, backend real) ya tiene una base limpia para crecer.
+
 ## 📌 Notas finales
 
 Este frontend está diseñado para **no rehacerse** al integrar backend.
