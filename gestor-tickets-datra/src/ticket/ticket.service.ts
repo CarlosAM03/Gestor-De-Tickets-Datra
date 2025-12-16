@@ -2,8 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { Prisma, ClientType, ImpactLevel } from '@prisma/client';
-import { TicketStatus } from './types/ticket-status.type';
+import {
+  Prisma,
+  ClientType,
+  ImpactLevel,
+  TicketStatus as PrismaTicketStatus,
+} from '@prisma/client';
+import type { TicketStatus } from './types/ticket-status.type';
 
 interface FindTicketsParams {
   userId: number;
@@ -111,10 +116,7 @@ export class TicketService {
   // =========================
   async findOne(id: number) {
     const ticket = await this.prisma.ticket.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
+      where: { id, deletedAt: null },
       include: {
         createdBy: true,
         preliminaryBy: true,
@@ -173,25 +175,19 @@ export class TicketService {
       data: { status },
     });
   }
+
   // =========================
-  // Solicitud de eliminación
+  // SOLICITUD DE ELIMINACIÓN
   // =========================
   async requestDelete(ticketId: number, userId: number) {
     const ticket = await this.prisma.ticket.findFirst({
-      where: {
-        id: ticketId,
-        deletedAt: null,
-      },
-      include: {
-        createdBy: true,
-      },
+      where: { id: ticketId, deletedAt: null },
     });
 
     if (!ticket) {
       throw new NotFoundException('Ticket no encontrado');
     }
 
-    // 🔒 Regla: solo el creador puede solicitar eliminación
     if (ticket.createdById !== userId) {
       throw new NotFoundException(
         'No tienes permisos para solicitar la eliminación de este ticket',
@@ -200,14 +196,12 @@ export class TicketService {
 
     return this.prisma.ticket.update({
       where: { id: ticketId },
-      data: {
-        deleteRequested: true,
-      },
+      data: { deleteRequested: true },
     });
   }
 
   // =========================
-  // Aprobación y soft delete (ADMIN)
+  // APROBAR ELIMINACIÓN (ADMIN)
   // =========================
   async approveDelete(ticketId: number, adminId: number) {
     const ticket = await this.prisma.ticket.findFirst({
@@ -220,18 +214,92 @@ export class TicketService {
 
     if (!ticket) {
       throw new NotFoundException(
-        'Ticket no encontrado o no tiene solicitud de eliminación',
+        'Ticket no encontrado o sin solicitud de eliminación',
       );
     }
 
-    return this.prisma.ticket.update({
-      where: { id: ticketId },
-      data: {
-        deletedAt: new Date(),
-        deletedById: adminId,
-        deleteRequested: false,
-        status: 'CANCELLED',
+    return this.prisma.$transaction([
+      this.prisma.ticket.update({
+        where: { id: ticketId },
+        data: {
+          deletedAt: new Date(),
+          deletedById: adminId,
+          deleteRequested: false,
+          status: PrismaTicketStatus.CANCELLED,
+        },
+      }),
+
+      this.prisma.ticketHistory.create({
+        data: {
+          ticketId,
+          action: 'APPROVE_DELETE',
+          fromValue: 'deleteRequested=true',
+          toValue: 'status=CANCELLED, deletedAt=SET',
+          performedById: adminId,
+        },
+      }),
+    ]);
+  }
+
+  // =========================
+  // LISTAR SOLICITUDES (ADMIN)
+  // =========================
+  async findDeleteRequests() {
+    return this.prisma.ticket.findMany({
+      where: {
+        deleteRequested: true,
+        deletedAt: null,
+      },
+      include: {
+        createdBy: true,
+        deletedBy: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  // =========================
+  // HISTORIAL DEL TICKET
+  // =========================
+  async getHistory(ticketId: number) {
+    return this.prisma.ticketHistory.findMany({
+      where: { ticketId },
+      include: { performedBy: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // =========================
+  // RECHAZAR ELIMINACIÓN (ADMIN)
+  // =========================
+  async rejectDelete(ticketId: number, adminId: number) {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        id: ticketId,
+        deleteRequested: true,
+        deletedAt: null,
       },
     });
+
+    if (!ticket) {
+      throw new NotFoundException('Solicitud no encontrada');
+    }
+
+    return this.prisma.$transaction([
+      this.prisma.ticket.update({
+        where: { id: ticketId },
+        data: { deleteRequested: false },
+      }),
+
+      this.prisma.ticketHistory.create({
+        data: {
+          ticketId,
+          action: 'REJECT_DELETE',
+          fromValue: 'deleteRequested=true',
+          toValue: 'deleteRequested=false',
+          performedById: adminId,
+        },
+      }),
+    ]);
   }
 }

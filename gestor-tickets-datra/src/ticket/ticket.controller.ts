@@ -18,6 +18,9 @@ import { StatusUpdateTicketDto } from './dto/status-update-ticket.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { RequestWithUser } from '../types/request-with-user';
 import { TICKET_STATUSES, TicketStatus } from './types/ticket-status.type';
+import { UserRole } from '@prisma/client';
+import { Roles } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
 
 @Controller('tickets')
 @UseGuards(JwtAuthGuard)
@@ -96,5 +99,44 @@ export class TicketController {
     @Req() req: RequestWithUser,
   ) {
     return this.ticketService.requestDelete(id, req.user.id);
+  }
+  // =========================
+  // LIST DELETE REQUESTS (ADMIN)
+  // =========================
+  @Get('admin/delete-requests')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  findDeleteRequests() {
+    return this.ticketService.findDeleteRequests();
+  }
+  // =========================
+  // ADMIN – APPROVE DELETE
+  // =========================
+  @Patch('admin/:id/approve-delete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  approveDelete(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.ticketService.approveDelete(id, req.user.id);
+  }
+  // =========================
+  // ADMIN – TICKET HISTORY
+  // =========================
+  @Get(':id/history')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  getHistory(@Param('id', ParseIntPipe) id: number) {
+    return this.ticketService.getHistory(id);
+  }
+  @Patch('admin/:id/reject-delete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  rejectDelete(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.ticketService.rejectDelete(id, req.user.id);
   }
 }
