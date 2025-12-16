@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -19,7 +20,7 @@ export class UserService {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: data.role ?? 'tecnico',
+        role: data.role ?? UserRole.TECNICO,
       },
     });
   }
