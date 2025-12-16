@@ -1,203 +1,179 @@
-## 📌 Gestor de Tickets Datra – Frontend (MVP)
 
-Este proyecto es la interfaz web del Sistema de Gestión de Tickets Datra, desarrollado como MVP para demostrar el flujo completo del sistema antes de conectar el backend real.
+# 🖥️ Gestor de Tickets Datra – Frontend
 
-El frontend está construido con:
+Este documento describe el plan, requerimientos y buenas prácticas para desarrollar el **frontend** del Gestor de Tickets Datra, completamente integrado con el backend NestJS + Prisma. Está diseñado para garantizar seguridad, escalabilidad y cumplimiento de roles definidos en backend.
 
-React + TypeScript
+---
 
-Vite
+## 🎯 Objetivo
 
-Bootstrap 5 / React-Bootstrap
+1. Reemplazar cualquier API simulada (mock) con el backend real.
+2. Implementar control de acceso según roles (ADMIN, TECNICO, INGENIERO).
+3. Garantizar una arquitectura escalable y sostenible.
+4. Preparar el sistema para uso empresarial real.
 
-Context API para Auth
+> **Nota clave:** El frontend **solo tiene login**. La creación de usuarios y permisos es responsabilidad del ADMIN. Esto elimina riesgos de seguridad y mantiene control centralizado.
 
-Router DOM v6
+---
 
-Formik + Yup para formularios
+## 👤 Autenticación y Roles
 
-Mock API integrada para pruebas sin backend
+### Login
 
-## 🚀 Características principales
-### ✔ Autenticación con Context API
+* Endpoint: `POST /auth/login`
+* Guardar: `JWT`, `role`, `userId`
+* Manejar sesión activa, logout y token expirado (401)
+* **No hay registro público de usuarios**
 
-Login
+### Roles (según backend)
 
-Registro
+| Rol       | Funciones en UI                                                                                              |
+| --------- | ------------------------------------------------------------------------------------------------------------ |
+| ADMIN     | Ver todos los tickets, aprobar/rechazar solicitudes de eliminación, historial, métricas, gestión de usuarios |
+| TECNICO   | Crear, editar, cerrar tickets propios, solicitar eliminación, consultar tickets globales                     |
+| INGENIERO | Crear, editar, cerrar tickets, solicitar eliminación de cualquier ticket, acceso a métricas                  |
 
-Permisos básicos (mock)
+> * El frontend **solo oculta o muestra acciones según rol**, el backend valida reglas de negocio.
+> * Orden de prioridad de desarrollo: ADMIN, INGENIERO, TECNICO
 
-Persistencia de sesión local
+---
 
-###  ✔ Sistema de tickets
+## 🔗 Migración de API (Mock → Real)
 
-Vista de listado
+1. **Congelar mock**: `mockApi.ts` queda obsoleto.
+2. **Cliente HTTP real**: `/src/api/http.ts`
 
-Vista de ticket
+   * Configurar baseURL por entorno
+   * Interceptor para JWT
+   * Manejo global de errores
+3. **Endpoints Tickets**
+   | Función             | Endpoint                |
+   |--------------------|------------------------|
+   | Listado             | GET `/tickets`          |
+   | Detalle             | GET `/tickets/:id`      |
+   | Crear               | POST `/tickets`         |
+   | Actualizar          | PATCH `/tickets/:id`    |
+   | Cambiar estatus     | PATCH `/tickets/:id/status` |
+   | Solicitud eliminación | DELETE `/tickets/:id`   |
 
-Creación de tickets
+* Mantener contratos y tipos alineados con backend.
 
-Mock API para simular retorno del backend
+---
 
-### ✔ Modo MOCK (sin backend)
+## 🎫 Gestión de Tickets
 
-Permite ejecutar todo el sistema sin conexión al backend real, ideal para demostraciones y validación del diseño UI/UX.
+### Listado
 
-### ✔ UI moderna y responsiva
+* Filtros: `scope` (`mine` / `all`), estado, impacto, fecha, búsqueda libre
+* Paginación básica preparada
+* Mostrar tickets según permisos
 
-Construida con Bootstrap 5 siguiendo lineamientos de software empresarial.
+### Detalle
 
-## 📁 Estructura del proyecto
-src/
- ├── components/       # Componentes reutilizables
- ├── contexts/         # AuthContext y proveedores
- ├── hooks/            # Custom hooks
- ├── layouts/          # Layout principal con Sidebar/Navbar
- ├── mock/             # Mock API (solo en modo VITE_USE_MOCK=true)
- ├── pages/            # Todas las vistas del sistema
- │    ├── Auth/        # Login / Registro
- │    └── Tickets/     # CRUD de Tickets
- ├── router/           # Rutas protegidas y públicas
- ├── services/         # Servicios reales (axios) o mock
- ├── styles/           # Estilos globales
- └── main.tsx          # Punto de entrada
+* Cargar ticket por ID
+* Mostrar historial (ADMIN)
+* Mostrar estado actual y acciones permitidas
 
-## 🛠 Tecnologías utilizadas
-Tecnología	Uso
-React 18 + TS	UI del sistema
-Vite	Build y dev server
-React Router DOM	Navegación
-Bootstrap 5	Estilos
-React-Bootstrap	Componentes UI
-Formik	Formularios
-Yup	Validación
-Context API	Sesión y autenticación
-Axios	(Preparado para backend real)
-Mock API	Simulación local tipo backend
-## 🧪 Modo Mock
+### Creación / Edición
 
-El proyecto incluye una API falsa que reemplaza automáticamente al backend real cuando está activada.
+* Formulario con campos validados
+* Actualizar solo campos permitidos
+* UX clara: loading, success, error
 
-Activarlo:
+### Eliminación
 
-Crear (o editar) el archivo .env:
+* Botón **Solicitar eliminación**
+* Estado: "Solicitud enviada", "Pendiente de aprobación"
+* No eliminar directamente
 
-VITE_USE_MOCK=true
+---
 
-Desactivarlo (conexión a backend):
-VITE_USE_MOCK=false
-VITE_API_URL=http://localhost:3000
+## ⚠️ Manejo de Errores y Seguridad
 
-## ▶️ Cómo ejecutar el proyecto
-1. Instalar dependencias
-npm install
+| Código | Acción Frontend       |
+| ------ | --------------------- |
+| 401    | Logout automático     |
+| 403    | Vista "No autorizado" |
+| 404    | Recurso no encontrado |
+| 500    | Error controlado      |
 
-2. Iniciar el servidor en modo desarrollo
-npm run dev
+* Nunca mostrar errores crudos
+* Logging básico solo para debugging
 
+---
 
-Abrir:
+## 📦 Estado Global Recomendado
 
-👉 http://localhost:5173/
+* Context API / Zustand / Redux Toolkit
+* Estados clave: usuario autenticado, rol, token, tickets, filtros activos
+* Evitar duplicación y props drilling
 
-## 🔐 Credenciales de prueba (Mock Mode)
-### 📌 Administrador
-Email: admin@datra.test
-Password: Pass1234
+---
 
-### 📌 Técnico
-Email: tecnico@datra.test
-Password: Pass1234
+## 🏗️ Dashboard
 
-## 🌐 Compilar para producción
-npm run build
+* Migrar datos mock a reales
+* Mostrar tickets recientes
+* Preparar espacio para métricas
+* ADMIN tendrá widgets exclusivos
 
+---
 
-Archivos finales quedan en:
+## ✅ Checklist Frontend – Producción
 
-/dist
+* Consume backend real (no mocks)
+* Respeta roles y reglas de negocio
+* Maneja errores correctamente
+* Login único (sin registro)
+* Arquitectura escalable
+* Variables de entorno definidas (`.env`)
+* URLs por ambiente (dev / prod)
+* Build sin warnings
+* Manejo de loading y empty states
 
-## 📦 Generar vista previa del build
-npm run preview
+---
 
-## 🔄 Rutas principales
-Ruta	Descripción
-/login	Inicio de sesión
-/register	Registro
-/	Dashboard
-/tickets	Listado de tickets
-/tickets/new	Crear ticket
-/tickets/:id	Ver ticket
-## 🧰 Conexión al backend (cuando esté listo)
+## 📐 Arquitectura Recomendada
 
-Cuando tu backend NestJS esté disponible solo debes:
+```
+/src
+  /api       -> Clientes HTTP (axios/fetch)
+  /auth      -> Login, guards, context
+  /tickets   -> Vistas, hooks, componentes
+  /users/components -> Reutilizables
+  /pages
+  /layouts
+  /routes
+  /types     -> Tipos alineados al backend
+  /utils/config
+```
 
-Desactivar mock:
+* Separación clara de dominio
+* Nada de lógica de negocio pesada en componentes
+* Todo acceso a backend pasa por `/api`
 
-VITE_USE_MOCK=false
+---
 
+## 🔄 Plan de Desarrollo Frontend
 
-Configurar URL:
+| Fase | Objetivo                                     | Tiempo estimado |
+| ---- | -------------------------------------------- | --------------- |
+| 1    | Integrar Login real y sustituir mockApi      | 1 semana        |
+| 2    | Migrar dashboard y vistas de tickets         | 1–2 semanas     |
+| 3    | Implementar filtros, paginación y métricas   | 1 semana        |
+| 4    | Validaciones finales, UX, pruebas integradas | 1 semana        |
+| 5    | Build de producción y despliegue             | 2–3 días        |
 
-VITE_API_URL=http://localhost:3000
+---
 
+## 📌 Recomendaciones y Buenas Prácticas
 
-Los servicios reales (axios) se activarán automáticamente.
+* No agregar nuevas features antes de conectar con backend real
+* No cambiar contratos de API
+* Validar tipos y DTOs con backend
+* Usar interceptores HTTP para manejo centralizado de errores
+* Mantener código modular y reutilizable
+* Documentar componentes críticos
+* Preparar estado global mínimo obligatorio desde el inicio
 
-## 🧱 Buenas prácticas incluidas
-
-✔ Arquitectura modular
-✔ Código limpio y tipado
-✔ Lint + reglas de seguridad
-✔ Separación UI / lógica / contexto
-✔ Sistema preparado para roles y permisos
-✔ Navegación protegida (AuthGuard)
-
-## 🗄 Compatibilidad con el Backend (NestJS + Prisma)
-
-Este front está alineado con los modelos:
-
-User
-
-name
-
-email
-
-password
-
-role
-
-active
-
-Ticket
-
-code
-
-openedAt
-
-requestedBy
-
-problemDesc
-
-eventLocation
-
-impacto, estado, timestamps, etc.
-
-Todas las vistas del MVP están diseñadas según este schema.
-
-## 👨‍💻 Desarrollado para
-
-MVP del sistema empresarial de gestión de tickets de Datra
-Plataforma para el control, seguimiento y documentación de incidencias de clientes.
-
-## 🎯 Objetivo del MVP
-
-Validar diseño UI/UX
-
-Navegar entre todas las pantallas del sistema
-
-Simular flujo real sin backend
-
-Usar usuarios y tickets de prueba
-
-Facilitar presentaciones y demostraciones
+---
