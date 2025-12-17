@@ -46,6 +46,14 @@ export default function App() {
             }
           />
           <Route
+            path="/tickets/:id/edit"
+            element={
+              <ProtectedRoute>
+                <TicketForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/tickets/:id"
             element={
               <ProtectedRoute>

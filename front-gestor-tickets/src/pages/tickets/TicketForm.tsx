@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Formik, Form, Field } from 'formik';
 import { Card, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import * as mockApi from '../../api/mockApi';
+import type { Ticket } from '../../types';
 
 /* ==========================================
    UBICACIÓN + GEOCODING INVERSO (OSM)
@@ -54,29 +56,90 @@ const getUserLocation = async (setFieldValue: any) => {
 
 export default function TicketForm() {
   const nav = useNavigate();
+  const { id } = useParams(); // Obtener el ID de la URL
+  const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isEditMode = Boolean(id); // Determinar si estamos editando
+
+  // Cargar el ticket si estamos en modo edición
+  useEffect(() => {
+    if (isEditMode && id) {
+      setLoading(true);
+      mockApi.getTicketById(Number(id))
+        .then((data) => setTicket(data))
+        .catch((err) => {
+          console.error('Error cargando ticket:', err);
+          alert('No se pudo cargar el ticket');
+          nav('/tickets');
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [id, isEditMode, nav]);
+
+  // Mostrar loader mientras carga
+  if (isEditMode && loading) {
+    return (
+      <Card className="p-3 shadow-sm">
+        <div className="text-center py-4">Cargando ticket...</div>
+      </Card>
+    );
+  }
+
+  // Si estamos en modo edición pero no hay ticket, mostrar error
+  if (isEditMode && !loading && !ticket) {
+    return (
+      <Card className="p-3 shadow-sm">
+        <div className="text-center py-4 text-danger">
+          No se encontró el ticket
+        </div>
+        <Button variant="outline-secondary" onClick={() => nav('/tickets')}>
+          Volver a tickets
+        </Button>
+      </Card>
+    );
+  }
+
+  // Valores iniciales: vacíos para crear, con datos del ticket para editar
+  const initialValues = {
+    requestedBy: ticket?.requestedBy || '',
+    contact: ticket?.contact || '',
+    clientType: ticket?.clientType || '',
+    serviceAffected: ticket?.serviceAffected || '',
+    problemDesc: ticket?.problemDesc || '',
+    initialFindings: ticket?.initialFindings || '',
+    actionsTaken: ticket?.actionsTaken || '',
+    eventLocation: ticket?.eventLocation || '',
+    impactLevel: ticket?.impactLevel || '',
+    serviceStatus: ticket?.serviceStatus || 'ABIERTO',
+  };
 
   return (
     <Card className="p-3 shadow-sm ticket-form">
-      <h4>Crear Ticket</h4>
+      <h4>{isEditMode ? 'Editar Ticket' : 'Crear Ticket'}</h4>
+      {isEditMode && ticket && (
+        <p className="text-muted mb-3">Código: <strong>{ticket.code}</strong></p>
+      )}
 
       <Formik
-        initialValues={{
-          requestedBy: '',
-          contact: '',
-          clientType: '',
-          serviceAffected: '',
-          problemDesc: '',
-          initialFindings: '',
-          actionsTaken: '',
-          eventLocation: '',
-          impactLevel: '',
-        }}
+        initialValues={initialValues}
+        enableReinitialize={true} // Importante: permite actualizar valores cuando cambia el ticket
         onSubmit={async (values, { setSubmitting }) => {
           try {
-            await mockApi.createTicket(values);
-            nav('/tickets');
+            if (isEditMode && id) {
+              // Actualizar ticket existente
+              await mockApi.updateTicket(Number(id), values);
+              alert('Ticket actualizado exitosamente');
+              nav(`/tickets/${id}`);
+            } else {
+              // Crear nuevo ticket
+              await mockApi.createTicket(values);
+              alert('Ticket creado exitosamente');
+              nav('/tickets');
+            }
           } catch (err) {
             console.error(err);
+            alert('Error al guardar el ticket');
           } finally {
             setSubmitting(false);
           }
@@ -119,6 +182,33 @@ export default function TicketForm() {
               <div className="col-md-6 mb-3">
                 <label>Servicio afectado</label>
                 <Field name="serviceAffected" className="form-control" />
+              </div>
+
+              {/* ESTADO DEL SERVICIO */}
+              {isEditMode && (
+                <div className="col-md-6 mb-3">
+                  <label>Estado del servicio</label>
+                  <Field as="select" name="serviceStatus" className="form-control">
+                    <option value="ABIERTO">Abierto</option>
+                    <option value="EN_PROCESO">En Proceso</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="RESUELTO">Resuelto</option>
+                    <option value="CERRADO">Cerrado</option>
+                    <option value="CANCELADO">Cancelado</option>
+                  </Field>
+                </div>
+              )}
+
+              {/* NIVEL DE IMPACTO */}
+              <div className="col-md-6 mb-3">
+                <label>Nivel de impacto</label>
+                <Field as="select" name="impactLevel" className="form-control">
+                  <option value="">Seleccionar...</option>
+                  <option value="Bajo">Bajo</option>
+                  <option value="Medio">Medio</option>
+                  <option value="Alto">Alto</option>
+                  <option value="Crítico">Crítico</option>
+                </Field>
               </div>
 
               {/* DESCRIPCIÓN */}
@@ -180,12 +270,12 @@ export default function TicketForm() {
                 disabled={isSubmitting}
                 className="btn-datra me-2"
               >
-                Guardar
+                {isSubmitting ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Guardar'}
               </Button>
 
               <Button
                 variant="outline-secondary"
-                onClick={() => nav(-1)}
+                onClick={() => nav('/tickets')}
               >
                 Cancelar
               </Button>
