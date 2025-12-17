@@ -136,16 +136,65 @@ Este documento describe el plan, requerimientos y buenas prácticas para desarro
 ## 📐 Arquitectura Recomendada
 
 ```
-/src
-  /api       -> Clientes HTTP (axios/fetch)
-  /auth      -> Login, guards, context
-  /tickets   -> Vistas, hooks, componentes
-  /users/components -> Reutilizables
-  /pages
-  /layouts
-  /routes
-  /types     -> Tipos alineados al backend
-  /utils/config
+front-gestor-tickets-datra/
+│
+├── src/
+│   ├── api/
+│   │   ├── http.ts              # Axios + interceptores
+│   │   ├── auth.api.ts          # /auth/login
+│   │   └── tickets.api.ts       # /tickets
+│   │
+│   ├── auth/
+│   │   ├── AuthContext.tsx      # Estado global de sesión
+│   │   ├── AuthProvider.tsx
+│   │   ├── useAuth.ts
+│   │   └── RequireAuth.tsx      # Guard de rutas
+│   │
+│   ├── layouts/
+│   │   ├── AuthLayout.tsx       # Login
+│   │   └── MainLayout.tsx       # App protegida
+│   │
+│   ├── pages/
+│   │   ├── Login.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── Unauthorized.tsx
+│   │   └── NotFound.tsx
+│   │
+│   ├── tickets/
+│   │   ├── pages/
+│   │   │   ├── TicketList.tsx
+│   │   │   ├── TicketDetail.tsx
+│   │   │   └── TicketCreate.tsx
+│   │   │
+│   │   ├── components/
+│   │   │   ├── TicketCard.tsx
+│   │   │   ├── TicketStatusBadge.tsx
+│   │   │   └── TicketFilters.tsx
+│   │   │
+│   │   └── hooks/
+│   │       └── useTickets.ts
+│   │
+│   ├── routes/
+│   │   └── AppRoutes.tsx
+│   │
+│   ├── types/
+│   │   ├── auth.types.ts
+│   │   ├── ticket.types.ts
+│   │   └── user.types.ts
+│   │
+│   ├── utils/
+│   │   ├── constants.ts
+│   │   └── role.utils.ts
+│   │
+│   ├── main.tsx
+│   └── App.tsx
+│
+├── .env
+├── .env.production
+├── index.html
+├── package.json
+└── README.md
+
 ```
 
 * Separación clara de dominio
