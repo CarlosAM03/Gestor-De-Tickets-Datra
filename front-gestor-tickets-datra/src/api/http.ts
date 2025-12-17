@@ -1,26 +1,55 @@
-import axios from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 
-export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+const API_URL = import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  throw new Error('VITE_API_URL no está definida en el entorno');
+}
+
+const http: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 10000, // 10s estándar empresarial
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-http.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+/**
+ * Interceptor de REQUEST
+ * Adjunta JWT automáticamente
+ */
+http.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
-  return config;
-});
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
+/**
+ * Interceptor de RESPONSE
+ * Manejo global de errores
+ */
 http.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  (error: AxiosError) => {
+    const status = error.response?.status;
+
+    if (status === 401) {
+      // Sesión inválida o expirada
       localStorage.clear();
-      window.location.href = '/login';
+
+      // Redirección dura: estado limpio garantizado
+      window.location.replace('/login');
     }
+
     return Promise.reject(error);
-  }
+  },
 );
+
+export default http;

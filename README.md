@@ -670,6 +670,3 @@ erDiagram
 * ✅ Diseño listo para **escalar y agregar métricas**
 
 ---
-
-
-

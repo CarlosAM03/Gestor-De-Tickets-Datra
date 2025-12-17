@@ -6,7 +6,7 @@ import type { AuthUser } from '../types/auth.types';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem('token')
+    localStorage.getItem('token'),
   );
 
   const login = async (email: string, password: string) => {
@@ -16,8 +16,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('token', data.access_token);
     setToken(data.access_token);
 
-    // Usar el usuario devuelto por el backend (NO decodificar JWT)
-    setUser(data.user);
+    // Si el backend devuelve el usuario → usarlo
+    // Si no → dejarlo en null (se puede cargar luego con /auth/me)
+    if (data.user) {
+      setUser(data.user);
+    } else {
+      setUser(null);
+    }
   };
 
   const logout = () => {
