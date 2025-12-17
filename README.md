@@ -1,4 +1,4 @@
-﻿﻿# 🎫 Gestor de Tickets Datra
+﻿﻿﻿﻿# 🎫 Gestor de Tickets Datra
 
 Sistema de gestión de tickets desarrollado para la empresa **Datra**, orientado a la administración de solicitudes, incidencias y procesos internos de soporte técnico.
 
@@ -670,5 +670,6 @@ erDiagram
 * ✅ Diseño listo para **escalar y agregar métricas**
 
 ---
+
 
 
