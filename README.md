@@ -367,16 +367,64 @@ El frontend consume **únicamente** la API oficial del backend.
 ## 📁 Arquitectura del Frontend
 
 ```
-/src
-├── api            # Cliente HTTP e interceptores
-├── auth           # Login, guards y contexto de sesión
-├── tickets        # Vistas y componentes de tickets
-├── users          # Componentes reutilizables
-├── pages          # Páginas principales
-├── layouts        # Layouts por rol
-├── routes         # Rutas protegidas
-├── types          # Tipos alineados al backend
-└── utils          # Configuración y utilidades
+front-gestor-tickets-datra/
+│
+├── src/
+│   ├── api/
+│   │   ├── http.ts              # Axios base + interceptores
+│   │   ├── auth.api.ts          # /auth/login
+│   │   └── tickets.api.ts       # Endpoints de tickets
+│   │
+│   ├── auth/
+│   │   ├── AuthContext.tsx      # Estado global de sesión
+│   │   ├── AuthProvider.tsx
+│   │   ├── useAuth.ts
+│   │   ├── RequireAuth.tsx      # Protección de rutas
+│   │   └── RequireRole.tsx      # Protección por rol
+│   │
+│   ├── layouts/
+│   │   ├── MainLayout.tsx       # Layout para login
+│   │   ├── MainLayout.css  
+│   │   └── Sidebar.tsx        # Layout protegido (sidebar, navbar)
+│   │
+│   ├── pages/
+│   │   ├── Login/
+│   │   │   ├── Login.tsx
+│   │   │   └── Login.css
+│   │   │
+│   │   ├── Dashboard/
+│   │   │   ├── Dashboard.tsx
+│   │   │   └── Dashboard.css
+│   │   │
+│   │   └── Users/
+│   │       ├── Users.tsx
+│   │       └── Users.css
+│   │   
+│   │
+│   ├── tickets/
+│   │   ├── pages/
+│   │   ├── components/
+│   │   └── hooks/
+│   │
+│   ├── routes/
+│   │   └── AppRouter.tsx
+│   │
+│   ├── types/
+│   │   ├── auth.types.ts
+│   │   ├── user.types.ts
+│   │   └── ticket.types.ts
+│   │
+│   ├── utils/
+│   │   ├── constants.ts
+│   │   └── role.utils.ts
+│   │
+│   ├── App.tsx
+│   └── main.tsx
+│
+├── .env
+├── .env.production
+├── index.html
+└── README.md
 ```
 
 Esta estructura permite **separación clara de responsabilidades** y facilita la evolución del sistema.
@@ -622,4 +670,5 @@ erDiagram
 * ✅ Diseño listo para **escalar y agregar métricas**
 
 ---
+
 
