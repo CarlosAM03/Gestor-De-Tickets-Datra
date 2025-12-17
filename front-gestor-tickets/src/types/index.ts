@@ -1,11 +1,12 @@
-export type Role = 'admin' | 'tecnico' | 'user' | string;
+// src/types/index.ts
+export type Role = 'ADMIN' | 'INGENIERO' | 'TECNICO';
 
 export interface User {
   id: number;
   name: string;
   email: string;
   password?: string;
-  role?: Role;
+  role: Role; // Ya no es opcional
   active?: boolean;
   createdAt?: string;
   updatedAt?: string;

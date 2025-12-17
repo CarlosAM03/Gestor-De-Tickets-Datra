@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import type { User } from '../types';
 import { AuthContext } from './authContextData';
 import * as mockApi from '../api/mockApi';
@@ -46,5 +46,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
-export { AuthContext };
 
+// ✅ Agrega este hook personalizado
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe usarse dentro de AuthProvider');
+  }
+  return context;
+};
+
+export { AuthContext };
