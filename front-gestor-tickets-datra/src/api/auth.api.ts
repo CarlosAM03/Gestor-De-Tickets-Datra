@@ -1,32 +1,12 @@
 import http from './http';
+import type { AuthUser } from '@/types/auth.types';
 
-/**
- * Roles soportados por el sistema
- */
-export type UserRole = 'ADMIN' | 'INGENIERO' | 'TECNICO';
-
-/**
- * Respuesta esperada del backend en /auth/login
- */
 export interface LoginResponse {
   access_token: string;
   expires_in?: string;
-
-  /**
-   * Opcional: el backend puede o no enviar el usuario
-   * dependiendo de la estrategia de auth
-   */
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-    role: UserRole;
-  };
+  user: AuthUser;
 }
 
-/**
- * Request de login
- */
 export const loginRequest = async (
   email: string,
   password: string,

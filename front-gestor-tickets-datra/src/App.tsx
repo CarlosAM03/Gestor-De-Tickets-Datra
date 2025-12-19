@@ -1,20 +1,16 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login/Login';
-import MainLayout from './layouts/MainLayout';
+import { Suspense } from 'react';
+import AppRoutes from './router/AppRoutes';
 
+/**
+ * Root component de la aplicación
+ * - No define rutas
+ * - No contiene lógica de auth
+ * - Solo compone la app
+ */
 export default function App() {
   return (
-    <Routes>
-      {/* Public */}
-      <Route path="/login" element={<Login />} />
-
-      {/* Private (temporal, sin guards aún) */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<div>Dashboard</div>} />
-      </Route>
-
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/login" />} />
-    </Routes>
+    <Suspense fallback={<div>Cargando aplicación...</div>}>
+      <AppRoutes />
+    </Suspense>
   );
 }

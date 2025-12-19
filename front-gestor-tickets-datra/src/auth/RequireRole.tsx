@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
-import type { UserRole } from '@/types/auth.types';
+import type { UserRole } from '@/types/user.types';
 import { JSX } from 'react';
 
 interface Props {

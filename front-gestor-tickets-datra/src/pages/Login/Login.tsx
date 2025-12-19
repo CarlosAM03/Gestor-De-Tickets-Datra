@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/useAuth';
-import './Login.css'
+import './Login.css';
+
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,14 +17,16 @@ export default function Login() {
 
     try {
       await login(email, password);
-      window.location.href = '/';
+
+      // 🔥 navegación SPA correcta
+      navigate('/', { replace: true });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5" >
+    <div className="container mt-5">
       <h3 className="mb-4">Acceso Datra</h3>
 
       <form onSubmit={handleSubmit}>

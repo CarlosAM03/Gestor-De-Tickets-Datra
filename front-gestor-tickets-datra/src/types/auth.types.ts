@@ -1,11 +1,14 @@
-export type UserRole = 'ADMIN' | 'INGENIERO' | 'TECNICO';
+import type { User } from './user.types';
 
-export interface AuthUser {
-  id: number;
-  email: string;
-  role: UserRole;
-}
+/**
+ * Usuario autenticado
+ * (por ahora igual a User, pero puede extenderse)
+ */
+export type AuthUser = User;
 
+/**
+ * Respuesta de login
+ */
 export interface LoginResponse {
   access_token: string;
   expires_in: string;

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 import Login from '@/pages/Login/Login';
 import Dashboard from '@/pages/Dashboard/Dashboard';
@@ -6,33 +6,33 @@ import Users from '@/pages/Users/Users';
 
 import MainLayout from '@/layouts/MainLayout';
 import RequireAuth from '@/auth/RequireAuth';
-import {RequireRole} from '@/auth/RequireRole';
+import { RequireRole } from '@/auth/RequireRole';
 
-export default function AppRouter() {
+export default function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Ruta pública */}
-        <Route path="/login" element={<Login />} />
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={<Login />} />
 
-        {/* Rutas protegidas */}
-        <Route element={<RequireAuth />}>
-          <Route element={<MainLayout />}>
-            {/* Dashboard */}
-            <Route path="/" element={<Dashboard />} />
+      {/* Protected */}
+      <Route element={<RequireAuth />}>
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* ADMIN only */}
-            <Route
-              path="/users"
-              element={
-                <RequireRole allowedRoles={['ADMIN']}>
-                  <Users />
-                </RequireRole>
-              }
-            />
-          </Route>
+          <Route
+            path="/users"
+            element={
+              <RequireRole allowedRoles={['ADMIN']}>
+                <Users />
+              </RequireRole>
+            }
+          />
         </Route>
-      </Routes>
-    </BrowserRouter>
+      </Route>
+
+      {/* Default */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }

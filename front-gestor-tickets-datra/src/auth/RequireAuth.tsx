@@ -1,14 +1,13 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
 export default function RequireAuth() {
   const { token } = useAuth();
+  const location = useLocation();
 
-  // No hay sesión
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Sesión válida
   return <Outlet />;
 }
