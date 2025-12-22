@@ -372,5 +372,304 @@ El Sprint 3 se considera **cerrado** cuando:
 Sprint 3 es el **sprint de consolidación técnica**.
 No se agregan features innecesarias, se **fortalece lo ya construido**, alineado a reglas reales de negocio y preparado para escalar.
 
+
+# 📄 Checklist técnico por archivo frontend (Sprint 3)
+
+Este checklist **no es teórico**: cada punto existe porque el backend **ya lo soporta**.
+
 ---
+
+## 🔐 Autenticación / Contexto (SOLO REFERENCIA)
+
+### `/auth/AuthProvider.tsx`
+
+* [ ] **NO tocar lógica base**
+* [ ] Mantener token en `localStorage`
+* [ ] User restaurado desde login (Sprint 2 ya OK)
+* [ ] Preparar para `/auth/me` (Sprint futuro)
+
+---
+
+### `/auth/RequireAuth.tsx`
+
+* [ ] Proteger TODAS las rutas privadas
+* [ ] Redirección correcta a `/login`
+* [ ] Mantener `state.from`
+
+---
+
+### `/auth/RequireRole.tsx`
+
+* [ ] Usar solo para:
+
+  * Admin sections
+* [ ] **NO usar para reglas finas de tickets**
+* [ ] Backend manda `403` → frontend refleja
+
+---
+
+## 🎫 Tickets — CORE DEL SPRINT 3
+
+---
+
+### `/api/tickets.api.ts`
+
+* [ ] `getTickets({ scope })`
+* [ ] `getTicketById(id)`
+* [ ] `createTicket(payload)`
+* [ ] `updateTicket(id, payload)`
+* [ ] `updateTicketStatus(id, status)`
+* [ ] `requestTicketDeletion(id)`
+
+⚠️ **NO agregar lógica aquí**
+Solo transporte HTTP.
+
+---
+
+### `/pages/Tickets/TicketsList.tsx`
+
+* [ ] `scope = 'mine'` **SIEMPRE**
+* [ ] Eliminar excepciones por rol
+* [ ] Mostrar solo tickets del usuario
+* [ ] Filtros:
+
+  * status
+  * search
+* [ ] Navegar a:
+
+  * `/tickets/:id`
+  * `/tickets/new`
+
+---
+
+### `/pages/Tickets/TicketDetail.tsx` *(si no existe → crear)*
+
+* [ ] `getTicketById(id)`
+* [ ] Mostrar info completa
+* [ ] Botones:
+
+  * Editar
+  * Cambiar estatus
+  * Solicitar eliminación
+* [ ] Deshabilitar botones según rol
+* [ ] Manejar `403` del backend
+
+---
+
+### `/pages/Tickets/TicketForm.tsx`
+
+* [ ] Alinear DTO **REAL del backend**
+* [ ] Usar SOLO campos Sprint 3
+* [ ] Crear y editar sin errores
+* [ ] Manejo correcto de loading / error
+* [ ] Redirecciones limpias
+
+---
+
+## 🧹 Eliminación Controlada
+
+### `/pages/Tickets/DeleteRequests.tsx` (ADMIN)
+
+* [ ] `GET /tickets/admin/delete-requests`
+* [ ] Listado claro
+* [ ] Acciones:
+
+  * Approve
+  * Reject
+* [ ] Confirmaciones UI
+
+---
+
+## 📊 Dashboard
+
+### `/pages/Dashboard/Dashboard.tsx`
+
+* [ ] `getTickets({ scope: 'all' })`
+* [ ] Mostrar últimos N tickets
+* [ ] No editar desde dashboard
+* [ ] No paginación aún
+
+---
+
+## 👤 Perfil
+
+### `/pages/Profile/Profile.tsx`
+
+* [ ] Mostrar info del usuario
+* [ ] Sin edición
+* [ ] Acceso todos los roles
+
+---
+
+## 👥 Usuarios (ADMIN – PREPARACIÓN)
+
+### `/pages/Users/Users.tsx`
+
+* [ ] Conectar lista real
+* [ ] Acciones visibles pero deshabilitadas
+* [ ] Tooltip “Sprint futuro”
+
+---
+
+# 🔄 2️⃣ Mapa Exacto Front ↔ Backend (Contrato Real)
+
+---
+
+## 🔐 Auth
+
+| Front            | Backend            |
+| ---------------- | ------------------ |
+| Login            | `POST /auth/login` |
+| Token persistido | JWT                |
+| Usuario          | JWT payload        |
+
+---
+
+## 🎫 Tickets
+
+### Listar
+
+```http
+GET /tickets?scope=mine
+GET /tickets?scope=all
+```
+
+| Vista     | Scope |
+| --------- | ----- |
+| Dashboard | all   |
+| Tickets   | mine  |
+
+---
+
+### Detalle
+
+```http
+GET /tickets/:id
+```
+
+---
+
+### Crear
+
+```http
+POST /tickets
+```
+
+**Payload Sprint 3**
+
+```ts
+{
+  requestedBy: string
+  contact: string
+  serviceAffected: string
+  problemDesc: string
+  impactLevel: 'LOW' | 'MEDIUM' | 'HIGH'
+}
+```
+
+---
+
+### Editar
+
+```http
+PATCH /tickets/:id
+```
+
+---
+
+### Cambiar estatus
+
+```http
+PATCH /tickets/:id/status
+```
+
+---
+
+### Solicitar eliminación
+
+```http
+DELETE /tickets/:id
+```
+
+---
+
+## 🧹 Admin
+
+### Solicitudes
+
+```http
+GET /tickets/admin/delete-requests
+```
+
+### Aprobar
+
+```http
+PATCH /tickets/admin/:id/approve-delete
+```
+
+### Rechazar
+
+```http
+PATCH /tickets/admin/:id/reject-delete
+```
+
+---
+
+## 📜 Historial
+
+```http
+GET /tickets/:id/history
+```
+
+(Admin only)
+
+---
+
+# 🧭 Flujo de Trabajo Recomendado — Sprint 3
+
+Esto es **clave para no saturarte**.
+
+---
+
+## 🧩 Orden Diario Sugerido
+
+### Día 1
+
+* Ajustar `TicketsList` (scope correcto)
+* Confirmar lectura sin errores
+
+---
+
+### Día 2
+
+* TicketView (lectura + botones)
+* Manejo de permisos UI
+
+---
+
+### Día 3
+
+* TicketForm (crear / editar real)
+* Corregir errores actuales
+
+---
+
+### Día 4
+
+* Soft delete (request + admin flow)
+* DeleteRequests page
+
+---
+
+### Día 5
+
+* Dashboard final
+* Perfil
+* Limpieza general
+
+---
+
+## 🧠 Regla de Oro Sprint 3
+
+> **Si el backend ya lo valida, el frontend NO debe revalidar, solo reflejar.**
 
