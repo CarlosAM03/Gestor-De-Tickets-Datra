@@ -1,0 +1,19 @@
+.app-navbar {
+  background-color: #ffffff;
+  padding: 0.75rem 1.25rem;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.brand-subtitle {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-left: 0.5rem;
+}
+
+.nav-link {
+  font-weight: 500;
+}
