@@ -13,22 +13,26 @@ import type {
   Ticket,
   CreateTicketDto,
   UpdateTicketDto,
-  TicketPriority,
+  ClientType,
+  ImpactLevel,
 } from '@/types/ticket.types';
 
 /* =============================
    Tipo del formulario
+   (alineado al backend)
 ============================= */
 type TicketFormValues = {
-  title: string;
-  description: string;
-  priority: TicketPriority;
+  requestedBy?: string;
+  contact?: string;
+  clientType?: ClientType;
+  serviceAffected?: string;
+  problemDesc?: string;
+  impactLevel?: ImpactLevel;
 };
 
 export default function TicketForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-
   const isEditMode = Boolean(id);
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -45,9 +49,7 @@ export default function TicketForm() {
         setLoading(true);
         const data = await getTicketById(Number(id));
         setTicket(data);
-      } catch (error) {
-        console.error(error);
-        alert('No se pudo cargar el ticket');
+      } catch {
         navigate('/tickets');
       } finally {
         setLoading(false);
@@ -58,21 +60,13 @@ export default function TicketForm() {
   }, [id, isEditMode, navigate]);
 
   /* =============================
-     Estados de carga
+     Estado de carga
   ============================== */
   if (isEditMode && loading) {
     return (
-      <Card className="p-4 shadow-sm text-center">
+      <Card className="p-4 text-center">
         <Spinner animation="border" />
-        <p className="mt-3">Cargando ticket...</p>
-      </Card>
-    );
-  }
-
-  if (isEditMode && !loading && !ticket) {
-    return (
-      <Card className="p-4 shadow-sm text-center text-danger">
-        Ticket no encontrado
+        <p className="mt-2">Cargando ticket...</p>
       </Card>
     );
   }
@@ -81,9 +75,12 @@ export default function TicketForm() {
      Valores iniciales
   ============================== */
   const initialValues: TicketFormValues = {
-    title: ticket?.title ?? '',
-    description: ticket?.description ?? '',
-    priority: ticket?.priority ?? 'MEDIUM',
+    requestedBy: ticket?.requestedBy ?? '',
+    contact: ticket?.contact ?? '',
+    clientType: ticket?.clientType ?? undefined,
+    serviceAffected: ticket?.serviceAffected ?? '',
+    problemDesc: ticket?.problemDesc ?? '',
+    impactLevel: ticket?.impactLevel ?? undefined,
   };
 
   /* =============================
@@ -106,17 +103,12 @@ export default function TicketForm() {
             if (isEditMode && id) {
               const payload: UpdateTicketDto = values;
               await updateTicket(Number(id), payload);
-              alert('Ticket actualizado correctamente');
               navigate(`/tickets/${id}`);
             } else {
               const payload: CreateTicketDto = values;
               await createTicket(payload);
-              alert('Ticket creado correctamente');
               navigate('/tickets');
             }
-          } catch (error) {
-            console.error(error);
-            alert('Error al guardar el ticket');
           } finally {
             setSubmitting(false);
           }
@@ -124,37 +116,67 @@ export default function TicketForm() {
       >
         {({ isSubmitting }) => (
           <Form>
-            {/* TÍTULO */}
+            {/* SOLICITANTE */}
             <div className="mb-3">
-              <label className="form-label">Título</label>
+              <label className="form-label">Solicitante</label>
               <Field
-                name="title"
+                name="requestedBy"
                 className="form-control"
-                placeholder="Ej. Error en sistema de facturación"
-                required
+                placeholder="Nombre del solicitante"
+              />
+            </div>
+
+            {/* CONTACTO */}
+            <div className="mb-3">
+              <label className="form-label">Contacto</label>
+              <Field
+                name="contact"
+                className="form-control"
+                placeholder="Correo o teléfono"
+              />
+            </div>
+
+            {/* TIPO DE CLIENTE */}
+            <div className="mb-3">
+              <label className="form-label">Tipo de cliente</label>
+              <Field name="clientType" as="select" className="form-control">
+                <option value="">Seleccionar</option>
+                <option value="INTERNO">Interno</option>
+                <option value="EXTERNO">Externo</option>
+              </Field>
+            </div>
+
+            {/* SERVICIO AFECTADO */}
+            <div className="mb-3">
+              <label className="form-label">Servicio afectado</label>
+              <Field
+                name="serviceAffected"
+                className="form-control"
+                placeholder="Ej. Sistema de facturación"
               />
             </div>
 
             {/* DESCRIPCIÓN */}
             <div className="mb-3">
-              <label className="form-label">Descripción</label>
+              <label className="form-label">Descripción del problema</label>
               <Field
-                name="description"
+                name="problemDesc"
                 as="textarea"
                 className="form-control"
                 rows={4}
-                required
               />
             </div>
 
-            {/* PRIORIDAD */}
+            {/* NIVEL DE IMPACTO */}
             <div className="mb-4">
-              <label className="form-label">Prioridad</label>
-              <Field name="priority" as="select" className="form-control">
-                <option value="LOW">Baja</option>
-                <option value="MEDIUM">Media</option>
-                <option value="HIGH">Alta</option>
-                <option value="CRITICAL">Crítica</option>
+              <label className="form-label">Nivel de impacto</label>
+              <Field name="impactLevel" as="select" className="form-control">
+                <option value="">Seleccionar</option>
+                <option value="LOW">Bajo</option>
+                <option value="MEDIUM">Medio</option>
+                <option value="HIGH">Alto</option>
+                <option value="CRITICAL">Crítico</option>
+                <option value="INFO">Informativo</option>
               </Field>
             </div>
 

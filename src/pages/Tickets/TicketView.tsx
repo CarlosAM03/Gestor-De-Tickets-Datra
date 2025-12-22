@@ -5,21 +5,28 @@ import { Card, Button, Badge, Spinner } from 'react-bootstrap';
 import { getTicketById } from '@/api/tickets.api';
 import type { Ticket, TicketStatus } from '@/types/ticket.types';
 
+/* =============================
+   Labels y colores de estado
+============================= */
 const STATUS_LABELS: Record<TicketStatus, string> = {
   OPEN: 'Abierto',
   IN_PROGRESS: 'En progreso',
+  ON_HOLD: 'En espera',
   RESOLVED: 'Resuelto',
   CLOSED: 'Cerrado',
+  CANCELLED: 'Cancelado',
 };
 
 const STATUS_VARIANTS: Record<TicketStatus, string> = {
   OPEN: 'secondary',
   IN_PROGRESS: 'warning',
+  ON_HOLD: 'info',
   RESOLVED: 'success',
   CLOSED: 'dark',
+  CANCELLED: 'danger',
 };
 
-export default function TicketsView() {
+export default function TicketView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -73,60 +80,68 @@ export default function TicketsView() {
   ============================== */
   return (
     <Card className="p-4 shadow-sm">
+      {/* Header */}
       <div className="d-flex justify-content-between align-items-start mb-3">
         <div>
-          <h3 className="mb-2">{ticket.title}</h3>
+          <h3 className="mb-2">{ticket.code}</h3>
           <Badge bg={STATUS_VARIANTS[ticket.status]}>
             {STATUS_LABELS[ticket.status]}
           </Badge>
         </div>
 
-        <div className="d-flex gap-2">
-          <Button
-            variant="outline-secondary"
-            onClick={() => navigate('/tickets')}
-          >
-            Volver
-          </Button>
+        <Button
+          variant="outline-secondary"
+          onClick={() => navigate('/tickets')}
+        >
+          Volver
+        </Button>
+      </div>
 
-          <Button
-            variant="warning"
-            onClick={() => navigate(`/tickets/${ticket.id}/edit`)}
-          >
-            Editar
-          </Button>
+      <hr />
+
+      {/* Información principal */}
+      <p>
+        <strong>Descripción del problema:</strong>
+      </p>
+      <p className="text-muted">
+        {ticket.problemDesc || 'Sin descripción'}
+      </p>
+
+      <hr />
+
+      <div className="row">
+        <div className="col-md-6 mb-2">
+          <strong>Impacto:</strong>{' '}
+          {ticket.impactLevel || 'No definido'}
+        </div>
+
+        <div className="col-md-6 mb-2">
+          <strong>Tipo de cliente:</strong>{' '}
+          {ticket.clientType || 'No definido'}
+        </div>
+
+        <div className="col-md-6 mb-2">
+          <strong>Solicitante:</strong>{' '}
+          {ticket.requestedBy || 'No especificado'}
+        </div>
+
+        <div className="col-md-6 mb-2">
+          <strong>Contacto:</strong>{' '}
+          {ticket.contact || 'No especificado'}
         </div>
       </div>
 
       <hr />
 
-      <p>
-        <strong>Descripción:</strong>
-      </p>
-      <p className="text-muted">{ticket.description}</p>
-
-      <hr />
-
-      <p>
-        <strong>Prioridad:</strong> {ticket.priority}
-      </p>
-
+      {/* Auditoría básica */}
       <p>
         <strong>Creado por:</strong>{' '}
         {ticket.createdBy.name} ({ticket.createdBy.email})
       </p>
 
-      {ticket.assignedTo && (
-        <p>
-          <strong>Asignado a:</strong>{' '}
-          {ticket.assignedTo.name}
-        </p>
-      )}
-
-      <hr />
-
       <small className="text-muted">
-        Creado: {new Date(ticket.createdAt).toLocaleString('es-MX')}
+        Abierto:{' '}
+        {new Date(ticket.openedAt).toLocaleString('es-MX')}
         <br />
         Última actualización:{' '}
         {new Date(ticket.updatedAt).toLocaleString('es-MX')}

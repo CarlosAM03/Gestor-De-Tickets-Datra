@@ -11,15 +11,19 @@ import type { Ticket, TicketStatus } from '@/types/ticket.types';
 const STATUS_LABELS: Record<TicketStatus, string> = {
   OPEN: 'Abierto',
   IN_PROGRESS: 'En progreso',
+  ON_HOLD: 'En espera',
   RESOLVED: 'Resuelto',
   CLOSED: 'Cerrado',
+  CANCELLED: 'Cancelado',
 };
 
 const STATUS_VARIANTS: Record<TicketStatus, string> = {
   OPEN: 'secondary',
   IN_PROGRESS: 'warning',
+  ON_HOLD: 'info',
   RESOLVED: 'success',
   CLOSED: 'dark',
+  CANCELLED: 'danger',
 };
 
 export default function TicketsList() {
@@ -32,13 +36,14 @@ export default function TicketsList() {
   const [status, setStatus] = useState<TicketStatus | ''>('');
 
   /* =============================
-     Cargar tickets
+     Cargar tickets (scope mine)
   ============================== */
   const loadTickets = async () => {
     try {
       setLoading(true);
 
       const data = await getTickets({
+        scope: 'mine',
         search: search || undefined,
         status: status || undefined,
       });
@@ -64,7 +69,7 @@ export default function TicketsList() {
     <Card className="p-3 shadow-sm">
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="mb-0">Tickets</h4>
+        <h4 className="mb-0">Mis Tickets</h4>
         <Button onClick={() => navigate('/tickets/new')}>
           + Nuevo ticket
         </Button>
@@ -74,7 +79,7 @@ export default function TicketsList() {
       <div className="row mb-3">
         <div className="col-md-6 mb-2 mb-md-0">
           <Form.Control
-            placeholder="Buscar por título o descripción"
+            placeholder="Buscar por descripción o código"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -97,7 +102,7 @@ export default function TicketsList() {
         </div>
       </div>
 
-      {/* Tabla / Estados */}
+      {/* Tabla */}
       {loading ? (
         <div className="text-center py-4">
           <Spinner animation="border" />
@@ -111,10 +116,10 @@ export default function TicketsList() {
         <Table striped hover responsive>
           <thead>
             <tr>
-              <th>Título</th>
-              <th>Creado por</th>
+              <th>Código</th>
+              <th>Descripción</th>
               <th>Estado</th>
-              <th>Prioridad</th>
+              <th>Impacto</th>
               <th></th>
             </tr>
           </thead>
@@ -122,10 +127,12 @@ export default function TicketsList() {
             {tickets.map((ticket) => (
               <tr key={ticket.id}>
                 <td>
-                  <strong>{ticket.title}</strong>
+                  <strong>{ticket.code}</strong>
                 </td>
 
-                <td>{ticket.createdBy.name}</td>
+                <td className="text-truncate" style={{ maxWidth: 250 }}>
+                  {ticket.problemDesc || 'Sin descripción'}
+                </td>
 
                 <td>
                   <Badge bg={STATUS_VARIANTS[ticket.status]}>
@@ -133,7 +140,7 @@ export default function TicketsList() {
                   </Badge>
                 </td>
 
-                <td>{ticket.priority}</td>
+                <td>{ticket.impactLevel || '-'}</td>
 
                 <td className="text-end">
                   <Button

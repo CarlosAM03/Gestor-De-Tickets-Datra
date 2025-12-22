@@ -1,31 +1,57 @@
-/**
- * Estados posibles de un ticket
- * Debe coincidir con el enum del backend (Prisma / Nest)
- */
+/* =====================================================
+   ENUMS / TIPOS BASE
+===================================================== */
+
 export type TicketStatus =
   | 'OPEN'
   | 'IN_PROGRESS'
+  | 'ON_HOLD'
   | 'RESOLVED'
-  | 'CLOSED';
+  | 'CLOSED'
+  | 'CANCELLED';
 
-/**
- * Prioridad del ticket
- */
-export type TicketPriority =
-  | 'LOW'
-  | 'MEDIUM'
+export type ImpactLevel =
+  | 'CRITICAL'
   | 'HIGH'
-  | 'CRITICAL';
+  | 'MEDIUM'
+  | 'LOW'
+  | 'INFO';
 
-/**
- * Ticket base (entidad principal)
- */
+export type ClientType =
+  | 'INTERNO'
+  | 'EXTERNO';
+
+/* =====================================================
+   MODELO PRINCIPAL: Ticket
+===================================================== */
+
 export interface Ticket {
   id: number;
-  title: string;
-  description: string;
+  code: string;
+
   status: TicketStatus;
-  priority: TicketPriority;
+
+  impactLevel?: ImpactLevel | null;
+  clientType?: ClientType | null;
+
+  requestedBy?: string | null;
+  contact?: string | null;
+  serviceAffected?: string | null;
+  problemDesc?: string | null;
+
+  eventLocation?: string | null;
+  initialFindings?: string | null;
+  probableRootCause?: string | null;
+  actionsTaken?: string | null;
+  additionalNotes?: string | null;
+
+  correctiveAction?: boolean | null;
+
+  openedAt: string;
+  estimatedStart?: string | null;
+  closedAt?: string | null;
+
+  deleteRequested: boolean;
 
   createdAt: string;
   updatedAt: string;
@@ -43,23 +69,52 @@ export interface Ticket {
   } | null;
 }
 
-/**
- * DTO para crear ticket
- * Coincide con CreateTicketDto del backend
- */
+/* =====================================================
+   DTO: Crear Ticket
+   (ALINEADO A CreateTicketDto BACKEND)
+===================================================== */
+
 export interface CreateTicketDto {
-  title: string;
-  description: string;
-  priority: TicketPriority;
+  openedAt?: string;
+
+  requestedBy?: string;
+  contact?: string;
+  clientType?: ClientType;
+
+  serviceAffected?: string;
+  problemDesc?: string;
+  eventLocation?: string;
+
+  estimatedStart?: string;
+
+  impactLevel?: ImpactLevel;
+
+  initialFindings?: string;
+  probableRootCause?: string;
+  actionsTaken?: string;
+
+  closedAt?: string;
+
+  additionalNotes?: string;
+  correctiveAction?: boolean;
 }
 
-/**
- * DTO para actualizar ticket
- * Todos los campos opcionales
- */
-export interface UpdateTicketDto {
-  title?: string;
-  description?: string;
-  priority?: TicketPriority;
-  assignedToId?: number | null;
+/* =====================================================
+   DTO: Actualizar Ticket
+   (PATCH parcial)
+===================================================== */
+
+export type UpdateTicketDto = Partial<CreateTicketDto>;
+
+/* =====================================================
+   PARAMS DE LISTADO (opcional, recomendado)
+===================================================== */
+
+export interface GetTicketsParams {
+  scope?: 'mine' | 'all';
+  status?: TicketStatus;
+  impactLevel?: ImpactLevel;
+  from?: string;
+  to?: string;
+  search?: string;
 }
