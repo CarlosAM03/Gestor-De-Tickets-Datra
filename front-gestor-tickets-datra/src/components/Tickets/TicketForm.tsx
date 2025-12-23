@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { useEffect, useMemo, useState } from 'react';
+import { Formik, Form, Field, ErrorMessage, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { Button, Spinner } from 'react-bootstrap';
 
@@ -7,9 +7,29 @@ import { searchClients } from '@/api/clients.api';
 import type {
   TicketFormValues,
   TicketClient,
+  TicketStatus,
 } from '@/types/ticket.types';
 
 import './TicketForm.css';
+
+/* =============================
+   Constantes
+============================= */
+const EMPTY_CLIENT: TicketClient = {
+  rfc: '',
+  companyName: '',
+  businessName: '',
+  location: '',
+};
+
+const STATUS_OPTIONS: TicketStatus[] = [
+  'OPEN',
+  'IN_PROGRESS',
+  'ON_HOLD',
+  'RESOLVED',
+  'CLOSED',
+  'CANCELLED',
+];
 
 /* =============================
    Props
@@ -22,22 +42,59 @@ interface TicketFormProps {
 }
 
 /* =============================
-   Validación
+   Validación dinámica
 ============================= */
-const TicketSchema = Yup.object({
-  requestedBy: Yup.string().required('Campo obligatorio'),
-  contact: Yup.string().required('Campo obligatorio'),
-  clientType: Yup.string().required('Selecciona un tipo'),
+const buildSchema = (mode: 'create' | 'edit') =>
+  Yup.object({
+    requestedBy: Yup.string().required('Campo obligatorio'),
+    contact: Yup.string().required('Campo obligatorio'),
+    clientType: Yup.string().required('Selecciona un tipo'),
 
-  client: Yup.object({
-    rfc: Yup.string().required('RFC obligatorio'),
-    companyName: Yup.string().required('Razón social obligatoria'),
-  }),
+    client:
+      mode === 'create'
+        ? Yup.object({
+            rfc: Yup.string().required('RFC obligatorio'),
+            companyName: Yup.string().required('Razón social obligatoria'),
+          })
+        : Yup.mixed().notRequired(),
 
-  serviceAffected: Yup.string().required('Campo obligatorio'),
-  problemDesc: Yup.string().required('Describe el problema'),
-  impactLevel: Yup.string().required('Selecciona el impacto'),
-});
+    serviceAffected: Yup.string().required('Campo obligatorio'),
+    problemDesc: Yup.string().required('Describe el problema'),
+    impactLevel: Yup.string().required('Selecciona el impacto'),
+
+    status:
+      mode === 'edit'
+        ? Yup.string().required('Selecciona el estatus')
+        : Yup.mixed().notRequired(),
+  });
+
+/* =============================
+   Normalización payload
+============================= */
+function normalizePayload(
+  mode: 'create' | 'edit',
+  values: TicketFormValues
+): TicketFormValues {
+  const payload: TicketFormValues = { ...values };
+
+  // EDIT → backend NO maneja client
+  if (mode === 'edit') {
+    delete payload.client;
+    return payload;
+  }
+
+  // CREATE → solo enviar client si es válido
+  const client = values.client;
+  if (
+    !client ||
+    !client.rfc?.trim() ||
+    !client.companyName?.trim()
+  ) {
+    delete payload.client;
+  }
+
+  return payload;
+}
 
 /* =============================
    Componente
@@ -49,16 +106,38 @@ export default function TicketForm({
   submitting = false,
 }: TicketFormProps) {
   const [clientSuggestions, setClientSuggestions] = useState<TicketClient[]>([]);
-  const [existingClient, setExistingClient] = useState<TicketClient | null>(
-    initialValues.client ?? null
-  );
+  const [existingClient, setExistingClient] = useState<TicketClient | null>(null);
+
+  const validationSchema = useMemo(() => buildSchema(mode), [mode]);
+
+  /* =============================
+     Inicialización segura (EDIT)
+  ============================= */
+  useEffect(() => {
+    if (
+      mode === 'edit' &&
+      initialValues.client?.rfc &&
+      initialValues.client.companyName
+    ) {
+      setExistingClient(initialValues.client);
+    } else {
+      setExistingClient(null);
+    }
+  }, [mode, initialValues.client]);
 
   return (
     <Formik
       initialValues={initialValues}
-      validationSchema={TicketSchema}
+      validationSchema={validationSchema}
       enableReinitialize
-      onSubmit={onSubmit}
+      onSubmit={async (
+        values: TicketFormValues,
+        helpers: FormikHelpers<TicketFormValues>
+      ) => {
+        const payload = normalizePayload(mode, values);
+        await onSubmit(payload);
+        helpers.setSubmitting(false);
+      }}
     >
       {({ setFieldValue }) => (
         <Form noValidate className="ticket-form">
@@ -105,6 +184,23 @@ export default function TicketForm({
           </div>
 
           {/* =============================
+              Estatus (solo EDIT)
+          ============================== */}
+          {mode === 'edit' && (
+            <div className="mb-3">
+              <label className="form-label">Estatus del ticket</label>
+              <Field as="select" name="status" className="form-control">
+                {STATUS_OPTIONS.map(status => (
+                  <option key={status} value={status}>
+                    {status.replace('_', ' ')}
+                  </option>
+                ))}
+              </Field>
+              <ErrorMessage name="status" component="div" className="text-danger small" />
+            </div>
+          )}
+
+          {/* =============================
               Cliente
           ============================== */}
           <h5 className="form-section">Cliente</h5>
@@ -114,24 +210,29 @@ export default function TicketForm({
             <Field
               name="client.rfc"
               className="form-control"
-              disabled={mode === 'edit'}
+              disabled={mode === 'edit' && !!existingClient}
               onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                 const rfc = e.target.value.toUpperCase();
                 setFieldValue('client.rfc', rfc);
+
                 setExistingClient(null);
+                setClientSuggestions([]);
 
-                if (rfc.length >= 3) {
-                  const results = await searchClients(rfc);
-                  setClientSuggestions(results);
+                if (rfc.length < 3) {
+                  setFieldValue('client', { ...EMPTY_CLIENT, rfc });
+                  return;
+                }
 
-                  const exactMatch = results.find(c => c.rfc === rfc);
-                  if (exactMatch) {
-                    setFieldValue('client', exactMatch);
-                    setExistingClient(exactMatch);
-                    setClientSuggestions([]);
-                  }
-                } else {
+                const results = await searchClients(rfc);
+                setClientSuggestions(results);
+
+                const exactMatch = results.find(c => c.rfc === rfc);
+                if (exactMatch) {
+                  setFieldValue('client', exactMatch);
+                  setExistingClient(exactMatch);
                   setClientSuggestions([]);
+                } else {
+                  setFieldValue('client', { ...EMPTY_CLIENT, rfc });
                 }
               }}
             />
@@ -146,18 +247,18 @@ export default function TicketForm({
 
           {clientSuggestions.length > 0 && (
             <div className="list-group mb-3">
-              {clientSuggestions.map(c => (
+              {clientSuggestions.map(client => (
                 <button
-                  key={c.rfc}
+                  key={client.rfc}
                   type="button"
                   className="list-group-item list-group-item-action"
                   onClick={() => {
-                    setFieldValue('client', c);
-                    setExistingClient(c);
+                    setFieldValue('client', client);
+                    setExistingClient(client);
                     setClientSuggestions([]);
                   }}
                 >
-                  <strong>{c.rfc}</strong> – {c.companyName}
+                  <strong>{client.rfc}</strong> – {client.companyName}
                 </button>
               ))}
             </div>
@@ -166,18 +267,30 @@ export default function TicketForm({
           <div className="row">
             <div className="col-md-6 mb-3">
               <label className="form-label">Razón social</label>
-              <Field name="client.companyName" className="form-control" disabled />
+              <Field
+                name="client.companyName"
+                className="form-control"
+                disabled={!!existingClient}
+              />
             </div>
 
             <div className="col-md-6 mb-3">
               <label className="form-label">Nombre comercial</label>
-              <Field name="client.businessName" className="form-control" disabled />
+              <Field
+                name="client.businessName"
+                className="form-control"
+                disabled={!!existingClient}
+              />
             </div>
           </div>
 
           <div className="mb-3">
             <label className="form-label">Ubicación</label>
-            <Field name="client.location" className="form-control" disabled />
+            <Field
+              name="client.location"
+              className="form-control"
+              disabled={!!existingClient}
+            />
           </div>
 
           {/* =============================
