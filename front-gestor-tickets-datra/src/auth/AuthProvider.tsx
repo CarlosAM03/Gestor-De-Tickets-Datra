@@ -3,47 +3,65 @@ import { AuthContext } from './AuthContext';
 import { loginRequest } from '@/api/auth.api';
 import type { AuthUser } from '@/types/auth.types';
 
+const USER_STORAGE_KEY = 'auth_user';
+const TOKEN_STORAGE_KEY = 'token';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem('token'),
-  );
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * LOGIN
+   */
   const login = async (email: string, password: string) => {
     const data = await loginRequest(email, password);
 
-    localStorage.setItem('token', data.access_token);
+    localStorage.setItem(TOKEN_STORAGE_KEY, data.access_token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+
     setToken(data.access_token);
     setUser(data.user);
   };
 
+  /**
+   * LOGOUT
+   */
   const logout = () => {
-    localStorage.clear();
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+
     setUser(null);
     setToken(null);
+
     window.location.href = '/login';
   };
 
   /**
-   * En el futuro:
-   * - Llamar /auth/me si existe token
-   * - Restaurar sesión al refrescar
+   * RESTAURAR SESIÓN (Sprint 2)
    */
   useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
+    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+    if (storedToken && storedUser) {
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch {
+        // Sesión corrupta
+        localStorage.clear();
+      }
     }
 
-    // Placeholder para Sprint 2
-    // fetchCurrentUser().then(setUser).finally(() => setLoading(false));
-
     setLoading(false);
-  }, [token]);
+  }, []);
 
+  /**
+   * Evitar render prematuro
+   */
   if (loading) {
-    return null; // o <SplashScreen />
+    return null; // luego podemos usar <SplashScreen />
   }
 
   return (

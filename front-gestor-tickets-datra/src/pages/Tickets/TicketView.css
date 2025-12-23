@@ -1,0 +1,153 @@
+/* =============================
+   CONTENEDOR GENERAL
+============================= */
+.ticket-view-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* =============================
+   HEADER DE LA VISTA (BOTONES)
+============================= */
+.ticket-view-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* =============================
+   CARD PRINCIPAL
+============================= */
+.ticket-view {
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* =============================
+   HEADER DEL TICKET
+============================= */
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* --- Branding Datra --- */
+.ticket-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.ticket-logo {
+  height: 48px;
+  width: auto;
+  align-self: first baseline;
+}
+
+.ticket-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.ticket-brand-text strong {
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+
+.ticket-brand-text span {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* --- Código y estatus --- */
+.ticket-header-right {
+  text-align: right;
+}
+
+.ticket-header-right h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.ticket-header-right .badge {
+  margin-top: 0.25rem;
+}
+
+/* =============================
+   SECCIONES
+============================= */
+.ticket-view section {
+  margin-bottom: 1.75rem;
+}
+
+.ticket-view section h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #374151;
+}
+
+/* =============================
+   TEXTOS
+============================= */
+.ticket-view p {
+  margin-bottom: 0.35rem;
+}
+
+.ticket-view p strong {
+  color: #111827;
+}
+
+.ticket-view .text-muted {
+  color: #6b7280 !important;
+}
+
+/* =============================
+   ESTADOS
+============================= */
+.ticket-view.loading,
+.ticket-view.error {
+  padding: 3rem;
+  text-align: center;
+}
+
+/* =============================
+   IMPRESIÓN / PDF
+============================= */
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .ticket-view-actions {
+    display: none;
+  }
+
+  .ticket-view {
+    box-shadow: none;
+    border: none;
+    padding: 0;
+  }
+
+  .ticket-header {
+    border-bottom: 2px solid #000;
+  }
+
+  .ticket-view section {
+    page-break-inside: avoid;
+  }
+}

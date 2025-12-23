@@ -1,8 +1,8 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ================================
+// Prisma Schema — Gestor de Tickets Datra
+// Versión: Sprint 3 (Producción Ready)
+// Fecha: 22-Dic-2025
+// ================================
 
 generator client {
   provider = "prisma-client-js"
@@ -13,7 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//Estados de Ticket
+// ================================
+// ENUMS
+// ================================
+
+// Estados de Ticket
 enum TicketStatus {
   OPEN
   IN_PROGRESS
@@ -42,13 +46,17 @@ enum ClientType {
   EXTERNO
 }
 
+// ================================
+// MODELS
+// ================================
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      UserRole @default(TECNICO)
-  active    Boolean  @default(true)
+  id       Int      @id @default(autoincrement())
+  name     String
+  email    String   @unique
+  password String
+  role     UserRole @default(TECNICO)
+  active   Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,35 +71,69 @@ model User {
   ticketHistory TicketHistory[]
 }
 
+// ================================
+// CLIENTE (NUEVO — DEFINITIVO)
+// ================================
+
+model Client {
+  /// RFC es el identificador único del cliente
+  rfc String @id
+
+  companyName  String
+  businessName String?
+  location     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  tickets Ticket[]
+}
+
+// ================================
+// TICKET
+// ================================
 
 model Ticket {
-  id        Int    @id @default(autoincrement())
-  code      String @unique
+  id   Int    @id @default(autoincrement())
+  code String @unique
 
   // Información general
-  openedAt  DateTime     @default(now())
-  status    TicketStatus @default(OPEN)
+  openedAt DateTime     @default(now())
+  status   TicketStatus @default(OPEN)
 
   requestedBy String?
   contact    String?
   clientType ClientType?
 
+  // =========================
+  // CLIENTE
+  // =========================
+  clientRfc String?
+  client    Client? @relation(fields: [clientRfc], references: [rfc])
+
+  // =========================
   // Incidente
+  // =========================
   serviceAffected String?
   problemDesc     String?
   eventLocation   String?
   estimatedStart  DateTime?
   impactLevel     ImpactLevel?
 
+  // =========================
   // Diagnóstico
+  // =========================
   initialFindings   String?
   probableRootCause String?
 
+  // =========================
   // Cierre
-  actionsTaken    String?
-  closedAt        DateTime?
-  serviceStatus   String?
-  additionalNotes String?
+  // =========================
+  actionsTaken     String?
+  closedAt         DateTime?
+  serviceStatus    String?
+  additionalNotes  String?
   correctiveAction Boolean?
 
   createdAt DateTime @default(now())
@@ -100,13 +142,13 @@ model Ticket {
   // =========================
   // Soft delete & control
   // =========================
-  deleteRequested Boolean   @default(false)
+  deleteRequested Boolean  @default(false)
   deletedAt       DateTime?
   deletedById     Int?
   deletedBy       User? @relation("TicketDeletedBy", fields: [deletedById], references: [id])
 
   // =========================
-  // Relaciones
+  // Relaciones de usuarios
   // =========================
   createdById Int?
   createdBy   User? @relation("TicketCreatedBy", fields: [createdById], references: [id])
@@ -119,14 +161,23 @@ model Ticket {
 
   // Auditoría
   history TicketHistory[]
-
 }
 
-model TicketHistory {
-  id        Int      @id @default(autoincrement())
+// ================================
+// HISTORIAL DE TICKET (AUDITORÍA)
+// ================================
 
-  ticketId  Int
-  ticket    Ticket  @relation(fields: [ticketId], references: [id])
+model TicketHistory {
+  id Int @id @default(autoincrement())
+
+  // =========================
+  // Relaciones
+  // =========================
+  ticketId Int
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+  /// Snapshot del RFC del cliente para auditoría y filtros
+  clientRfc String?
 
   action    String
   fromValue String?
@@ -136,4 +187,9 @@ model TicketHistory {
   performedBy   User? @relation(fields: [performedById], references: [id])
 
   createdAt DateTime @default(now())
+
+  // Índices recomendados para auditoría futura
+  @@index([ticketId])
+  @@index([clientRfc])
+  @@index([createdAt])
 }

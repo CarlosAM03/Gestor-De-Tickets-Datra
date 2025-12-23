@@ -1,25 +1,26 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import type { UserRole } from '@/types/user.types';
-import { JSX } from 'react';
+import type { ReactNode } from 'react';
 
 interface Props {
   allowedRoles: UserRole[];
-  children: JSX.Element;
+  children: ReactNode;
 }
 
 export function RequireRole({ allowedRoles, children }: Props) {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
-  // No autenticado → login
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  // Auth ya fue validado por RequireAuth
+  // Si no hay usuario aún, no renderizamos nada
+  if (!user) {
+    return null;
   }
 
-  // Autenticado pero sin permisos → unauthorized
-  if (!user || !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
+  // Usuario autenticado pero sin permisos
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }

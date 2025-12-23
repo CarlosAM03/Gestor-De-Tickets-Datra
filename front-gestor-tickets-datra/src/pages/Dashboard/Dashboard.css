@@ -20,3 +20,15 @@
   padding: 1rem;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
+
+/* ==========================
+  Actividad reciente
+========================== */
+
+.dashboard-recent-item {
+  cursor: pointer;
+}
+
+.dashboard-recent-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}

@@ -20,6 +20,11 @@ interface FindTicketsParams {
   scope?: 'mine' | 'all';
   status?: TicketStatus;
   impact?: string;
+
+  // NUEVOS (no rompen nada)
+  rfc?: string;
+  code?: string;
+
   from?: string;
   to?: string;
   search?: string;
@@ -33,6 +38,32 @@ export class TicketService {
   // CREATE
   // =========================
   async create(data: CreateTicketDto, userId: number) {
+    let clientRfc: string | null = null;
+    // =========================
+    // UPSERT CLIENT (RFC)
+    // =========================
+    if (data.client && typeof data.client.rfc === 'string') {
+      const client = await this.prisma.client.upsert({
+        where: { rfc: data.client.rfc },
+        update: {
+          companyName: data.client.companyName,
+          businessName: data.client.businessName,
+          location: data.client.location,
+        },
+        create: {
+          rfc: data.client.rfc,
+          companyName: data.client.companyName,
+          businessName: data.client.businessName,
+          location: data.client.location,
+        },
+      });
+
+      clientRfc = client.rfc;
+    }
+
+    // =========================
+    // CREATE TICKET
+    // =========================
     const ticket = await this.prisma.ticket.create({
       data: {
         requestedBy: data.requestedBy,
@@ -44,6 +75,7 @@ export class TicketService {
         impactLevel: data.impactLevel
           ? (data.impactLevel as ImpactLevel)
           : null,
+
         initialFindings: data.initialFindings,
         probableRootCause: data.probableRootCause,
         actionsTaken: data.actionsTaken,
@@ -57,11 +89,27 @@ export class TicketService {
           : null,
         closedAt: data.closedAt ? new Date(data.closedAt) : null,
 
+        clientRfc, // 🔗 asociación cliente-ticket
+
         code: 'TEMP',
       },
     });
 
     const formattedCode = `TT-${ticket.id.toString().padStart(6, '0')}`;
+
+    // =========================
+    // UPDATE CODE + HISTORY
+    // =========================
+    await this.prisma.ticketHistory.create({
+      data: {
+        ticketId: ticket.id,
+        action: 'CREATE_TICKET',
+        fromValue: null,
+        toValue: `clientRfc=${clientRfc ?? 'N/A'}`,
+        performedById: userId,
+        clientRfc,
+      },
+    });
 
     return this.prisma.ticket.update({
       where: { id: ticket.id },
@@ -73,7 +121,8 @@ export class TicketService {
   // FIND ALL
   // =========================
   async findAll(params: FindTicketsParams) {
-    const { userId, scope, status, impact, from, to, search } = params;
+    const { userId, scope, status, impact, rfc, code, from, to, search } =
+      params;
 
     const where: Prisma.TicketWhereInput = {
       deletedAt: null,
@@ -90,6 +139,19 @@ export class TicketService {
     if (impact) {
       where.impactLevel = impact as ImpactLevel;
     }
+    if (code) {
+      where.code = {
+        contains: code,
+        mode: 'insensitive',
+      };
+    }
+
+    if (rfc) {
+      where.clientRfc = {
+        contains: rfc,
+        mode: 'insensitive',
+      };
+    }
 
     if (from || to) {
       where.openedAt = {};
@@ -99,15 +161,18 @@ export class TicketService {
 
     if (search) {
       where.OR = [
+        { code: { contains: search, mode: 'insensitive' } },
         { requestedBy: { contains: search, mode: 'insensitive' } },
         { contact: { contains: search, mode: 'insensitive' } },
         { serviceAffected: { contains: search, mode: 'insensitive' } },
+        { clientRfc: { contains: search, mode: 'insensitive' } },
       ];
     }
 
     return this.prisma.ticket.findMany({
       where,
       include: {
+        client: true,
         createdBy: true,
         preliminaryBy: true,
         closingTechnician: true,
@@ -126,9 +191,15 @@ export class TicketService {
         deletedAt: null,
       },
       include: {
+        client: true, // ✅ CLIENTE
         createdBy: true,
         preliminaryBy: true,
         closingTechnician: true,
+        deletedBy: true, // ✅ AUDITORÍA
+        history: {
+          // ✅ HISTORIAL
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
 

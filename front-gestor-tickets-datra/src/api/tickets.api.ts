@@ -4,15 +4,18 @@ import type {
   CreateTicketDto,
   UpdateTicketDto,
   TicketStatus,
+  ImpactLevel,
 } from '@/types/ticket.types';
 
 /**
  * Listar tickets
- * scope=mine | all
  */
 export const getTickets = async (params?: {
   scope?: 'mine' | 'all';
   status?: TicketStatus;
+  impact?: ImpactLevel; // 👈 backend usa impact
+  rfc?: string;
+  code?: string;
   from?: string;
   to?: string;
   search?: string;
@@ -20,6 +23,7 @@ export const getTickets = async (params?: {
   const { data } = await http.get<Ticket[]>('/tickets', { params });
   return data;
 };
+
 
 /**
  * Obtener ticket por ID
