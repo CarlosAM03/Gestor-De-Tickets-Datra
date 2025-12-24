@@ -1,7 +1,3 @@
-Perfecto. Con lo que describes, **el backend queda oficialmente documentado y “cerrado” para Sprint 3**, con control milimétrico real (no aspiracional).
-A continuación te dejo la **versión final depurada y coherente** del documento de backend, **alineada con lo que ya existe y con lo que el frontend está consumiendo hoy**, sin prometer nada que no esté implementado.
-
-Puedes copiarlo tal cual a tu README / documentación técnica.
 
 ---
 
@@ -208,10 +204,3 @@ Los **guards controlan acceso**, los **services controlan reglas de negocio**.
 
 ---
 
-Si quieres, en el siguiente mensaje podemos:
-
-* 🔍 Documentar **el bug “fantasma” de `TicketEditStatus.tsx`** desde el punto de vista backend/frontend (para que no se pierda)
-* 🧾 Generar **CHANGELOG Sprint 3 Día 1–4**
-* 🧠 Preparar **criterios de aceptación finales de Sprint 3**
-
-Dime cuál seguimos.
