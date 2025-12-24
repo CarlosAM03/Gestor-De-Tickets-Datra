@@ -7,13 +7,13 @@ import type {
   ImpactLevel,
 } from '@/types/ticket.types';
 
-/**
- * Listar tickets
- */
+/* =====================================================
+   LISTADO
+===================================================== */
 export const getTickets = async (params?: {
   scope?: 'mine' | 'all';
   status?: TicketStatus;
-  impact?: ImpactLevel; // 👈 backend usa impact
+  impact?: ImpactLevel;
   rfc?: string;
   code?: string;
   from?: string;
@@ -24,26 +24,25 @@ export const getTickets = async (params?: {
   return data;
 };
 
-
-/**
- * Obtener ticket por ID
- */
+/* =====================================================
+   DETALLE
+===================================================== */
 export const getTicketById = async (id: number) => {
   const { data } = await http.get<Ticket>(`/tickets/${id}`);
   return data;
 };
 
-/**
- * Crear ticket
- */
+/* =====================================================
+   CREATE
+===================================================== */
 export const createTicket = async (payload: CreateTicketDto) => {
   const { data } = await http.post<Ticket>('/tickets', payload);
   return data;
 };
 
-/**
- * Actualizar ticket
- */
+/* =====================================================
+   UPDATE INFO (PATCH)
+===================================================== */
 export const updateTicket = async (
   id: number,
   payload: UpdateTicketDto,
@@ -55,9 +54,9 @@ export const updateTicket = async (
   return data;
 };
 
-/**
- * Cambiar estatus del ticket
- */
+/* =====================================================
+   UPDATE STATUS
+===================================================== */
 export const updateTicketStatus = async (
   id: number,
   status: TicketStatus,
@@ -69,10 +68,50 @@ export const updateTicketStatus = async (
   return data;
 };
 
-/**
- * Solicitar eliminación de ticket
- */
+/* =====================================================
+   REQUEST DELETE (soft delete)
+===================================================== */
 export const requestTicketDeletion = async (id: number) => {
   const { data } = await http.delete(`/tickets/${id}`);
+  return data;
+};
+
+/* =====================================================
+   ADMIN – LIST DELETE REQUESTS
+===================================================== */
+export const getDeleteRequests = async () => {
+  const { data } = await http.get<Ticket[]>(
+    '/tickets/admin/delete-requests',
+  );
+  return data;
+};
+
+/* =====================================================
+   ADMIN – APPROVE DELETE
+===================================================== */
+export const approveDeleteTicket = async (id: number) => {
+  const { data } = await http.patch(
+    `/tickets/admin/${id}/approve-delete`,
+  );
+  return data;
+};
+
+/* =====================================================
+   ADMIN – REJECT DELETE
+===================================================== */
+export const rejectTicketDeletion = async (id: number) => {
+  const { data } = await http.patch(
+    `/tickets/admin/${id}/reject-delete`,
+  );
+  return data;
+};
+
+/* =====================================================
+   ADMIN – HISTORY
+===================================================== */
+export const getTicketHistory = async (id: number) => {
+  const { data } = await http.get(
+    `/tickets/${id}/history`,
+  );
   return data;
 };

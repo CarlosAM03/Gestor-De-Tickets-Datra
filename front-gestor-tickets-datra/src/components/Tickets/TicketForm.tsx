@@ -77,13 +77,26 @@ function normalizePayload(
 ): TicketFormValues {
   const payload: TicketFormValues = { ...values };
 
-  // EDIT → backend NO maneja client
   if (mode === 'edit') {
+    // backend no acepta client en PATCH
     delete payload.client;
+
+    // limpiar campos vacíos (evita PATCH inútil)
+    Object.keys(payload).forEach(key => {
+      const value = payload[key as keyof TicketFormValues];
+      if (
+        value === undefined ||
+        value === null ||
+        value === ''
+      ) {
+        delete payload[key as keyof TicketFormValues];
+      }
+    });
+
     return payload;
   }
 
-  // CREATE → solo enviar client si es válido
+  // CREATE
   const client = values.client;
   if (
     !client ||
@@ -95,6 +108,7 @@ function normalizePayload(
 
   return payload;
 }
+
 
 /* =============================
    Componente
@@ -188,17 +202,18 @@ export default function TicketForm({
           ============================== */}
           {mode === 'edit' && (
             <div className="mb-3">
-              <label className="form-label">Estatus del ticket</label>
-              <Field as="select" name="status" className="form-control">
+                <label className="form-label">Estatus del ticket</label>
+                <Field as="select" name="status" className="form-control">
                 {STATUS_OPTIONS.map(status => (
-                  <option key={status} value={status}>
+                    <option key={status} value={status}>
                     {status.replace('_', ' ')}
-                  </option>
+                    </option>
                 ))}
-              </Field>
-              <ErrorMessage name="status" component="div" className="text-danger small" />
+                </Field>
+                <ErrorMessage name="status" component="div" className="text-danger small" />
             </div>
-          )}
+            )}
+
 
           {/* =============================
               Cliente

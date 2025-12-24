@@ -147,6 +147,9 @@ export interface CreateTicketDto {
   ========================= */
   initialFindings?: string;
   probableRootCause?: string;
+  
+  /* estatus de ticket*/
+  status: TicketStatus;
 
   /* =========================
      Cierre
