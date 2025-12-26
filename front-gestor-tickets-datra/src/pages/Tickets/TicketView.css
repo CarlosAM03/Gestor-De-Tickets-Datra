@@ -117,7 +117,7 @@
 }
 
 /* =============================
-   ESTADOS
+  ESTADOS
 ============================= */
 .ticket-view.loading,
 .ticket-view.error {
@@ -126,28 +126,76 @@
 }
 
 /* =============================
-   IMPRESIÓN / PDF
+  IMPRESIÓN / PDF
 ============================= */
 @media print {
+  /* Reset general */
   body {
     background: #ffffff;
-  }
-
-  .ticket-view-actions {
-    display: none;
-  }
-
-  .ticket-view {
-    box-shadow: none;
-    border: none;
+    margin: 0;
     padding: 0;
   }
 
+  /* Ocultar TODO por defecto */
+  body * {
+    visibility: hidden;
+  }
+  /* Oculta párrafos sin contenido real */
+  .ticket-view section p:has(span:empty),
+  .ticket-view section p:has(+ p.text-muted:empty) {
+    display: none;
+  }
+
+  /* Si una sección queda vacía, se oculta completa */
+  .ticket-view section:has(p:only-child) {
+    display: none;
+  }
+  /* Mostrar SOLO el ticket */
+  .printable-ticket,
+  .printable-ticket * {
+    visibility: visible;
+  }
+
+  /* Asegurar posicionamiento correcto */
+  .printable-ticket {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 90%;
+
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0;
+  }
+
+  /* Ajustes visuales para PDF */
   .ticket-header {
     border-bottom: 2px solid #000;
+    margin-bottom: 1rem;
   }
 
   .ticket-view section {
     page-break-inside: avoid;
   }
+
+  /* Evitar cortes raros */
+  section,
+  p,
+  h5 {
+    page-break-inside: avoid;
+  }
+}
+
+/* =============================
+   BOTONES SUPERIORES
+============================= */
+.ticket-view-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-view-actions .left-actions {
+  display: flex;
+  gap: 0.5rem;
 }

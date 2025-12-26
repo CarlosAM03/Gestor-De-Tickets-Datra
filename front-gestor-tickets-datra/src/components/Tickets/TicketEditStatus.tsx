@@ -69,7 +69,7 @@ export default function TicketEditStatus({
           </Alert>
         )}
 
-        {/* ✅ controlId soluciona el error axe */}
+        {/* ✅ controlId soluciona el error axe || no funciona pero no rompe la edicion de estado*/}
         <Form.Group className="mb-3">
           <Form.Label htmlFor="ticket-status-select">
             Nuevo estatus

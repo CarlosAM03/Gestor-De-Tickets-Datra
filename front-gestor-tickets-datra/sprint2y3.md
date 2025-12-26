@@ -163,10 +163,8 @@ Este punto **ES REQUISITO para cerrar Sprint 3**.
 * [ ] Quitar cualquier acción editable
 * [ ] Ocultar / deshabilitar botones por rol
 * [ ] Documentar warning de `TicketEditStatus.tsx`
-* [ ] Ajustes visuales:
-  * TicketForm
 * [ ] Ajustes visuales y de funcionamiento finales:
-  * TicketsList opciones de softdelete en las solicitudes para admin
+  * TicketsList opciones de softdelete en las solicitudes (visible solo para admin)
 
 🟢 **Resultado esperado:** Sistema usable por los 3 roles
 
@@ -244,3 +242,201 @@ Este punto **ES REQUISITO para cerrar Sprint 3**.
 >
 > ❌ **No más features nuevas**
 
+---
+
+# 📘 Cierre de Día 3 
+
+**Cierre de Módulos Principales**
+
+📅 **Fecha:** 24 de diciembre de 2025
+📦 **Sprint:** 3
+🎯 **Objetivo del día:** Cerrar módulos clave para producción y dejar documentadas las consideraciones pendientes sin bloquear el avance.
+
+---
+
+## ✅ Módulos Cerrados para Producción
+
+Durante el Día 3 se dio cierre funcional a los siguientes módulos, cumpliendo criterios de aceptación definidos para Sprint 3.
+
+---
+
+## 📊 Dashboard
+
+### Estado
+
+🟢 **CERRADO PARA PRODUCCIÓN**
+
+### Funcionalidad validada
+
+* Visualización de información global (`scope=all`)
+* Actividad reciente real
+* Acceso de solo lectura
+* Sin acciones destructivas o de edición
+* Carga estable sin errores críticos
+
+### Consideraciones pendientes (no bloqueantes)
+
+* 🔹 **Paginación**
+
+  * Actualmente **NO implementada en backend**
+  * Puede implementarse temporalmente en frontend:
+
+    * 10 tickets por página
+    * Orden:
+
+      * Más reciente → más antiguo (default)
+      * Invertible en el futuro
+  * La implementación **NO debe romper contrato backend**
+  * Se deja documentado para Sprint futuro
+
+---
+
+## 📋 TicketList
+
+### Estado
+
+🟢 **CERRADO PARA PRODUCCIÓN**
+
+### Funcionalidad validada
+
+* Listado de tickets según rol:
+
+  * ADMIN → tickets globales
+  * INGENIERO → tickets globales
+  * TECNICO → tickets propios
+* Filtros operativos:
+
+  * Código
+  * RFC
+  * Estado
+  * Impacto
+* Indicadores visuales:
+
+  * Impacto
+  * Solicitudes de eliminación
+* Acciones:
+
+  * Ver ticket
+  * Crear ticket
+  * Aprobar / rechazar eliminación (solo ADMIN)
+
+### Control de permisos
+
+* UI refleja correctamente permisos
+* Acciones administrativas ocultas para roles no autorizados
+* Backend sigue siendo la fuente de verdad
+
+### UX
+
+* Estados vacíos controlados
+* Carga con spinner
+* Mensajes de éxito visibles
+* Tabla clara y consistente
+
+---
+
+## 🎫 TicketView
+
+### Estado
+
+🟢 **CERRADO PARA PRODUCCIÓN**
+
+### Funcionalidad validada
+
+* Visualización completa del ticket:
+
+  * Información general
+  * Cliente
+  * Incidente
+  * Diagnóstico
+  * Cierre
+  * Auditoría
+* Branding corporativo correcto
+* Acciones según permisos:
+
+  * Volver
+  * Editar (según rol)
+  * Exportar PDF
+
+### Exportación PDF
+
+* Se utiliza `window.print()`
+* Se imprime **solo la card principal**
+* Estilos de impresión definidos vía CSS
+
+#### Consideración pendiente (no bloqueante)
+
+* Algunos campos vacíos generan espacio en blanco en impresión
+* Solución posible a futuro:
+
+  * Ocultar secciones sin contenido en `@media print`
+* **No prioritario**
+* No afecta funcionalidad ni demo
+
+---
+
+## 🧩 TicketEditStatus
+
+### Estado
+
+🟡 **FUNCIONAL CON WARNING DOCUMENTADO**
+
+* Flujo operativo
+* No bloquea el sistema
+* Warning conocido y documentado
+* Corrección pendiente para fase de pulido
+
+---
+
+## 👥 Gestión de Usuarios
+
+### Estado
+
+🔴 **PENDIENTE — REQUERIDO PARA CIERRE FINAL DEL SPRINT**
+
+Se deja documentado como **alcance obligatorio restante** para cerrar Sprint 3:
+
+* Lista de usuarios (ADMIN)
+* Filtros por rol y nombre
+* Vista de usuario
+* Crear usuario
+* Eliminar / desactivar usuario
+
+> ⚠️ Este módulo **NO se trabajó en Día 3**, pero queda oficialmente identificado como requisito pendiente.
+
+---
+
+## 🧪 Calidad Técnica
+
+### Estado general
+
+* Sin errores críticos en consola
+* Flujos principales estables
+* Permisos reflejados correctamente en UI
+* Backend mantiene control de negocio
+* Frontend actúa como capa de presentación
+
+### Errores permitidos
+
+* Warnings no incapacitantes documentados
+* Ningún error bloquea demo o pruebas manuales
+
+---
+
+## 🏁 Conclusión del Día 3
+
+> Con el cierre de **Dashboard**, **TicketList** y **TicketView**,
+> el sistema ya es **usable de extremo a extremo** para:
+>
+> * ADMIN
+> * INGENIERO
+> * TECNICO
+>
+> El enfoque ahora pasa de **construcción** a **gestión y pulido**.
+
+### Próximo paso inmediato
+
+👉 Implementar **gestión básica de usuarios** para cerrar Sprint 3 oficialmente.
+
+---
+definamos la estructura esperada, el flujo de trabajo recomendado y la checklist para cerrar el modulo de usuario completamente el dia 4 del sprint 3 de manera profesional y estable para produccion  

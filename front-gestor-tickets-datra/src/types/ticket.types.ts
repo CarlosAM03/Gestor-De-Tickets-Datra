@@ -149,7 +149,7 @@ export interface CreateTicketDto {
   probableRootCause?: string;
   
   /* estatus de ticket*/
-  status: TicketStatus;
+  status: TicketStatus | undefined;
 
   /* =========================
      Cierre
