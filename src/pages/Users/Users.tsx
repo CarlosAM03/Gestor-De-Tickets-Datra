@@ -1,10 +1,207 @@
+// src/pages/Users/Users.tsx
+import { useEffect, useState } from 'react';
+import {
+  Table,
+  Button,
+  Card,
+  Form,
+  Spinner,
+  Badge,
+  Alert,
+} from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+
+import { getUsers, deleteUser } from '@/api/users.api';
+import type { User, UserRole } from '@/types/user.types';
+
 import './Users.css';
 
+/* =============================
+   Roles visuales
+============================= */
+const ROLE_VARIANTS: Record<UserRole, string> = {
+  ADMIN: 'danger',
+  INGENIERO: 'primary',
+  TECNICO: 'secondary',
+};
+
 export default function Users() {
+  const navigate = useNavigate();
+
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const [search, setSearch] = useState('');
+  const [role, setRole] = useState<UserRole | ''>('');
+
+  /* =============================
+     Load users (ADMIN)
+  ============================= */
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await getUsers();
+      setUsers(data);
+    } catch {
+      setError('No fue posible cargar los usuarios');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  /* =============================
+     Delete user (ADMIN)
+  ============================= */
+  const handleDelete = async (id: number) => {
+    const confirm = window.confirm(
+      '¿Estás seguro de eliminar este usuario?',
+    );
+
+    if (!confirm) return;
+
+    try {
+      await deleteUser(id);
+      setSuccess('Usuario eliminado correctamente');
+      loadUsers();
+    } catch {
+      setError('No fue posible eliminar el usuario');
+    }
+  };
+
+  /* =============================
+     Filtro local (permitido)
+  ============================= */
+  const filteredUsers = users.filter(u => {
+    const matchText =
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+
+    const matchRole = role ? u.role === role : true;
+
+    return matchText && matchRole;
+  });
+
   return (
-    <div className="users">
-      <h1>Gestión de Usuarios</h1>
-      <p>Solo visible para administradores.</p>
-    </div>
+    <Card className="users p-3 shadow-sm">
+      {/* Header */}
+      <div className="users-header">
+        <h4 className="mb-0">Usuarios del sistema</h4>
+
+        <Button onClick={() => navigate('/users/create')}>
+          + Nuevo usuario
+        </Button>
+      </div>
+
+      {/* Alerts */}
+      {error && (
+        <Alert
+          variant="danger"
+          dismissible
+          onClose={() => setError(null)}
+        >
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert
+          variant="success"
+          dismissible
+          onClose={() => setSuccess(null)}
+        >
+          {success}
+        </Alert>
+      )}
+
+      {/* Filtros */}
+      <div className="row mb-3">
+        <div className="col-md-6 mb-2">
+          <Form.Control
+            placeholder="Buscar por nombre o email"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="col-md-3 mb-2">
+          <Form.Select
+            value={role}
+            onChange={e =>
+              setRole(e.target.value as UserRole | '')
+            }
+          >
+            <option value="">Todos los roles</option>
+            <option value="ADMIN">ADMIN</option>
+            <option value="INGENIERO">INGENIERO</option>
+            <option value="TECNICO">TECNICO</option>
+          </Form.Select>
+        </div>
+      </div>
+
+      {/* Tabla */}
+      {loading ? (
+        <div className="text-center py-4">
+          <Spinner animation="border" />
+        </div>
+      ) : filteredUsers.length === 0 ? (
+        <div className="text-center text-muted py-4">
+          No hay usuarios registrados
+        </div>
+      ) : (
+        <Table hover responsive>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredUsers.map(user => (
+              <tr key={user.id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>
+                  <Badge bg={ROLE_VARIANTS[user.role]}>
+                    {user.role}
+                  </Badge>
+                </td>
+
+                <td className="text-end">
+                  <Button
+                    size="sm"
+                    variant="outline-primary"
+                    className="me-2"
+                    onClick={() =>
+                      navigate(`/users/${user.id}`)
+                    }
+                  >
+                    Ver
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline-danger"
+                    onClick={() => handleDelete(user.id)}
+                  >
+                    Eliminar
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
+    </Card>
   );
 }

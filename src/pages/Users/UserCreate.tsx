@@ -1,0 +1,156 @@
+import { useState } from 'react';
+import {
+  Card,
+  Form,
+  Button,
+  Alert,
+  Spinner,
+} from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+
+import { createUser } from '@/api/users.api';
+import type { UserRole } from '@/types/user.types';
+
+import './Users.css';
+
+export default function UserCreate() {
+  const navigate = useNavigate();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('TECNICO');
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /* =============================
+     Submit (ADMIN)
+  ============================= */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name || !email || !password) {
+      setError('Todos los campos son obligatorios');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      await createUser({
+        name,
+        email,
+        password,
+        role,
+      });
+
+      navigate('/users');
+    } catch {
+      setError('No fue posible crear el usuario');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="users p-3 shadow-sm">
+      <h4 className="mb-3">Nuevo usuario</h4>
+
+      {error && (
+        <Alert
+          variant="danger"
+          dismissible
+          onClose={() => setError(null)}
+        >
+          {error}
+        </Alert>
+      )}
+
+      <Form onSubmit={handleSubmit}>
+        {/* Nombre */}
+        <Form.Group className="mb-3">
+          <Form.Label>Nombre</Form.Label>
+          <Form.Control
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Nombre completo"
+            required
+          />
+        </Form.Group>
+
+        {/* Email */}
+        <Form.Group className="mb-3">
+          <Form.Label>Email</Form.Label>
+          <Form.Control
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="correo@datra.mx"
+            required
+          />
+        </Form.Group>
+
+        {/* Password */}
+        <Form.Group className="mb-3">
+          <Form.Label>Contraseña</Form.Label>
+          <Form.Control
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Mínimo 6 caracteres"
+            required
+          />
+        </Form.Group>
+
+        {/* Rol */}
+        <Form.Group className="mb-4">
+          <Form.Label>Rol</Form.Label>
+          <Form.Select
+            value={role}
+            onChange={e =>
+              setRole(e.target.value as UserRole)
+            }
+          >
+            <option value="ADMIN">ADMIN</option>
+            <option value="INGENIERO">INGENIERO</option>
+            <option value="TECNICO">TECNICO</option>
+          </Form.Select>
+        </Form.Group>
+
+        {/* Acciones */}
+        <div className="d-flex justify-content-end">
+          <Button
+            variant="outline-secondary"
+            className="me-2"
+            onClick={() => navigate('/users')}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+
+          <Button type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <Spinner
+                  size="sm"
+                  animation="border"
+                  className="me-2"
+                />
+                Creando...
+              </>
+            ) : (
+              'Crear usuario'
+            )}
+          </Button>
+        </div>
+      </Form>
+    </Card>
+  );
+}

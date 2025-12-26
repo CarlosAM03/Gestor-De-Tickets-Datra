@@ -46,9 +46,10 @@ export default function AppNavBar() {
 
               <NavDropdown.Divider />
 
-              <NavDropdown.Item onClick={() => navigate('/profile')}>
+              <NavDropdown.Item onClick={() => navigate(`/users/${user.id}`)}>
                 Perfil
               </NavDropdown.Item>
+
 
               <NavDropdown.Item onClick={handleLogout}>
                 Cerrar sesión
