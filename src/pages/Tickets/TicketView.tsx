@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Badge, Spinner } from 'react-bootstrap';
+import { Card, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 
 import { getTicketById } from '@/api/tickets.api';
+import { useAuth } from '@/auth/useAuth';
+
 import type { Ticket, TicketStatus } from '@/types/ticket.types';
 
+import './TicketView.css';
+
 /* =============================
-   Labels y colores de estado
+   Labels y colores
 ============================= */
 const STATUS_LABELS: Record<TicketStatus, string> = {
   OPEN: 'Abierto',
@@ -29,13 +33,11 @@ const STATUS_VARIANTS: Record<TicketStatus, string> = {
 export default function TicketView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(false);
 
-  /* =============================
-     Cargar ticket
-  ============================== */
   useEffect(() => {
     if (!id) return;
 
@@ -44,9 +46,6 @@ export default function TicketView() {
         setLoading(true);
         const data = await getTicketById(Number(id));
         setTicket(data);
-      } catch (error) {
-        console.error(error);
-        setTicket(null);
       } finally {
         setLoading(false);
       }
@@ -56,96 +55,191 @@ export default function TicketView() {
   }, [id]);
 
   /* =============================
-     Estados
-  ============================== */
+     Estados base
+  ============================= */
   if (loading) {
     return (
-      <Card className="p-4 text-center">
+      <Card className="ticket-view loading">
         <Spinner animation="border" />
-        <p className="mt-3">Cargando ticket...</p>
+        <p>Cargando ticket...</p>
       </Card>
     );
   }
 
-  if (!ticket) {
+  if (!ticket || !user) {
     return (
-      <Card className="p-4 text-center text-danger">
+      <Card className="ticket-view error">
         Ticket no encontrado
       </Card>
     );
   }
 
   /* =============================
+     Permisos
+  ============================= */
+  const isOwner = ticket.createdBy.id === user.id;
+
+  const canEdit =
+    user.role === 'ADMIN' ||
+    user.role === 'INGENIERO' ||
+    (user.role === 'TECNICO' && isOwner);
+
+  /* =============================
+     Acciones
+  ============================= */
+  const handleExportPdf = () => {
+    window.print();
+  };
+
+  /* =============================
      Render
-  ============================== */
+  ============================= */
   return (
-    <Card className="p-4 shadow-sm">
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-start mb-3">
-        <div>
-          <h3 className="mb-2">{ticket.code}</h3>
-          <Badge bg={STATUS_VARIANTS[ticket.status]}>
-            {STATUS_LABELS[ticket.status]}
-          </Badge>
+    <div className="ticket-view-wrapper">
+      {/* =============================
+          ACCIONES SUPERIORES
+      ============================= */}
+      <div className="ticket-view-actions">
+        <div className="left-actions">
+          <Button
+            variant="outline-secondary"
+            onClick={() => navigate('/tickets')}
+          >
+            Volver
+          </Button>
+
+          <Button
+            variant="outline-dark"
+            onClick={handleExportPdf}
+          >
+            Exportar PDF
+          </Button>
         </div>
 
-        <Button
-          variant="outline-secondary"
-          onClick={() => navigate('/tickets')}
-        >
-          Volver
-        </Button>
+        {canEdit && (
+          <Button
+            variant="primary"
+            onClick={() =>
+              navigate(`/tickets/${ticket.id}/edit`)
+            }
+          >
+            Editar
+          </Button>
+        )}
       </div>
 
-      <hr />
+      {/* =============================
+          ALERTA ELIMINACIÓN
+      ============================= */}
+      {ticket.deleteRequested && (
+        <Alert variant="warning" className="mb-3">
+          ⚠️ Este ticket tiene una <strong>solicitud de eliminación pendiente</strong>.
+        </Alert>
+      )}
 
-      {/* Información principal */}
-      <p>
-        <strong>Descripción del problema:</strong>
-      </p>
-      <p className="text-muted">
-        {ticket.problemDesc || 'Sin descripción'}
-      </p>
+      {/* =============================
+          CARD PRINCIPAL
+      ============================= */}
+      <Card className="ticket-view shadow-sm printable-ticket">
+        {/* =============================
+            HEADER
+        ============================= */}
+        <div className="ticket-header">
+          <div className="ticket-header-left">
+            <img
+              src="/src/assets/datra-logo.png"
+              alt="Datra"
+              className="ticket-logo"
+            />
+            <div className="ticket-brand-text">
+              <strong>DATRA</strong>
+              <span>Internet & Data Transporting</span>
+            </div>
+          </div>
 
-      <hr />
-
-      <div className="row">
-        <div className="col-md-6 mb-2">
-          <strong>Impacto:</strong>{' '}
-          {ticket.impactLevel || 'No definido'}
+          <div className="ticket-header-right">
+            <h2>{ticket.code}</h2>
+            <Badge bg={STATUS_VARIANTS[ticket.status]}>
+              {STATUS_LABELS[ticket.status]}
+            </Badge>
+          </div>
         </div>
 
-        <div className="col-md-6 mb-2">
-          <strong>Tipo de cliente:</strong>{' '}
-          {ticket.clientType || 'No definido'}
-        </div>
+        {/* =============================
+            INFORMACIÓN GENERAL
+        ============================= */}
+        <section>
+          <h5>Información general</h5>
+          <p><strong>Solicitante:</strong> {ticket.requestedBy || '-'}</p>
+          <p><strong>Contacto:</strong> {ticket.contact || '-'}</p>
+          <p><strong>Tipo de cliente:</strong> {ticket.clientType || '-'}</p>
+          <p><strong>Impacto:</strong> {ticket.impactLevel || '-'}</p>
+        </section>
 
-        <div className="col-md-6 mb-2">
-          <strong>Solicitante:</strong>{' '}
-          {ticket.requestedBy || 'No especificado'}
-        </div>
+        {/* =============================
+            CLIENTE
+        ============================= */}
+        <section>
+          <h5>Cliente</h5>
+          {ticket.client ? (
+            <>
+              <p><strong>Razón social:</strong> {ticket.client.companyName}</p>
+              <p><strong>Nombre comercial:</strong> {ticket.client.businessName || '-'}</p>
+              <p><strong>RFC:</strong> {ticket.client.rfc}</p>
+              <p><strong>Ubicación:</strong> {ticket.client.location || '-'}</p>
+            </>
+          ) : (
+            <p className="text-muted">Sin información de cliente</p>
+          )}
+        </section>
 
-        <div className="col-md-6 mb-2">
-          <strong>Contacto:</strong>{' '}
-          {ticket.contact || 'No especificado'}
-        </div>
-      </div>
+        {/* =============================
+            INCIDENTE
+        ============================= */}
+        <section>
+          <h5>Incidente</h5>
+          <p><strong>Servicio afectado:</strong> {ticket.serviceAffected || '-'}</p>
+          <p><strong>Ubicación del evento:</strong> {ticket.eventLocation || '-'}</p>
+          <p><strong>Descripción:</strong></p>
+          <p className="text-muted">{ticket.problemDesc || '-'}</p>
+        </section>
 
-      <hr />
+        {/* =============================
+            DIAGNÓSTICO
+        ============================= */}
+        <section>
+          <h5>Diagnóstico</h5>
+          <p><strong>Hallazgos iniciales:</strong></p>
+          <p className="text-muted">{ticket.initialFindings || '-'}</p>
+          <p><strong>Causa raíz probable:</strong></p>
+          <p className="text-muted">{ticket.probableRootCause || '-'}</p>
+        </section>
 
-      {/* Auditoría básica */}
-      <p>
-        <strong>Creado por:</strong>{' '}
-        {ticket.createdBy.name} ({ticket.createdBy.email})
-      </p>
+        {/* =============================
+            CIERRE
+        ============================= */}
+        <section>
+          <h5>Cierre</h5>
+          <p><strong>Acciones tomadas:</strong></p>
+          <p className="text-muted">{ticket.actionsTaken || '-'}</p>
+          <p><strong>Notas adicionales:</strong></p>
+          <p className="text-muted">{ticket.additionalNotes || '-'}</p>
+          <p><strong>Acción correctiva:</strong> {ticket.correctiveAction ? 'Sí' : 'No'}</p>
+        </section>
 
-      <small className="text-muted">
-        Abierto:{' '}
-        {new Date(ticket.openedAt).toLocaleString('es-MX')}
-        <br />
-        Última actualización:{' '}
-        {new Date(ticket.updatedAt).toLocaleString('es-MX')}
-      </small>
-    </Card>
+        {/* =============================
+            AUDITORÍA
+        ============================= */}
+        <section>
+          <h5>Auditoría</h5>
+          <p><strong>Creado por:</strong> {ticket.createdBy.name} ({ticket.createdBy.email})</p>
+          <p><strong>Fecha apertura:</strong> {new Date(ticket.openedAt).toLocaleString('es-MX')}</p>
+          {ticket.closedAt && (
+            <p><strong>Fecha cierre:</strong> {new Date(ticket.closedAt).toLocaleString('es-MX')}</p>
+          )}
+          <p><strong>Última actualización:</strong> {new Date(ticket.updatedAt).toLocaleString('es-MX')}</p>
+        </section>
+      </Card>
+    </div>
   );
 }

@@ -1,12 +1,33 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Card, Badge, Form, Spinner } from 'react-bootstrap';
+import {
+  Table,
+  Button,
+  Card,
+  Badge,
+  Form,
+  Spinner,
+  Alert,
+} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-import { getTickets } from '@/api/tickets.api';
-import type { Ticket, TicketStatus } from '@/types/ticket.types';
+import {
+  approveDeleteTicket,
+  rejectTicketDeletion,
+  getTickets,
+} from '@/api/tickets.api';
+
+import { useAuth } from '@/auth/useAuth';
+
+import type {
+  Ticket,
+  TicketStatus,
+  ImpactLevel,
+} from '@/types/ticket.types';
+
+import './TicketList.css';
 
 /* =============================
-   Labels y colores de estado
+   Labels y colores
 ============================= */
 const STATUS_LABELS: Record<TicketStatus, string> = {
   OPEN: 'Abierto',
@@ -26,32 +47,59 @@ const STATUS_VARIANTS: Record<TicketStatus, string> = {
   CANCELLED: 'danger',
 };
 
-export default function TicketsList() {
+const IMPACT_VARIANTS: Record<ImpactLevel, string> = {
+  LOW: 'secondary',
+  MEDIUM: 'info',
+  HIGH: 'warning',
+  CRITICAL: 'danger',
+  INFO: 'primary',
+};
+
+/* =============================
+   Componente
+============================= */
+export default function TicketList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<TicketStatus | ''>('');
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   /* =============================
-     Cargar tickets (scope mine)
+     Filtros
+  ============================== */
+  const [searchCode, setSearchCode] = useState('');
+  const [searchRfc, setSearchRfc] = useState('');
+  const [status, setStatus] = useState<TicketStatus | ''>('');
+  const [impact, setImpact] = useState<ImpactLevel | ''>('');
+
+  /* =============================
+     Cargar tickets
   ============================== */
   const loadTickets = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
 
       const data = await getTickets({
-        scope: 'mine',
-        search: search || undefined,
+        scope: user.role === 'ADMIN' ? 'all' : 'mine',
+        code: searchCode || undefined,
+        rfc: searchRfc || undefined,
         status: status || undefined,
+        impact: impact || undefined,
       });
 
-      setTickets(data);
-    } catch (error) {
-      console.error(error);
-      setTickets([]);
+      setTickets(
+        user.role === 'ADMIN'
+          ? data
+          : data.filter(
+              (t) =>
+                !t.deleteRequested ||
+                t.createdBy.id === user.id,
+            ),
+      );
     } finally {
       setLoading(false);
     }
@@ -60,42 +108,108 @@ export default function TicketsList() {
   useEffect(() => {
     loadTickets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status]);
+  }, [searchCode, searchRfc, status, impact]);
 
   /* =============================
-     Render
+     Acciones ADMIN
   ============================== */
+  const handleApprove = async (id: number) => {
+    await approveDeleteTicket(id);
+    setSuccessMsg('Solicitud de eliminación aprobada');
+    loadTickets();
+  };
+
+  const handleReject = async (id: number) => {
+    await rejectTicketDeletion(id);
+    setSuccessMsg('Solicitud de eliminación cancelada');
+    loadTickets();
+  };
+
+  if (!user) return null;
+
   return (
-    <Card className="p-3 shadow-sm">
+    <Card className="ticket-list p-3 shadow-sm">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="mb-0">Mis Tickets</h4>
-        <Button onClick={() => navigate('/tickets/new')}>
-          + Nuevo ticket
-        </Button>
+      <div className="ticket-list-header">
+        <h4 className="mb-0">
+          {user.role === 'ADMIN'
+            ? 'Tickets del sistema'
+            : 'Mis tickets'}
+        </h4>
+
+        <div className="d-flex gap-2">
+          <Button
+            variant="outline-secondary"
+            onClick={loadTickets}
+          >
+            ⟳ Refrescar
+          </Button>
+
+          <Button onClick={() => navigate('/tickets/create')}>
+            + Nuevo ticket
+          </Button>
+        </div>
       </div>
+
+      {successMsg && (
+        <Alert
+          variant="success"
+          dismissible
+          onClose={() => setSuccessMsg(null)}
+        >
+          {successMsg}
+        </Alert>
+      )}
 
       {/* Filtros */}
       <div className="row mb-3">
-        <div className="col-md-6 mb-2 mb-md-0">
+        <div className="col-md-3 mb-2">
           <Form.Control
-            placeholder="Buscar por descripción o código"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Código"
+            value={searchCode}
+            onChange={(e) => setSearchCode(e.target.value)}
           />
         </div>
 
-        <div className="col-md-6">
+        <div className="col-md-3 mb-2">
+          <Form.Control
+            placeholder="RFC Cliente"
+            value={searchRfc}
+            onChange={(e) =>
+              setSearchRfc(e.target.value.toUpperCase())
+            }
+          />
+        </div>
+
+        <div className="col-md-3 mb-2">
           <Form.Select
             value={status}
             onChange={(e) =>
               setStatus(e.target.value as TicketStatus | '')
             }
           >
-            <option value="">Todos los estados</option>
-            {Object.entries(STATUS_LABELS).map(([key, label]) => (
+            <option value="">Estado</option>
+            {Object.entries(STATUS_LABELS).map(
+              ([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ),
+            )}
+          </Form.Select>
+        </div>
+
+        <div className="col-md-3 mb-2">
+          <Form.Select
+            value={impact}
+            onChange={(e) =>
+              setImpact(e.target.value as ImpactLevel | '')
+            }
+          >
+            <option value="">Impacto</option>
+            {Object.keys(IMPACT_VARIANTS).map((key) => (
               <option key={key} value={key}>
-                {label}
+                {key}
               </option>
             ))}
           </Form.Select>
@@ -106,50 +220,106 @@ export default function TicketsList() {
       {loading ? (
         <div className="text-center py-4">
           <Spinner animation="border" />
-          <p className="mt-2">Cargando tickets...</p>
         </div>
       ) : tickets.length === 0 ? (
-        <div className="text-center py-4 text-muted">
-          No hay tickets registrados
+        <div className="text-center text-muted py-4">
+          No hay tickets
         </div>
       ) : (
-        <Table striped hover responsive>
+        <Table hover responsive className="ticket-table">
           <thead>
             <tr>
               <th>Código</th>
+              <th>Cliente</th>
               <th>Descripción</th>
               <th>Estado</th>
               <th>Impacto</th>
               <th></th>
             </tr>
           </thead>
+
           <tbody>
             {tickets.map((ticket) => (
-              <tr key={ticket.id}>
+              <tr
+                key={ticket.id}
+                data-impact={ticket.impactLevel || undefined}
+                className={
+                  ticket.deleteRequested
+                    ? 'row-delete-requested'
+                    : ''
+                }
+              >
                 <td>
                   <strong>{ticket.code}</strong>
                 </td>
 
-                <td className="text-truncate" style={{ maxWidth: 250 }}>
+                <td>{ticket.client?.rfc || '-'}</td>
+
+                <td className="text-truncate">
                   {ticket.problemDesc || 'Sin descripción'}
                 </td>
 
                 <td>
-                  <Badge bg={STATUS_VARIANTS[ticket.status]}>
+                  <Badge
+                    bg={STATUS_VARIANTS[ticket.status]}
+                  >
                     {STATUS_LABELS[ticket.status]}
                   </Badge>
                 </td>
 
-                <td>{ticket.impactLevel || '-'}</td>
+                <td>
+                  {ticket.impactLevel ? (
+                    <Badge
+                      bg={
+                        IMPACT_VARIANTS[
+                          ticket.impactLevel
+                        ]
+                      }
+                    >
+                      {ticket.impactLevel}
+                    </Badge>
+                  ) : (
+                    '-'
+                  )}
+                </td>
 
                 <td className="text-end">
                   <Button
                     size="sm"
                     variant="outline-primary"
-                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                    className="me-2"
+                    onClick={() =>
+                      navigate(`/tickets/${ticket.id}`)
+                    }
                   >
                     Ver
                   </Button>
+
+                  {user.role === 'ADMIN' &&
+                    ticket.deleteRequested && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline-success"
+                          className="me-1"
+                          onClick={() =>
+                            handleApprove(ticket.id)
+                          }
+                        >
+                          Aprobar
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          onClick={() =>
+                            handleReject(ticket.id)
+                          }
+                        >
+                          Cancelar
+                        </Button>
+                      </>
+                    )}
                 </td>
               </tr>
             ))}
@@ -159,3 +329,4 @@ export default function TicketsList() {
     </Card>
   );
 }
+

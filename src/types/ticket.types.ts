@@ -22,7 +22,30 @@ export type ClientType =
   | 'EXTERNO';
 
 /* =====================================================
+   CLIENTE
+   (Embebido en Ticket – alineado al backend actual)
+===================================================== */
+
+export interface TicketClient {
+  rfc: string;
+  companyName: string;
+  businessName?: string;
+  location?: string;
+}
+
+/*
+  ⚠️ NOTA DE DISEÑO:
+  - Hoy el cliente SOLO existe embebido en Ticket
+  - Este tipo permite en el futuro:
+      - Client
+      - ClientList
+      - ClientView
+    sin romper contratos actuales
+*/
+
+/* =====================================================
    MODELO PRINCIPAL: Ticket
+   (Respuesta API Backend)
 ===================================================== */
 
 export interface Ticket {
@@ -36,26 +59,50 @@ export interface Ticket {
 
   requestedBy?: string | null;
   contact?: string | null;
+
+  /* =========================
+     Cliente embebido
+  ========================= */
+  client?: TicketClient | null;
+
+  /* =========================
+     Incidente
+  ========================= */
   serviceAffected?: string | null;
   problemDesc?: string | null;
-
   eventLocation?: string | null;
+
+  /* =========================
+     Diagnóstico
+  ========================= */
   initialFindings?: string | null;
   probableRootCause?: string | null;
+
+  /* =========================
+     Cierre
+  ========================= */
   actionsTaken?: string | null;
   additionalNotes?: string | null;
-
   correctiveAction?: boolean | null;
 
+  /* =========================
+     Fechas
+  ========================= */
   openedAt: string;
   estimatedStart?: string | null;
   closedAt?: string | null;
 
+  /* =========================
+     Control
+  ========================= */
   deleteRequested: boolean;
 
   createdAt: string;
   updatedAt: string;
 
+  /* =========================
+     Relaciones
+  ========================= */
   createdBy: {
     id: number;
     name: string;
@@ -71,7 +118,7 @@ export interface Ticket {
 
 /* =====================================================
    DTO: Crear Ticket
-   (ALINEADO A CreateTicketDto BACKEND)
+   (ALINEADO EXACTO A CreateTicketDto BACKEND)
 ===================================================== */
 
 export interface CreateTicketDto {
@@ -81,20 +128,34 @@ export interface CreateTicketDto {
   contact?: string;
   clientType?: ClientType;
 
+  /* =========================
+     Cliente embebido
+  ========================= */
+  client?: TicketClient;
+
+  /* =========================
+     Incidente
+  ========================= */
   serviceAffected?: string;
   problemDesc?: string;
   eventLocation?: string;
-
   estimatedStart?: string;
-
   impactLevel?: ImpactLevel;
 
+  /* =========================
+     Diagnóstico
+  ========================= */
   initialFindings?: string;
   probableRootCause?: string;
+  
+  /* estatus de ticket*/
+  status: TicketStatus | undefined;
+
+  /* =========================
+     Cierre
+  ========================= */
   actionsTaken?: string;
-
   closedAt?: string;
-
   additionalNotes?: string;
   correctiveAction?: boolean;
 }
@@ -107,7 +168,14 @@ export interface CreateTicketDto {
 export type UpdateTicketDto = Partial<CreateTicketDto>;
 
 /* =====================================================
-   PARAMS DE LISTADO (opcional, recomendado)
+   FORM VALUES
+   (El formulario usa el mismo contrato que Create)
+===================================================== */
+
+export type TicketFormValues = CreateTicketDto;
+
+/* =====================================================
+   PARAMS DE LISTADO
 ===================================================== */
 
 export interface GetTicketsParams {

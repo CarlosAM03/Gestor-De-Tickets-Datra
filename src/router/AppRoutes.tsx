@@ -6,7 +6,8 @@ import Users from '@/pages/Users/Users';
 
 import TicketsList from '@/pages/Tickets/TicketsList';
 import TicketView from '@/pages/Tickets/TicketView';
-import TicketForm from '@/pages/Tickets/TicketForm';
+import TicketCreate from '@/pages/Tickets/TicketCreate';
+import TicketEdit from '@/pages/Tickets/TicketEdit';
 
 import MainLayout from '@/layouts/MainLayout';
 import RequireAuth from '@/auth/RequireAuth';
@@ -25,7 +26,7 @@ export default function AppRoutes() {
       ======================= */}
       <Route element={<RequireAuth />}>
         <Route element={<MainLayout />}>
-          {/* Entry point del sistema */}
+          {/* Entry point */}
           <Route index element={<Navigate to="/dashboard" replace />} />
 
           {/* Dashboard */}
@@ -49,13 +50,13 @@ export default function AppRoutes() {
           <Route path="tickets" element={<TicketsList />} />
 
           {/* Crear */}
-          <Route path="tickets/new" element={<TicketForm />} />
+          <Route path="tickets/create" element={<TicketCreate />} />
 
-          {/* Ver detalle */}
+          {/* Ver */}
           <Route path="tickets/:id" element={<TicketView />} />
 
           {/* Editar */}
-          <Route path="tickets/:id/edit" element={<TicketForm />} />
+          <Route path="tickets/:id/edit" element={<TicketEdit />} />
         </Route>
       </Route>
 

@@ -1,675 +1,244 @@
 
-## 🟢 Sprint 2 — Autenticación, Ruteo y Core de Tickets (Estado Cerrado)
+---
 
-### 🎯 Objetivo del Sprint
+# ✅ Criterios de Aceptación — Sprint 3 (Definitivos)
 
-Dejar el **frontend funcional y conectado al backend real**, cerrando completamente:
-
-* Autenticación
-* Persistencia de sesión
-* Ruteo protegido por roles
-* Dashboard funcional
-* Core del sistema de tickets
-
-Sin deuda técnica en arquitectura ni decisiones pendientes.
+> **Sprint 3 se considera CERRADO** cuando **TODOS** los puntos siguientes se cumplen.
+>
+> No se agregan features nuevas fuera de este alcance.
 
 ---
 
-## ✅ Alcance completado
+## 🎯 1. Core del Sistema de Tickets (OBLIGATORIO)
 
-### 🔐 Autenticación y Sesión
+### El sistema debe permitir, sin errores:
 
-* Login real contra backend (JWT)
-* Almacenamiento de token en `localStorage`
-* Restauración de sesión al refrescar
-* Logout seguro con limpieza de estado
-* Manejo global de sesión expirada (401)
+* ✔️ Crear tickets (con cliente embebido)
+* ✔️ Editar tickets
+* ✔️ Cambiar estatus
+* ✔️ Visualizar detalle completo
+* ✔️ Solicitar eliminación
+* ✔️ Aprobar / rechazar eliminación (ADMIN)
+* ✔️ Ver historial (ADMIN)
 
-**Estado:** ✔️ Cerrado
+### Condiciones de aceptación
 
----
+* No hay errores silenciosos
+* No hay validaciones duplicadas frontend/backend
+* El backend es la fuente de verdad
+* El frontend **solo refleja permisos**
 
-### 🧭 Ruteo y Protección de Rutas
-
-* Ruteador centralizado (`AppRoutes`)
-* Separación clara:
-
-  * Rutas públicas (`/login`)
-  * Rutas protegidas (`RequireAuth`)
-* Layout principal con Navbar persistente
-* Fallback de rutas no existentes
-* Redirección post-login limpia y controlada
-
-**Estado:** ✔️ Cerrado
+🟢 **Estado esperado:** COMPLETAMENTE FUNCIONAL
 
 ---
 
-### 👤 Roles y Permisos (Frontend)
+## 👤 2. Permisos por Rol (UI Reflejada)
 
-* Roles soportados:
+### El frontend debe:
 
-  * `ADMIN`
-  * `INGENIERO`
-  * `TECNICO`
-* `RequireRole` definitivo:
+| Rol       | Comportamiento esperado   |
+| --------- | ------------------------- |
+| ADMIN     | Ve todo, actúa sobre todo |
+| TECNICO   | Solo tickets propios      |
+| INGENIERO | Tickets globales          |
 
-  * Bloquea rutas no autorizadas
-  * Redirección automática
-* Menú dinámico según rol
-* Navbar oculta opciones no permitidas por rol
+### Aceptación
 
-> Las reglas críticas se validan **siempre en backend**, el frontend solo refleja permisos.
+* Botones ocultos o deshabilitados según rol
+* `403` backend → mensaje claro
+* **NUNCA** lógica de negocio en frontend
 
-**Estado:** ✔️ Cerrado
-
----
-
-### 📊 Dashboard (Conectado a Backend)
-
-* Panel de bienvenida con datos del usuario autenticado
-* Actividad reciente real:
-
-  * Obtiene tickets desde backend
-  * Muestra tickets de todos los usuarios (visión global)
-* Navegación directa a detalle de ticket
-* Estado vacío controlado
-* Sin estilos inline (lint limpio)
-
-**Estado:** ✔️ Cerrado
+🟢 **Estado esperado:** CLARO, PREDECIBLE, SIN HACKS
 
 ---
 
-### 🎫 Tickets — Core del Sistema
+## 🧹 3. Eliminación Controlada (Soft Delete)
 
-Implementación completa del flujo base de tickets:
+### El sistema debe:
 
-#### 📄 Listado de Tickets
+* Permitir solicitar eliminación
+* Marcar tickets pendientes
+* Permitir ADMIN aprobar / rechazar **desde lista**
+* Reflejar estado visualmente
 
-* Conexión real al backend
+### Decisión confirmada
+
+> ✔️ **NO es obligatorio** crear vista separada `DeleteRequests`
+>
+> ✔️ ADMIN puede gestionarlo desde `TicketsList`
+
+🟢 **Estado esperado:** OPERATIVO Y PROFESIONAL
+
+---
+
+## 📊 4. Dashboard Final
+
+### Debe cumplir:
+
+* `scope=all`
+* Actividad reciente real
+* Sin edición
+* Preparado para métricas futuras
+* Sin errores de carga
+
+🟢 **Estado esperado:** ESTABLE Y LIMPIO
+
+---
+
+## 👥 5. Gestión Básica de Usuarios (NUEVO — OBLIGATORIO)
+
+Este punto **ES REQUISITO para cerrar Sprint 3**.
+
+### Funcionalidades mínimas requeridas
+
+#### 📄 Lista de Usuarios (ADMIN)
+
+* Listado global
 * Filtros:
 
-  * Búsqueda
-  * Estado
-* Visibilidad:
+  * Nombre de usuario
+  * Rol
+* Estado vacío controlado
 
-  * Todos los tickets (visión actual)
-* Navegación a detalle
+#### 👁️ Vista de Usuario
 
-#### 🔍 Detalle de Ticket
+* Datos del usuario
+* Rol
+* Información básica (solo lectura por ahora)
 
-* Carga por ID desde backend
-* Visualización completa:
+#### ➕ Crear Usuario
 
-  * Estado
-  * Prioridad
-  * Descripción
-  * Metadatos
-* Acciones visibles según rol (UI)
+* Botón visible solo para ADMIN
+* Redirección a formulario
+* Formulario funcional (mínimo):
 
-#### ✏️ Crear / Editar Ticket
+  * Usuario
+  * Email
+  * Rol
+  * Password
+* Validación backend
 
-* Formulario real conectado a backend
-* DTOs alineados con NestJS
-* Modo crear / editar automático
-* Manejo de errores y estados de carga
+#### 🗑️ Eliminar Usuario
 
-> ⚠️ Las restricciones de edición/cierre por rol se validan en backend.
+* Acción visible solo para ADMIN
+* Confirmación
+* Soft delete o desactivación (según backend actual)
 
-**Estado:** ✔️ Implementado / 🔧 Ajustes menores documentados
-
----
-
-## ⚠️ Observaciones Técnicas (Intencionalmente Diferidas)
-
-Estos puntos **NO bloquean Sprint 2** y quedan documentados para Sprint 3:
-
-- Ajustar scope de tickets:
-  - La pestaña **Tickets** debe mostrar únicamente tickets personales
-  - Aplica de igual forma para los 3 roles
-- Revisar errores detectados al actualizar y crear tickets
-- Ajustes finos en validaciones de UI (disabled vs hidden)
-- Mensajería de errores más granular
-- Paginación de listados
-- Métricas avanzadas en dashboard
+🟢 **Estado esperado:** FUNCIONAL, AUNQUE SIMPLE
 
 ---
 
-## 🧠 Estado General del Sistema
+## 🧩 6. Calidad Técnica y UX
 
-| Área                   | Estado                     |
-|------------------------|----------------------------|
-| Autenticación          | ✅ Cerrado                  |
-| Persistencia de sesión | ✅ Cerrado                  |
-| Ruteo                  | ✅ Cerrado                  |
-| Roles y permisos       | ✅ Cerrado                  |
-| Dashboard              | ✅ Cerrado                  |
-| Tickets (core)         | ✅ Funcional (sin edición) |
-| Deuda técnica          | ❌ Ninguna crítica          |
+### Reglas de aceptación
 
-### ✔️ Aprobado
+* No errores críticos en consola
+* Warnings documentados (ej. `TicketEditStatus.tsx`)
+* Navegación fluida
+* Mensajes claros
+* UX coherente
 
-## 🚀 Conclusión del Sprint 2
-
-> El sistema se encuentra en un **estado sólido, estable y profesional**.
-> El frontend ya consume backend real, respeta autenticación, roles y ruteo, y el core del negocio (tickets) está operativo.
-
-Sprint 2 se da por **FINALIZADO** ✅
+🟡 **Errores no bloqueantes permitidos**, pero documentados.
 
 ---
 
-# 🚀 Sprint 3 — Core de Tickets + Administración Inicial
+# 🗓️ Plan de Trabajo — Próximos 3 Días (Ajustado)
 
-## 📌 Contexto General
-
-Tras el **cierre satisfactorio del Sprint 2**, el sistema cuenta ya con:
-
-* Autenticación real con JWT
-* Persistencia de sesión
-* Ruteo protegido
-* Roles y permisos funcionales
-* Conexión real Frontend ↔ Backend
-* Dashboard operativo con actividad global
-* Core de tickets conectado al backend
-
-El **Sprint 3** tiene como objetivo **consolidar el core del sistema de tickets**, alinearlo completamente con el **contrato del backend**, y preparar la base para la **administración completa del sistema en producción**, priorizando estabilidad, consistencia y experiencia de usuario.
+📅 **Hoy:** 23 de diciembre de 2025
+📅 **Presentación:** 5 de enero de 2026
+📅 **Objetivo:** Sprint 3 cerrado antes del 28–29 de diciembre
 
 ---
 
-## ✅ Validación de Sprint 2 (Estado Base)
+## 🟢 Día 3 (24/12/2025) — Dashboard + Permisos UI
 
-Sprint 2 se considera **cerrado**, con las siguientes validaciones confirmadas:
+### Objetivo del día
 
-| Área                   | Estado      |
-| ---------------------- | ----------- |
-| Autenticación          | ✅ Cerrado   |
-| Persistencia de sesión | ✅ Cerrado   |
-| Ruteo protegido        | ✅ Cerrado   |
-| Roles y permisos       | ✅ Cerrado   |
-| Dashboard (actividad)  | ✅ Cerrado   |
-| Tickets (lectura)      | ✅ Funcional |
-| Conexión Backend       | ✅ Real      |
-| Deuda crítica          | ❌ Ninguna   |
+> Cerrar **experiencia del usuario final**
 
-### Observaciones técnicas documentadas (heredadas a Sprint 3)
+### Checklist
 
-Estas observaciones **no bloquean Sprint 2** y pasan a Sprint 3 como trabajo planificado:
+* [ ] Dashboard final (`scope=all`)
+* [ ] Actividad reciente
+* [ ] Quitar cualquier acción editable
+* [ ] Ocultar / deshabilitar botones por rol
+* [ ] Documentar warning de `TicketEditStatus.tsx`
+* [ ] Ajustes visuales y de funcionamiento finales:
+  * TicketsList opciones de softdelete en las solicitudes (visible solo para admin)
 
-* Ajustar scope de tickets:
-
-  * La **lista de tickets debe ser personal (`scope=mine`) para los 3 roles**
-* Resolver errores en:
-
-  * Crear ticket
-  * Actualizar ticket
-* Ajustes finos de UX:
-
-  * `disabled` vs `hidden`
-* Mensajería de errores más granular
-* Paginación (postergada)
-* Métricas avanzadas de dashboard (postergadas)
+🟢 **Resultado esperado:** Sistema usable por los 3 roles
 
 ---
 
-## 🎯 Objetivo Principal del Sprint 3
+## 🟢 Día 4 — Usuarios (ADMIN)
 
-> **Consolidar el core de tickets para uso real**, asegurando que:
+### Objetivo del día
+
+> Completar **gestión del sistema**
+
+### Checklist
+
+* [ ] `UsersList.tsx`:
+
+  * Listado real
+  * Filtro por rol
+  * Filtro por nombre
+* [ ] `UserDetail.tsx`
+* [ ] Botón crear usuario
+* [ ] Formulario de creación funcional
+* [ ] Acción eliminar usuario
+* [ ] Permisos UI correctos
+
+🟢 **Resultado esperado:** Admin controla el sistema completo
+
+---
+
+## 🟢 Día 5 — Limpieza Final + Validación
+
+### Objetivo del día
+
+> Dejar el sistema **listo para pruebas y demo**
+
+### Checklist
+
+* [ ] Revisión completa de flujos
+* [ ] Limpieza de warnings
+* [ ] Validación de errores
+* [ ] Pruebas manuales por rol
+* [ ] Ajustes menores UX
+* [ ] Congelar features
+
+🟢 **Resultado esperado:** **SPRINT 3 CERRADO**
+
+---
+
+# 🏁 Estado Esperado al Cerrar Sprint 3
+
+| Área             | Estado Final          |
+| ---------------- | --------------------- |
+| Tickets          | ✅ Cerrado             |
+| Soft Delete      | ✅ Cerrado             |
+| Dashboard        | ✅ Cerrado             |
+| Usuarios (ADMIN) | ✅ Básico              |
+| Permisos         | ✅ Reflejados          |
+| UX               | ✅ Profesional         |
+| Producción       | 🟡 Lista para pruebas |
+
+---
+
+# 🧠 Conclusión Final
+
+> Sprint 3 **ya no es experimental**.
 >
-> * El frontend respete estrictamente el contrato del backend
-> * Las reglas de negocio vivan en el backend
-> * El frontend refleje permisos sin duplicar lógica
-> * El sistema sea estable y predecible para producción
-
----
-
-## 🔐 Reglas Funcionales Clave (Contrato Backend)
-
-Estas reglas **YA están implementadas en el backend** y el frontend debe **reflejarlas**, no re-implementarlas:
-
-### Roles
-
-| Rol       | Alcance                     |
-| --------- | --------------------------- |
-| ADMIN     | Control total del sistema   |
-| TECNICO   | Tickets propios             |
-| INGENIERO | Tickets globales + métricas |
-
-### Scopes
-
-| Vista            | Scope                          |
-| ---------------- | ------------------------------ |
-| Dashboard        | `scope=all`                    |
-| Lista de Tickets | `scope=mine` (TODOS los roles) |
-
----
-
-## 🔄 Mapa Frontend ↔ Backend (Contrato Oficial)
-
-### Tickets
-
-| Acción                  | Endpoint                    |
-| ----------------------- | --------------------------- |
-| Listar tickets propios  | `GET /tickets?scope=mine`   |
-| Listar tickets globales | `GET /tickets?scope=all`    |
-| Ver detalle             | `GET /tickets/:id`          |
-| Crear ticket            | `POST /tickets`             |
-| Editar ticket           | `PATCH /tickets/:id`        |
-| Cambiar estatus         | `PATCH /tickets/:id/status` |
-| Solicitar eliminación   | `DELETE /tickets/:id`       |
-
-### Administración (ADMIN)
-
-| Acción                         | Endpoint                                  |
-| ------------------------------ | ----------------------------------------- |
-| Ver solicitudes de eliminación | `GET /tickets/admin/delete-requests`      |
-| Aprobar eliminación            | `PATCH /tickets/admin/:id/approve-delete` |
-| Rechazar eliminación           | `PATCH /tickets/admin/:id/reject-delete`  |
-| Ver historial                  | `GET /tickets/:id/history`                |
-
----
-
-## 📋 Checklist Técnico — Sprint 3
-
-### 🎫 Tickets (CORE)
-
-* [ ] Ajustar `TicketsList` para usar siempre `scope=mine`
-* [ ] Validar filtros (`status`, `search`)
-* [ ] Implementar vista de detalle completa
-* [ ] Corregir creación de ticket (DTO alineado al backend)
-* [ ] Corregir edición de ticket
-* [ ] Implementar cambio de estatus
-* [ ] Solicitud de eliminación (soft delete)
-* [ ] Manejo correcto de `403` (permisos)
-
----
-
-### 🧹 Eliminación Controlada (ADMIN)
-
-* [ ] Listado de solicitudes de eliminación
-* [ ] Aprobación
-* [ ] Rechazo
-* [ ] Confirmaciones UI
-* [ ] Feedback visual claro
-
----
-
-### 📊 Dashboard
-
-* [ ] Conectar a `GET /tickets?scope=all`
-* [ ] Mostrar actividad reciente global
-* [ ] Sin edición desde dashboard
-* [ ] Preparado para métricas futuras
-
----
-
-### 👤 Perfil
-
-* [ ] Pantalla de perfil
-* [ ] Información del usuario
-* [ ] Sin edición (Sprint futuro)
-
----
-
-### 👥 Usuarios (ADMIN – Preparación)
-
-* [ ] Conectar listado real de usuarios
-* [ ] Mostrar acciones (editar / activar / desactivar)
-* [ ] Acciones deshabilitadas (documentadas como Sprint futuro)
-
----
-
-## 🧭 Orden Exacto de Implementación
-
-Para evitar saturación y mantener estabilidad:
-
-1. **TicketsList (scope correcto)**
-2. **TicketDetail (lectura + permisos UI)**
-3. **TicketForm (crear / editar sin errores)**
-4. **Soft Delete + flujo ADMIN**
-5. **Dashboard final**
-6. **Perfil**
-7. **Preparación Usuarios ADMIN**
-
----
-
-## 🧠 Criterios de Aceptación del Sprint 3
-
-El Sprint 3 se considera **cerrado** cuando:
-
-* El core de tickets funciona sin errores
-* El frontend respeta completamente el contrato backend
-* Los permisos se reflejan correctamente por rol
-* No hay validaciones duplicadas innecesarias
-* El sistema es usable de extremo a extremo
-
----
-
-## 🏁 Estado Esperado al Final del Sprint 3
-
-| Área                | Estado        |
-| ------------------- | ------------- |
-| Core de tickets     | ✅ Cerrado     |
-| Dashboard           | ✅ Consolidado |
-| Soft delete         | ✅ Operativo   |
-| Administración base | 🟡 Preparada  |
-| UX base             | ✅ Profesional |
-| Producción-ready    | 🟡 Parcial    |
-
----
-
-## 🔜 Lo que queda para Sprint 4
-
-* Paginación
-* Métricas avanzadas
-* Edición de perfil
-* Gestión completa de usuarios
-* Normalización de respuestas
-* Auditoría avanzada
-
----
-
-### ✅ Conclusión
-
-Sprint 3 es el **sprint de consolidación técnica**.
-No se agregan features innecesarias, se **fortalece lo ya construido**, alineado a reglas reales de negocio y preparado para escalar.
-
-
-# 📄 Checklist técnico por archivo frontend (Sprint 3)
-
-Este checklist **no es teórico**: cada punto existe porque el backend **ya lo soporta**.
-
----
-
-## 🔐 Autenticación / Contexto (SOLO REFERENCIA)
-
-### `/auth/AuthProvider.tsx`
-
-* [ ] **NO tocar lógica base**
-* [ ] Mantener token en `localStorage`
-* [ ] User restaurado desde login (Sprint 2 ya OK)
-* [ ] Preparar para `/auth/me` (Sprint futuro)
-
----
-
-### `/auth/RequireAuth.tsx`
-
-* [ ] Proteger TODAS las rutas privadas
-* [ ] Redirección correcta a `/login`
-* [ ] Mantener `state.from`
-
----
-
-### `/auth/RequireRole.tsx`
-
-* [ ] Usar solo para:
-
-  * Admin sections
-* [ ] **NO usar para reglas finas de tickets**
-* [ ] Backend manda `403` → frontend refleja
-
----
-
-## 🎫 Tickets — CORE DEL SPRINT 3
-
----
-
-### `/api/tickets.api.ts`
-
-* [ ] `getTickets({ scope })`
-* [ ] `getTicketById(id)`
-* [ ] `createTicket(payload)`
-* [ ] `updateTicket(id, payload)`
-* [ ] `updateTicketStatus(id, status)`
-* [ ] `requestTicketDeletion(id)`
-
-⚠️ **NO agregar lógica aquí**
-Solo transporte HTTP.
-
----
-
-### `/pages/Tickets/TicketsList.tsx`
-
-* [ ] `scope = 'mine'` **SIEMPRE**
-* [ ] Eliminar excepciones por rol
-* [ ] Mostrar solo tickets del usuario
-* [ ] Filtros:
-
-  * status
-  * search
-* [ ] Navegar a:
-
-  * `/tickets/:id`
-  * `/tickets/new`
-
----
-
-### `/pages/Tickets/TicketDetail.tsx` *(si no existe → crear)*
-
-* [ ] `getTicketById(id)`
-* [ ] Mostrar info completa
-* [ ] Botones:
-
-  * Editar
-  * Cambiar estatus
-  * Solicitar eliminación
-* [ ] Deshabilitar botones según rol
-* [ ] Manejar `403` del backend
-
----
-
-### `/pages/Tickets/TicketForm.tsx`
-
-* [ ] Alinear DTO **REAL del backend**
-* [ ] Usar SOLO campos Sprint 3
-* [ ] Crear y editar sin errores
-* [ ] Manejo correcto de loading / error
-* [ ] Redirecciones limpias
-
----
-
-## 🧹 Eliminación Controlada
-
-### `/pages/Tickets/DeleteRequests.tsx` (ADMIN)
-
-* [ ] `GET /tickets/admin/delete-requests`
-* [ ] Listado claro
-* [ ] Acciones:
-
-  * Approve
-  * Reject
-* [ ] Confirmaciones UI
-
----
-
-## 📊 Dashboard
-
-### `/pages/Dashboard/Dashboard.tsx`
-
-* [ ] `getTickets({ scope: 'all' })`
-* [ ] Mostrar últimos N tickets
-* [ ] No editar desde dashboard
-* [ ] No paginación aún
-
----
-
-## 👤 Perfil
-
-### `/pages/Profile/Profile.tsx`
-
-* [ ] Mostrar info del usuario
-* [ ] Sin edición
-* [ ] Acceso todos los roles
-
----
-
-## 👥 Usuarios (ADMIN – PREPARACIÓN)
-
-### `/pages/Users/Users.tsx`
-
-* [ ] Conectar lista real
-* [ ] Acciones visibles pero deshabilitadas
-* [ ] Tooltip “Sprint futuro”
-
----
-
-# 🔄 2️⃣ Mapa Exacto Front ↔ Backend (Contrato Real)
-
----
-
-## 🔐 Auth
-
-| Front            | Backend            |
-| ---------------- | ------------------ |
-| Login            | `POST /auth/login` |
-| Token persistido | JWT                |
-| Usuario          | JWT payload        |
-
----
-
-## 🎫 Tickets
-
-### Listar
-
-```http
-GET /tickets?scope=mine
-GET /tickets?scope=all
-```
-
-| Vista     | Scope |
-| --------- | ----- |
-| Dashboard | all   |
-| Tickets   | mine  |
-
----
-
-### Detalle
-
-```http
-GET /tickets/:id
-```
-
----
-
-### Crear
-
-```http
-POST /tickets
-```
-
-**Payload Sprint 3**
-
-```ts
-{
-  requestedBy: string
-  contact: string
-  serviceAffected: string
-  problemDesc: string
-  impactLevel: 'LOW' | 'MEDIUM' | 'HIGH'
-}
-```
-
----
-
-### Editar
-
-```http
-PATCH /tickets/:id
-```
-
----
-
-### Cambiar estatus
-
-```http
-PATCH /tickets/:id/status
-```
-
----
-
-### Solicitar eliminación
-
-```http
-DELETE /tickets/:id
-```
-
----
-
-## 🧹 Admin
-
-### Solicitudes
-
-```http
-GET /tickets/admin/delete-requests
-```
-
-### Aprobar
-
-```http
-PATCH /tickets/admin/:id/approve-delete
-```
-
-### Rechazar
-
-```http
-PATCH /tickets/admin/:id/reject-delete
-```
-
----
-
-## 📜 Historial
-
-```http
-GET /tickets/:id/history
-```
-
-(Admin only)
-
----
-
-# 🧭 Flujo de Trabajo Recomendado — Sprint 3
-
-Esto es **clave para no saturarte**.
-
----
-
-## 🧩 Orden Diario Sugerido
-
-### Día 1
-
-* Ajustar `TicketsList` (scope correcto)
-* Confirmar lectura sin errores
-
----
-
-### Día 2
-
-* TicketView (lectura + botones)
-* Manejo de permisos UI
-
----
-
-### Día 3
-
-* TicketForm (crear / editar real)
-* Corregir errores actuales
-
----
-
-### Día 4
-
-* Soft delete (request + admin flow)
-* DeleteRequests page
-
----
-
-### Día 5
-
-* Dashboard final
-* Perfil
-* Limpieza general
-
----
-
-## 🧠 Regla de Oro Sprint 3
-
-> **Si el backend ya lo valida, el frontend NO debe revalidar, solo reflejar.**
+> Con la gestión básica de usuarios:
+>
+> * El sistema es **realmente usable**
+> * El ADMIN controla todo
+> * Los otros roles trabajan sin fricción
+>
+> A partir de aquí:
+>
+> 👉 **Solo pruebas, pulido y preparación de demo**
+>
+> ❌ **No más features nuevas**
 
