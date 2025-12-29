@@ -1,44 +1,54 @@
+/* ==========================
+   CONTENEDOR GENERAL
+========================== */
+
 .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f6f8; /* empresarial */
+
+  /* Fondo corporativo */
+  background-image: url('/src/assets/datra-fondoApp.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
+
+/* ==========================
+   CONTENIDO PRINCIPAL
+========================== */
 
 .app-content {
   flex: 1;
   padding: 1.5rem 2rem;
+
+  /* Capa de lectura */
+  background-color: rgba(248, 249, 250, 0.541);
 }
 
-.sidebar {
-  width: 240px;
-  background-color: #1f2933;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 768px) {
+  .app-content {
+    padding: 0.75rem;
+  }
 }
 
-.sidebar-header {
-  margin-bottom: 2rem;
+/* ==========================
+   IMPRESIÓN
+========================== */
+
+@media print {
+  .app-shell {
+    background: #ffffff !important;
+  }
+
+  .app-content {
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
 }
 
-.sidebar-nav a {
-  display: block;
-  color: #d1d5db;
-  text-decoration: none;
-  margin-bottom: 0.75rem;
-}
-
-.sidebar-nav a:hover {
-  color: #ffffff;
-}
-
-.sidebar-logout {
-  margin-top: auto;
-  background: none;
-  border: 1px solid #ffffff33;
-  color: #fff;
-  padding: 0.5rem;
-  border-radius: 4px;
-}

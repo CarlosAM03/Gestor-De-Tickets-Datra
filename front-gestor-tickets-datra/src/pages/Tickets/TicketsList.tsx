@@ -6,19 +6,26 @@ import {
   Badge,
   Form,
   Spinner,
+  Alert,
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-import { getTickets } from '@/api/tickets.api';
-// ⬇️ cuando exista
-// import { approveDelete, cancelDelete } from '@/api/tickets.admin.api';
+import {
+  approveDeleteTicket,
+  rejectTicketDeletion,
+  getTickets,
+} from '@/api/tickets.api';
+
+import { useAuth } from '@/auth/useAuth';
 
 import type {
   Ticket,
   TicketStatus,
   ImpactLevel,
 } from '@/types/ticket.types';
+
 import './TicketList.css';
+
 /* =============================
    Labels y colores
 ============================= */
@@ -53,9 +60,11 @@ const IMPACT_VARIANTS: Record<ImpactLevel, string> = {
 ============================= */
 export default function TicketList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   /* =============================
      Filtros
@@ -66,31 +75,31 @@ export default function TicketList() {
   const [impact, setImpact] = useState<ImpactLevel | ''>('');
 
   /* =============================
-     Simulación de rol
-     (luego viene de auth)
-  ============================== */
-  const role: 'USER' | 'TECH' | 'ENGINEER' | 'ADMIN' = 'ADMIN';
-
-  /* =============================
      Cargar tickets
   ============================== */
   const loadTickets = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
 
       const data = await getTickets({
-        scope: 'mine',
+        scope: user.role === 'ADMIN' ? 'all' : 'mine',
         code: searchCode || undefined,
         rfc: searchRfc || undefined,
         status: status || undefined,
         impact: impact || undefined,
       });
 
-
-      setTickets(data);
-    } catch (error) {
-      console.error(error);
-      setTickets([]);
+      setTickets(
+        user.role === 'ADMIN'
+          ? data
+          : data.filter(
+              (t) =>
+                !t.deleteRequested ||
+                t.createdBy.id === user.id,
+            ),
+      );
     } finally {
       setLoading(false);
     }
@@ -102,23 +111,61 @@ export default function TicketList() {
   }, [searchCode, searchRfc, status, impact]);
 
   /* =============================
-     Render
+     Acciones ADMIN
   ============================== */
+  const handleApprove = async (id: number) => {
+    await approveDeleteTicket(id);
+    setSuccessMsg('Solicitud de eliminación aprobada');
+    loadTickets();
+  };
+
+  const handleReject = async (id: number) => {
+    await rejectTicketDeletion(id);
+    setSuccessMsg('Solicitud de eliminación cancelada');
+    loadTickets();
+  };
+
+  if (!user) return null;
+
   return (
-    <Card className="p-3 shadow-sm">
+    <Card className="ticket-list p-3 shadow-sm">
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="mb-0">Mis Tickets</h4>
-        <Button onClick={() => navigate('/tickets/create')}>
-          + Nuevo ticket
-        </Button>
+      <div className="ticket-list-header">
+        <h4 className="mb-0">
+          {user.role === 'ADMIN'
+            ? 'Tickets del Sistema'
+            : 'Mis tickets'}
+        </h4>
+
+        <div className="d-flex gap-2">
+          <Button
+            variant="outline-secondary"
+            onClick={loadTickets}
+          >
+            ⟳ Refrescar
+          </Button>
+
+          <Button onClick={() => navigate('/tickets/create')}>
+            + Nuevo ticket
+          </Button>
+        </div>
       </div>
+
+      {successMsg && (
+        <Alert
+          variant="success"
+          dismissible
+          onClose={() => setSuccessMsg(null)}
+        >
+          {successMsg}
+        </Alert>
+      )}
 
       {/* Filtros */}
       <div className="row mb-3">
         <div className="col-md-3 mb-2">
           <Form.Control
-            placeholder="Código de ticket"
+            placeholder="Código"
             value={searchCode}
             onChange={(e) => setSearchCode(e.target.value)}
           />
@@ -126,9 +173,11 @@ export default function TicketList() {
 
         <div className="col-md-3 mb-2">
           <Form.Control
-            placeholder="RFC del cliente"
+            placeholder="RFC Cliente"
             value={searchRfc}
-            onChange={(e) => setSearchRfc(e.target.value.toUpperCase())}
+            onChange={(e) =>
+              setSearchRfc(e.target.value.toUpperCase())
+            }
           />
         </div>
 
@@ -140,11 +189,13 @@ export default function TicketList() {
             }
           >
             <option value="">Estado</option>
-            {Object.entries(STATUS_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
+            {Object.entries(STATUS_LABELS).map(
+              ([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ),
+            )}
           </Form.Select>
         </div>
 
@@ -169,14 +220,13 @@ export default function TicketList() {
       {loading ? (
         <div className="text-center py-4">
           <Spinner animation="border" />
-          <p className="mt-2">Cargando tickets...</p>
         </div>
       ) : tickets.length === 0 ? (
-        <div className="text-center py-4 text-muted">
-          No hay tickets registrados
+        <div className="text-center text-muted py-4">
+          No hay tickets
         </div>
       ) : (
-        <Table striped hover responsive>
+        <Table hover responsive className="ticket-table">
           <thead>
             <tr>
               <th>Código</th>
@@ -184,7 +234,7 @@ export default function TicketList() {
               <th>Descripción</th>
               <th>Estado</th>
               <th>Impacto</th>
-              <th>Acciones</th>
+              <th></th>
             </tr>
           </thead>
 
@@ -192,31 +242,40 @@ export default function TicketList() {
             {tickets.map((ticket) => (
               <tr
                 key={ticket.id}
-                className={ticket.deleteRequested ? 'table-warning' : ''}
+                data-impact={ticket.impactLevel || undefined}
+                className={
+                  ticket.deleteRequested
+                    ? 'row-delete-requested'
+                    : ''
+                }
               >
                 <td>
                   <strong>{ticket.code}</strong>
                 </td>
 
-                <td>
-                  {ticket.client
-                    ? `${ticket.client.rfc}`
-                    : '-'}
-                </td>
+                <td>{ticket.client?.rfc || '-'}</td>
 
-                <td className="text-truncate" >
+                <td className="text-truncate">
                   {ticket.problemDesc || 'Sin descripción'}
                 </td>
 
                 <td>
-                  <Badge bg={STATUS_VARIANTS[ticket.status]}>
+                  <Badge
+                    bg={STATUS_VARIANTS[ticket.status]}
+                  >
                     {STATUS_LABELS[ticket.status]}
                   </Badge>
                 </td>
 
                 <td>
                   {ticket.impactLevel ? (
-                    <Badge bg={IMPACT_VARIANTS[ticket.impactLevel]}>
+                    <Badge
+                      bg={
+                        IMPACT_VARIANTS[
+                          ticket.impactLevel
+                        ]
+                      }
+                    >
                       {ticket.impactLevel}
                     </Badge>
                   ) : (
@@ -236,29 +295,31 @@ export default function TicketList() {
                     Ver
                   </Button>
 
-                  {/* =============================
-                     ADMIN: Soft delete
-                  ============================== */}
-                  {role === 'ADMIN' && ticket.deleteRequested && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline-success"
-                        className="me-1"
-                        // onClick={() => approveDelete(ticket.id)}
-                      >
-                        Aprobar
-                      </Button>
+                  {user.role === 'ADMIN' &&
+                    ticket.deleteRequested && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline-success"
+                          className="me-1"
+                          onClick={() =>
+                            handleApprove(ticket.id)
+                          }
+                        >
+                          Aprobar
+                        </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        // onClick={() => cancelDelete(ticket.id)}
-                      >
-                        Cancelar
-                      </Button>
-                    </>
-                  )}
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          onClick={() =>
+                            handleReject(ticket.id)
+                          }
+                        >
+                          Cancelar
+                        </Button>
+                      </>
+                    )}
                 </td>
               </tr>
             ))}
@@ -268,3 +329,4 @@ export default function TicketList() {
     </Card>
   );
 }
+

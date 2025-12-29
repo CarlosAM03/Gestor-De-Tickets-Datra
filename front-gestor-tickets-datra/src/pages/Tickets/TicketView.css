@@ -1,56 +1,66 @@
 /* =============================
    CONTENEDOR GENERAL
 ============================= */
+
 .ticket-view-wrapper {
   max-width: 1100px;
   margin: 0 auto;
+  padding: 0 0.5rem;
 }
 
 /* =============================
-   HEADER DE LA VISTA (BOTONES)
+   ACCIONES SUPERIORES
 ============================= */
+
 .ticket-view-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.ticket-view-actions .left-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 /* =============================
    CARD PRINCIPAL
 ============================= */
+
 .ticket-view {
-  padding: 2rem;
   background-color: #ffffff;
-  border-radius: 6px;
+  border-radius: 8px;
+  padding: 2rem;
   font-size: 0.95rem;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 /* =============================
    HEADER DEL TICKET
 ============================= */
+
 .ticket-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
   border-bottom: 2px solid #e5e7eb;
 }
 
-/* --- Branding Datra --- */
+/* Branding */
+
 .ticket-header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 0.75rem;
 }
 
 .ticket-logo {
-  height: 48px;
+  height: 42px;
   width: auto;
-  align-self: first baseline;
 }
 
 .ticket-brand-text {
@@ -60,7 +70,7 @@
 }
 
 .ticket-brand-text strong {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   letter-spacing: 0.5px;
 }
 
@@ -69,14 +79,15 @@
   color: #6b7280;
 }
 
-/* --- Código y estatus --- */
+/* Código + estado */
+
 .ticket-header-right {
   text-align: right;
 }
 
 .ticket-header-right h2 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.35rem;
 }
 
 .ticket-header-right .badge {
@@ -86,15 +97,16 @@
 /* =============================
    SECCIONES
 ============================= */
+
 .ticket-view section {
   margin-bottom: 1.75rem;
 }
 
 .ticket-view section h5 {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.35rem;
   border-bottom: 1px solid #e5e7eb;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -104,8 +116,9 @@
 /* =============================
    TEXTOS
 ============================= */
+
 .ticket-view p {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
 }
 
 .ticket-view p strong {
@@ -119,6 +132,7 @@
 /* =============================
    ESTADOS
 ============================= */
+
 .ticket-view.loading,
 .ticket-view.error {
   padding: 3rem;
@@ -126,28 +140,123 @@
 }
 
 /* =============================
-   IMPRESIÓN / PDF
+   RESPONSIVE
 ============================= */
-@media print {
-  body {
-    background: #ffffff;
+
+@media (max-width: 768px) {
+  .ticket-view {
+    padding: 1.25rem;
+  }
+
+  .ticket-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .ticket-header-right {
+    text-align: left;
   }
 
   .ticket-view-actions {
-    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
   }
 
-  .ticket-view {
-    box-shadow: none;
-    border: none;
+  .ticket-view-actions .left-actions {
+    flex-direction: column;
+  }
+}
+
+/* =============================
+   IMPRESIÓN / PDF
+============================= */
+
+@media print {
+  body {
+    background: #ffffff;
+    margin: 0;
     padding: 0;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .printable-ticket,
+  .printable-ticket * {
+    visibility: visible;
+  }
+
+  .printable-ticket {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   .ticket-header {
     border-bottom: 2px solid #000;
+    margin-bottom: 1rem;
   }
 
   .ticket-view section {
+    page-break-inside: avoid;
+  }
+
+  section,
+  p,
+  h5 {
+    page-break-inside: avoid;
+  }
+}
+/* =============================
+   GRID DE SECCIONES
+============================= */
+
+.ticket-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.75rem 2rem;
+}
+
+/* Cada bloque */
+.ticket-section {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.25rem;
+}
+
+/* Títulos */
+.ticket-section h5 {
+  margin-top: 0;
+}
+
+/* =============================
+   RESPONSIVE
+============================= */
+
+@media (max-width: 768px) {
+  .ticket-sections-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================
+   PRINT / PDF
+============================= */
+
+@media print {
+  .ticket-sections-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .ticket-section {
     page-break-inside: avoid;
   }
 }

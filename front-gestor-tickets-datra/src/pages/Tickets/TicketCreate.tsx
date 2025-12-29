@@ -37,7 +37,8 @@ export default function TicketCreate() {
     actionsTaken: '',
     additionalNotes: '',
     correctiveAction: false,
-  };
+    status: undefined,
+  }; 
 
   return (
     <Card className="p-4 shadow-sm">

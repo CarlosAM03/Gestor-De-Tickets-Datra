@@ -1,6 +1,145 @@
-.ticket-desc {
-  max-width: 220px;
+/* ==========================
+   CONTENEDOR PRINCIPAL
+========================== */
+
+.ticket-list {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+/* ==========================
+   HEADER
+========================== */
+
+.ticket-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ticket-list-header h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* ==========================
+   FILTROS
+========================== */
+
+.ticket-list .form-control,
+.ticket-list .form-select {
+  font-size: 0.9rem;
+}
+
+/* ==========================
+   TABLA
+========================== */
+
+.ticket-table {
+  margin-bottom: 0;
+}
+
+.ticket-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ticket-table td {
+  font-size: 0.85rem;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.ticket-table .text-truncate {
+  max-width: 260px;
+}
+
+/* Hover limpio */
+.ticket-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* ==========================
+   IMPACTO (TENUE / PROFESIONAL)
+========================== */
+
+.ticket-table tbody tr[data-impact='LOW'] {
+  background-color: rgba(107, 114, 128, 0.06);
+}
+
+.ticket-table tbody tr[data-impact='MEDIUM'] {
+  background-color: rgba(59, 130, 246, 0.06);
+}
+
+.ticket-table tbody tr[data-impact='HIGH'] {
+  background-color: rgba(245, 158, 11, 0.08);
+}
+
+.ticket-table tbody tr[data-impact='CRITICAL'] {
+  background-color: rgba(220, 38, 38, 0.08);
+}
+
+.ticket-table tbody tr[data-impact='INFO'] {
+  background-color: rgba(99, 102, 241, 0.06);
+}
+
+/* ==========================
+   SOLICITUD DE ELIMINACIÓN
+========================== */
+
+.row-delete-requested {
+  outline: 2px dashed rgba(245, 158, 11, 0.5);
+  outline-offset: -2px;
+}
+
+/* ==========================
+   BADGES
+========================== */
+
+.ticket-table .badge {
+  font-size: 0.7rem;
+  padding: 0.35em 0.55em;
+  font-weight: 500;
+}
+
+/* ==========================
+   BOTONES
+========================== */
+
+.ticket-list button {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 768px) {
+  .ticket-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ticket-table .text-truncate {
+    max-width: 160px;
+  }
+}
+
+@media (max-width: 576px) {
+  .ticket-list {
+    padding: 1rem;
+  }
+
+  .ticket-table th,
+  .ticket-table td {
+    font-size: 0.8rem;
+  }
 }

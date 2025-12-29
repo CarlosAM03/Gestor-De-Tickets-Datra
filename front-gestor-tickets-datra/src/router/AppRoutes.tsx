@@ -2,7 +2,10 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import Login from '@/pages/Login/Login';
 import Dashboard from '@/pages/Dashboard/Dashboard';
+
 import Users from '@/pages/Users/Users';
+import UserCreate from '@/pages/Users/UserCreate';
+import UserView from '@/pages/Users/UserView';
 
 import TicketsList from '@/pages/Tickets/TicketsList';
 import TicketView from '@/pages/Tickets/TicketView';
@@ -17,45 +20,49 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* =======================
-          PUBLIC ROUTES
+          PUBLIC
       ======================= */}
       <Route path="/login" element={<Login />} />
 
       {/* =======================
-          PROTECTED ROUTES
+          PROTECTED
       ======================= */}
       <Route element={<RequireAuth />}>
         <Route element={<MainLayout />}>
-          {/* Entry point */}
+          {/* Entry */}
           <Route index element={<Navigate to="/dashboard" replace />} />
 
           {/* Dashboard */}
           <Route path="dashboard" element={<Dashboard />} />
 
-          {/* Usuarios (solo ADMIN) */}
+          {/* =======================
+              USERS (ADMIN)
+          ======================= */}
           <Route
             path="users"
             element={
-              <RequireRole allowedRoles={['ADMIN']}>
                 <Users />
+            }
+          />
+
+          <Route
+            path="users/create"
+            element={
+              <RequireRole allowedRoles={['ADMIN']}>
+                <UserCreate />
               </RequireRole>
             }
           />
 
+          {/* Vista de usuario */} 
+          <Route path="users/:id" element={ <UserView /> } />
+
           {/* =======================
-              TICKETS (CORE)
+              TICKETS
           ======================= */}
-
-          {/* Listado */}
           <Route path="tickets" element={<TicketsList />} />
-
-          {/* Crear */}
           <Route path="tickets/create" element={<TicketCreate />} />
-
-          {/* Ver */}
           <Route path="tickets/:id" element={<TicketView />} />
-
-          {/* Editar */}
           <Route path="tickets/:id/edit" element={<TicketEdit />} />
         </Route>
       </Route>

@@ -163,10 +163,8 @@ Este punto **ES REQUISITO para cerrar Sprint 3**.
 * [ ] Quitar cualquier acción editable
 * [ ] Ocultar / deshabilitar botones por rol
 * [ ] Documentar warning de `TicketEditStatus.tsx`
-* [ ] Ajustes visuales:
-  * TicketForm
 * [ ] Ajustes visuales y de funcionamiento finales:
-  * TicketsList opciones de softdelete en las solicitudes para admin
+  * TicketsList opciones de softdelete en las solicitudes (visible solo para admin)
 
 🟢 **Resultado esperado:** Sistema usable por los 3 roles
 
@@ -225,7 +223,7 @@ Este punto **ES REQUISITO para cerrar Sprint 3**.
 | Permisos         | ✅ Reflejados          |
 | UX               | ✅ Profesional         |
 | Producción       | 🟡 Lista para pruebas |
-
+ 
 ---
 
 # 🧠 Conclusión Final

@@ -8,7 +8,8 @@ import App from './App';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
-//import './style.css';*/
+import './style.css';
+
 
 ReactDOM.createRoot(
   document.getElementById('app') as HTMLElement

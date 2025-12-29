@@ -69,27 +69,25 @@ export default function TicketEditStatus({
           </Alert>
         )}
 
-        {/* ✅ controlId soluciona el error axe */}
-        <Form.Group className="mb-3">
-          <Form.Label htmlFor="ticket-status-select">
-            Nuevo estatus
-          </Form.Label>
+        {/* ✅ Accesibilidad validada por axe */}
+        <Form.Group controlId="ticket-status" className="mb-3">
+          <Form.Label>Nuevo estatus</Form.Label>
 
           <Form.Select
-            id="ticket-status-select"
-            title="Seleccionar estatus del ticket"
             value={status}
-            onChange={e => setStatus(e.target.value as TicketStatus)}
+            onChange={(e) =>
+              setStatus(e.target.value as TicketStatus)
+            }
             disabled={loading}
+            aria-label="Seleccionar nuevo estatus del ticket"
           >
-            {STATUS_OPTIONS.map(option => (
+            {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
           </Form.Select>
         </Form.Group>
-
 
         <div className="d-flex justify-content-end">
           <Button
