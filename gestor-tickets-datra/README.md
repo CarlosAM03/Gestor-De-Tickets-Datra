@@ -1,99 +1,119 @@
-# 🧭 Estado actual vs Alcance objetivo
-
-## Gestor de Tickets Datra – Backend
-
-Este documento describe **el estado real del backend**, qué componentes están **listos para conectar con el frontend**, qué partes están **cerradas a nivel de arquitectura**, y qué decisiones técnicas siguen pendientes.
-
-El objetivo es que cualquier desarrollador (backend, frontend o reviewer) pueda responder rápidamente:
-
-> **¿Este backend ya puede conectarse a un frontend real?**
 
 ---
 
-# ✅ CHECKLIST PRE-FRONTEND (BACKEND READY)
+# 🎫 Gestor de Tickets Datra — Backend (NestJS)
+
+Backend oficial del sistema **Gestor de Tickets Datra**, desarrollado con **NestJS + Prisma**, orientado a un entorno empresarial, con **reglas de negocio centralizadas**, **control de acceso por roles** y **contrato estable para frontend productivo**.
+
+Este backend es la **fuente única de verdad** del sistema.
 
 ---
 
-## 🔐 1. Autenticación y Seguridad (OBLIGATORIO)
+## 🚀 Objetivo del Backend
 
-| Item                   | Estado | Notas                 |
-| ---------------------- | ------ | --------------------- |
-| Registro de usuarios   | ✅      | Contraseñas hasheadas |
-| Login con JWT          | ✅      | Email + password      |
-| Expiración de token    | ✅      | Configurada           |
-| `JwtAuthGuard`         | ✅      | Protege endpoints     |
-| Usuario en request     | ✅      | `RequestWithUser`     |
-| Manejo de errores auth | ✅      |                       |
+Proveer una API robusta y segura que permita:
 
-🟢 **LISTO PARA FRONTEND**
+* Autenticación real con JWT
+* Control estricto de acceso por roles
+* Gestión completa del ciclo de vida de tickets
+* Eliminación controlada (soft delete)
+* Auditoría y trazabilidad
+* Contratos estables para frontend
+* Escalabilidad futura sin refactor crítico
 
 ---
 
-## 👤 2. Roles y Permisos (OBLIGATORIO)
+## ✅ Estado Actual del Sistema (Cierre Sprint 3)
+
+El backend se encuentra en estado:
+
+> **🟢 FUNCIONAL · 🟢 ESTABLE · 🟢 CONGELADO**
+
+Listo para:
+
+* Integración frontend real
+* Demo funcional
+* Producción controlada
+
+---
+
+## 🔐 1. Autenticación y Seguridad
+
+| Funcionalidad                | Estado |
+| ---------------------------- | ------ |
+| Registro de usuarios         | ✅      |
+| Login con JWT                | ✅      |
+| Expiración de token          | ✅      |
+| `JwtAuthGuard`               | ✅      |
+| Usuario inyectado en request | ✅      |
+| Logout forzado por 401       | ✅      |
+
+📌 **El backend controla completamente la sesión**
+📌 El frontend **no replica lógica crítica**
+
+---
+
+## 👤 2. Roles y Permisos
 
 ### Roles definidos
 
-| Rol           | Capacidades reales                                                                                   |
-| ------------- | ---------------------------------------------------------------------------------------------------- |
-| **ADMIN**     | Control total, aprobación/rechazo de eliminaciones, auditoría, historial                             |
-| **TECNICO**   | Consultar, crear, editar, cerrar y solicitar eliminación **de sus propios tickets**                  |
-| **INGENIERO** | Consultar, crear, editar, cerrar y solicitar eliminación **de todos los tickets**, acceso a métricas |
+| Rol           | Capacidades                                           |
+| ------------- | ----------------------------------------------------- |
+| **ADMIN**     | Control total, auditoría, aprobación de eliminaciones |
+| **INGENIERO** | Gestión global de tickets, métricas                   |
+| **TECNICO**   | Gestión de tickets propios                            |
 
 ### Implementación técnica
 
-| Item                          | Estado |
-| ----------------------------- | ------ |
-| Enum `UserRole`               | ✅      |
-| Decorador `@Roles()`          | ✅      |
-| `RolesGuard`                  | ✅      |
-| Guards aplicados por endpoint | ✅      |
-| Reglas finas en service       | ✅      |
+| Componente                  | Estado |
+| --------------------------- | ------ |
+| Enum `UserRole`             | ✅      |
+| Decorador `@Roles()`        | ✅      |
+| `RolesGuard`                | ✅      |
+| Validación fina en Services | ✅      |
 
-📌 **Diseño intencional**: los guards validan *quién puede entrar*; el **service valida reglas de negocio**.
-
-🟢 **LISTO PARA PRODUCCIÓN**
+📌 **Guards = acceso**
+📌 **Services = reglas de negocio**
 
 ---
 
-## 🎫 3. Tickets – Core del Sistema
+## 🎫 3. Tickets — Core del Sistema
 
 ### Funcionalidades implementadas
 
-| Funcionalidad                     | Estado            |
-| --------------------------------- | ----------------- |
-| Crear ticket                      | ✅                 |
-| Código autogenerado (`TT-000001`) | ✅                 |
-| Asignación automática de creador  | ✅                 |
-| Ver tickets propios               | ✅ (`scope=mine`)  |
-| Ver tickets globales              | ✅ (`scope=all`)   |
-| Ver detalle                       | ✅                 |
-| Editar información                | ✅                 |
-| Actualizar estatus                | ✅ (tipado seguro) |
-| Cerrar ticket                     | ✅                 |
+| Funcionalidad                      | Estado |
+| ---------------------------------- | ------ |
+| Crear ticket                       | ✅      |
+| Código autogenerado (`TT-000001`)  | ✅      |
+| Asignación automática de creador   | ✅      |
+| Ver tickets propios (`scope=mine`) | ✅      |
+| Ver tickets globales (`scope=all`) | ✅      |
+| Ver detalle                        | ✅      |
+| Editar ticket                      | ✅      |
+| Cambiar estado                     | ✅      |
+| Cerrar ticket                      | ✅      |
 
-🟢 **LISTO PARA FRONTEND**
+🟢 **Core completo y listo para producción**
 
 ---
 
 ## 🔍 4. Filtros y Búsqueda
 
-| Filtro                | Estado                |
-| --------------------- | --------------------- |
-| Fecha (`from` / `to`) | ✅                     |
-| Impacto               | ✅                     |
-| Estatus               | ✅ (valores validados) |
-| Búsqueda texto        | ✅                     |
-
-🟢 **LISTO PARA FRONTEND**
+| Filtro                | Estado |
+| --------------------- | ------ |
+| Fecha (`from` / `to`) | ✅      |
+| Impacto               | ✅      |
+| Estado                | ✅      |
+| Búsqueda textual      | ✅      |
 
 ---
 
 ## 🧹 5. Eliminación Controlada (Soft Delete)
 
-### Flujo completo
+### Flujo oficial
 
 1. Usuario solicita eliminación
-2. Ticket queda con `deleteRequested = true`
+2. `deleteRequested = true`
 3. ADMIN aprueba o rechaza
 4. Si aprueba:
 
@@ -102,140 +122,199 @@ El objetivo es que cualquier desarrollador (backend, frontend o reviewer) pueda 
    * `status = CANCELLED`
 5. Se registra historial
 
-| Item                       | Estado |
-| -------------------------- | ------ |
-| Soft delete (`deletedAt`)  | ✅      |
-| Solicitud de eliminación   | ✅      |
-| Aprobación ADMIN           | ✅      |
-| Rechazo ADMIN              | ✅      |
-| Ocultar tickets eliminados | ✅      |
+| Elemento                | Estado |
+| ----------------------- | ------ |
+| Soft delete             | ✅      |
+| Solicitud               | ✅      |
+| Aprobación ADMIN        | ✅      |
+| Rechazo ADMIN           | ✅      |
+| Ocultamiento automático | ✅      |
 
-🟢 **LISTO PARA FRONTEND**
+📌 **Nunca se elimina físicamente un ticket desde la API**
 
 ---
 
 ## 📜 6. Auditoría / Historial
 
-| Item                       | Estado |
-| -------------------------- | ------ |
-| Modelo `TicketHistory`     | ✅      |
-| Registro de approve/reject | ✅      |
-| Endpoint historial         | ✅      |
-| Quién / cuándo             | ✅      |
+| Funcionalidad                 | Estado |
+| ----------------------------- | ------ |
+| Modelo `TicketHistory`        | ✅      |
+| Registro de acciones críticas | ✅      |
+| Endpoint de historial         | ✅      |
+| Auditoría completa            | ✅      |
 
-🟢 **LISTO PARA FRONTEND (ADMIN)**
+Disponible para **ADMIN**.
 
 ---
 
 ## 🧠 7. Reglas de Negocio Críticas
 
-| Regla                            | Estado      |
-| -------------------------------- | ----------- |
-| Técnico elimina solo sus tickets | ✅ (service) |
-| Ingeniero elimina cualquiera     | ✅ (service) |
-| Admin control total              | ✅           |
-| No hard delete desde API         | ✅           |
-| Estados válidos                  | ✅           |
+| Regla                            | Implementación |
+| -------------------------------- | -------------- |
+| Técnico elimina solo sus tickets | Service        |
+| Ingeniero elimina cualquiera     | Service        |
+| Admin control total              | Global         |
+| No hard delete                   | Global         |
+| Estados válidos                  | Enum + DTO     |
 
-🟢 **REGLAS IMPLEMENTADAS DONDE CORRESPONDE**
-
----
-
-## 📡 8. Contrato Backend → Frontend
-
-| Item                    | Estado | Decisión  |
-| ----------------------- | ------ | --------- |
-| Endpoints estables      | ✅      |           |
-| DTOs claros             | ✅      |           |
-| Tipos consistentes      | 🟡     | Mejorable |
-| Paginación              | ❌      | Pendiente |
-| Respuestas normalizadas | 🟡     | Pendiente |
+🟢 **Reglas aplicadas donde corresponde**
 
 ---
 
-## 🚦 Decisión Técnica Final
+## 👥 8. Clientes (Modelo Mínimo Definitivo)
 
-### ✅ El frontend **YA PUEDE CONECTARSE** si:
+### Decisión técnica clave (Sprint 3)
 
-* Se inicia con listado simple
-* Detalle de ticket
-* Crear / editar / cerrar
-* Flujos reales de eliminación
+Se incorporó un **modelo Cliente mínimo persistente**, sin CRUD administrativo.
 
-### ⏸️ Conviene pausar solo si:
+### Modelo `Client`
 
-* Se requieren dashboards complejos
-* Se necesitan grandes volúmenes de datos desde día 1
+```prisma
+model Client {
+  /// RFC es el identificador único del cliente
+  rfc String @id
+  
+  companyName  String
+  businessName String?
+  location     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // Relaciones
+  tickets Ticket[]
+}
+```
 
-👉 **Recomendación:** conectar frontend ahora y evolucionar en paralelo.
+### Relación con Ticket (NO destructiva)
+
+```prisma
+clientRfc String?
+client    Client? @relation(fields: [clientRfc], references: [rfc])
+```
+
+✔️ No rompe tickets existentes
+✔️ RFC como identificador único
+✔️ Preparado para crecimiento futuro
 
 ---
 
-## 🔜 Siguientes pasos sugeridos
+## 🔄 9. Flujo Cliente al Crear Ticket
 
-1. Paginación (`page`, `limit`, `total`)
-2. Normalizar responses (`{ data, meta }`)
-3. Métricas para INGENIERO
-4. Swagger / OpenAPI
-5. Optimización de queries
+* Si el RFC existe → reutiliza cliente
+* Si no existe → lo crea automáticamente
+* El frontend **no decide**
+
+DTO extendido (compatible):
+
+```ts
+client?: {
+  rfc: string;
+  companyName: string;
+  businessName?: string;
+  location?: string;
+};
+```
 
 ---
 
-## Project setup
+## 📡 10. Contrato Backend ↔ Frontend
+
+### Endpoints principales
+
+#### Auth
+
+* `POST /auth/login`
+
+#### Tickets
+
+* `GET /tickets?scope=mine`
+* `GET /tickets?scope=all`
+* `GET /tickets/:id`
+* `POST /tickets`
+* `PATCH /tickets/:id`
+* `PATCH /tickets/:id/status`
+* `DELETE /tickets/:id`
+
+#### Clientes
+
+* `GET /clients/:rfc`
+
+📌 Endpoints **congelados** al cierre de Sprint 3
+
+---
+
+## 🌍 Variables de Entorno
+
+```env
+DATABASE_URL=
+JWT_SECRET=
+JWT_EXPIRES_IN=8h
+PORT=3000
+```
+
+---
+
+## 🛠️ Instalación y Ejecución
 
 ```bash
 npm install
-```
-
-## Run
-
-```bash
 npm run start:dev
 ```
 
+Producción:
+
+```bash
+npm run build
+npm run start:prod
+```
+
 ---
 
-## License
+## 🔒 Estado de Congelamiento (Sprint 3)
 
-MIT
+✔️ Endpoints congelados
+✔️ Contratos congelados
+✔️ Modelo de datos definido
+❌ Edición de usuario → **Sprint 4**
 
 ---
 
-## Description
+## 📌 Decisión Técnica Final
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+El backend se declara:
 
-## Project setup
+* ✅ Funcional
+* ✅ Estable
+* ✅ Congelado
+* ✅ Listo para producción controlada
 
-```bash
-$ npm install
-```
+---
 
-## Compile and run the project
+## 🔜 Sprint 4 (Producción)
 
-```bash
-# development
-$ npm run start
+* Deploy real
+* Variables seguras
+* Testing post-deploy
+* Monitoreo
+* Documentación final
+* Integración futura con sistema de monitoreo
 
-# watch mode
-$ npm run start:dev
+---
 
-# production mode
-$ npm run start:prod
-```
+## 🏁 Conclusión
 
-## Run tests
+Este backend **ya no es un prototipo**.
 
-```bash
-# unit tests
-$ npm run test
+Es un **sistema empresarial real**, diseñado para:
 
-# e2e tests
-$ npm run test:e2e
+* crecer
+* integrarse
+* auditarse
+* mantenerse
 
-# test coverage
-$ npm run test:cov
-```
+Sprint 3 queda **formalmente cerrado**.
+Sprint 4 inicia como **ingeniería de producción**.
+
+---
 
 ## Deployment
 

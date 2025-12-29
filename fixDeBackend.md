@@ -212,27 +212,6 @@ Response:
 
 ---
 
-## 7️⃣ Tipos Front (EXTENSIÓN limpia)
-
-```ts
-export interface Client {
-  rfc: string;
-  companyName: string;
-  businessName?: string;
-  location?: string;
-}
-
-export interface CreateTicketDto {
-  requestedBy?: string;
-  contact?: string;
-  serviceAffected?: string;
-  problemDesc?: string;
-  impactLevel?: ImpactLevel;
-
-  client?: Client;
-}
-```
-
 ✔️ Compatible
 ✔️ Tipado fuerte
 ✔️ Sin romper forms existentes

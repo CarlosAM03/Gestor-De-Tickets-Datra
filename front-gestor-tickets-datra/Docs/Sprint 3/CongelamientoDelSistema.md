@@ -92,6 +92,7 @@ El sistema está diseñado para **operación interna controlada**, con enfoque e
 
    * Cambio de nombre
    * Cambio de rol
+   * Cambio de contraseña seguro
    * Desactivación lógica
 
 2. **Producción real**

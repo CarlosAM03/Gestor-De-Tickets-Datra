@@ -1,23 +1,61 @@
-﻿﻿﻿﻿# 🎫 Gestor de Tickets Datra
+﻿﻿
+---
 
-Sistema de gestión de tickets desarrollado para la empresa **Datra**, orientado a la administración de solicitudes, incidencias y procesos internos de soporte técnico.
+# 🎫 Gestor de Tickets Datra
 
-Este repositorio actualmente contiene **el Backend completo (NestJS)**. El **Frontend** modo moc en proceso de migracion integrado dentro de la misma estructura del proyecto.
+**Sistema Empresarial de Gestión de Incidencias y Soporte Técnico**
 
 ---
 
-## 📌 Alcance del Sistema
+## 📌 Visión General
 
-El sistema está diseñado para:
+El **Gestor de Tickets Datra** es un sistema empresarial diseñado para **centralizar, controlar y auditar** la gestión de incidencias, solicitudes técnicas y procesos internos de soporte dentro de la empresa **Datra**.
 
-* Gestionar tickets de soporte con ciclo de vida controlado
-* Aplicar reglas de negocio basadas en **roles de usuario**
-* Mantener trazabilidad de acciones (auditoría)
-* Permitir crecimiento hacia métricas, reportes y dashboards
+El sistema está construido bajo principios de **arquitectura limpia, separación de responsabilidades y contratos estables**, con una visión clara de **crecimiento futuro**, integración con sistemas de monitoreo y despliegue en infraestructura empresarial.
+
+📌 **Estado actual:**
+✔ Sistema funcional
+✔ Arquitectura cerrada
+✔ Frontend y Backend congelados (Sprint 3)
+✔ Listo para despliegue controlado y pruebas de producción
 
 ---
 
-## 📁 Estructura General del Proyecto
+## 🎯 Objetivos del Sistema
+
+* Centralizar la operación de soporte técnico
+* Controlar flujos de trabajo por **roles**
+* Garantizar trazabilidad completa (auditoría)
+* Prevenir eliminaciones destructivas de información
+* Facilitar métricas, reportes y dashboards futuros
+* Servir como base para integración con sistemas de monitoreo administrado
+
+---
+
+## 🧱 Arquitectura General
+
+El sistema se compone de **dos capas principales**, completamente desacopladas pero alineadas por contrato:
+
+### 🔹 Backend (Core del negocio)
+
+* Define **todas las reglas críticas**
+* Valida permisos, estados y flujos
+* Controla seguridad, auditoría y persistencia
+
+### 🔹 Frontend (Capa de presentación)
+
+* Consume exclusivamente la API oficial
+* Refleja permisos según rol
+* No replica reglas de negocio críticas
+* Proporciona UX empresarial y segura
+
+📌 **Principio rector**:
+
+> *El backend manda. El frontend obedece.*
+
+---
+
+## 📁 Estructura General del Repositorio
 
 ```
 GestorTicketsDatra/
@@ -26,92 +64,213 @@ GestorTicketsDatra/
 │   ├── src/
 │   ├── prisma/
 │   ├── dist/
-│   ├── node_modules/
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── .env
-│   └── README.md               # Documentación técnica del backend
+│   └── README.md               # Documentación técnica backend
+│
+├── front-gestor-tickets-datra/ # Frontend (React + TS)
+│   ├── src/
+│   ├── index.html
+│   ├── .env
+│   └── README.md               # Documentación técnica frontend
 │
 ├── .gitignore
-└── README.md                   # Este archivo
+└── README.md                   # Documentación general (este archivo)
 ```
 
 ---
 
-## 🚀 Backend — NestJS (`gestor-tickets-datra`)
+# 🧭 Backend — NestJS
 
-### 🧱 Stack Tecnológico
+**`gestor-tickets-datra`**
 
-* **Node.js**: 18.x
-* **NestJS**: ^10.x
-* **TypeScript**: ^5.x
-* **Prisma ORM**: **v5.16.1**
-* **Base de datos**: PostgreSQL
-* **Autenticación**: JWT
-* **Validaciones**: class-validator / class-transformer
-* **Control de acceso**: Guards + Roles
+## 🧱 Stack Tecnológico
+
+* Node.js 18.x
+* NestJS ^10
+* TypeScript ^5
+* Prisma ORM 5.x
+* PostgreSQL
+* JWT (autenticación)
+* Guards + Roles (control de acceso)
+* Soft Delete + Auditoría
 
 ---
 
 ## 👤 Roles del Sistema
 
-| Rol           | Descripción                                                                             |
-| ------------- | --------------------------------------------------------------------------------------- |
-| **ADMIN**     | Control total del sistema, aprobación de eliminaciones, auditoría, métricas             |
-| **TECNICO**   | Crear, consultar y actualizar sus tickets. Puede cerrar tickets y solicitar eliminación |
-| **INGENIERO** | Crear, consultar, actualizar y cerrar tickets globales. Acceso a métricas generales     |
+| Rol           | Capacidades                                                   |
+| ------------- | ------------------------------------------------------------- |
+| **ADMIN**     | Control total, auditoría, aprobación/rechazo de eliminaciones |
+| **INGENIERO** | Gestión global de tickets, cierre, métricas                   |
+| **TECNICO**   | Gestión de tickets propios, cierre, solicitud de eliminación  |
 
-📌 **Notas importantes**
+📌 **Decisiones clave**:
 
-* El **ADMIN no se crea por endpoint público**
-* La eliminación de tickets es **por solicitud (soft delete)**
+* No existe registro público
+* El ADMIN no se crea por endpoint
+* Eliminaciones siempre son **controladas (soft delete)**
 
 ---
 
-## 🎫 Funcionalidades Implementadas
+## 🎫 Funcionalidades Backend
 
-### Tickets
-
-✔ Crear ticket con código autogenerado
-
-✔ Asignación automática del usuario creador
-
-✔ Listar tickets:
-
-* Propios (`scope=mine`)
-* Globales (`scope=all`)
-
-✔ Filtros avanzados:
-
-* Rango de fechas (`from`, `to`)
-* Impacto
-* Estatus
-* Búsqueda textual
-
-✔ Ver detalle de ticket
-
-✔ Actualizar información del ticket
-
-✔ Actualizar estatus (tipado seguro)
-
-✔ Solicitud de eliminación
+✔ Creación de tickets con código autogenerado
+✔ Asignación automática de usuario creador
+✔ Listado por alcance (`mine` / `all`)
+✔ Filtros avanzados (fecha, impacto, estatus, búsqueda)
+✔ Edición controlada
+✔ Cambio de estatus tipado
+✔ Solicitud y aprobación de eliminación
+✔ Auditoría completa (`TicketHistory`)
 
 ---
 
 ## 🔌 Endpoints Principales
 
-| Método | Ruta                              | Descripción                           |
-| ------ | --------------------------------- | ------------------------------------- |
-| POST   | /tickets                          | Crear ticket                          |
-| GET    | /tickets                          | Listar tickets (mine / all + filtros) |
-| GET    | /tickets/:id                      | Ver ticket                            |
-| PATCH  | /tickets/:id                      | Actualizar información                |
-| PATCH  | /tickets/:id/status               | Actualizar estatus                    |
-| DELETE | /tickets/:id                      | Solicitar eliminación                 |
-| GET    | /tickets/admin/delete-requests    | Ver solicitudes (ADMIN)               |
-| PATCH  | /tickets/admin/:id/approve-delete | Aprobar eliminación                   |
-| PATCH  | /tickets/admin/:id/reject-delete  | Rechazar eliminación                  |
-| GET    | /tickets/:id/history              | Historial del ticket (ADMIN)          |
+| Método | Endpoint             |
+| ------ | -------------------- |
+| POST   | /auth/login          |
+| GET    | /tickets             |
+| GET    | /tickets/:id         |
+| POST   | /tickets             |
+| PATCH  | /tickets/:id         |
+| PATCH  | /tickets/:id/status  |
+| DELETE | /tickets/:id         |
+| GET    | /tickets/:id/history |
+
+📌 Endpoints **congelados desde Sprint 3**.
+
+---
+
+## 📊 Estado Backend
+
+✔ Funcional
+✔ Estable
+✔ Congelado
+✔ Listo para producción controlada
+
+---
+
+# 🖥️ Frontend — React + TypeScript
+
+**`front-gestor-tickets-datra`**
+
+## 🎯 Propósito
+
+Proveer una **interfaz empresarial, segura y clara** para la operación diaria del sistema, respetando estrictamente el contrato del backend.
+
+---
+
+## 🧱 Stack Frontend
+
+* React 18
+* TypeScript
+* Vite
+* React Router DOM
+* Axios
+* Bootstrap 5
+* Context API (Auth)
+
+---
+
+## 🔐 Seguridad y Sesión
+
+✔ Login real contra backend
+✔ Persistencia de sesión
+✔ Interceptor JWT automático
+✔ Manejo global de 401
+✔ Protección de rutas
+✔ Protección por rol
+
+---
+
+## 📊 Funcionalidades Frontend
+
+### Dashboard
+
+* Actividad reciente
+* Contexto por rol
+* Preparado para métricas
+
+### Tickets
+
+* Listado
+* Filtros
+* Detalle
+* Creación
+* Edición permitida
+* Cambio de estatus
+* Solicitud de eliminación
+
+### Usuarios
+
+* Listado (ADMIN)
+* Vista de perfil
+* ❌ Edición pendiente → Sprint 4
+
+---
+
+## 📊 Estado Frontend
+
+✔ Funcional
+✔ UX consolidada
+✔ Fondo corporativo aplicado post-login
+✔ Rutas y layouts cerrados
+✔ Congelado desde Sprint 3
+
+---
+
+# 🧠 Decisiones Técnicas Clave
+
+* Soft delete obligatorio
+* Auditoría completa
+* Backend como autoridad
+* Contratos estables
+* Arquitectura preparada para escalar
+* Pensado para integración futura con monitoreo
+
+---
+
+# 🔒 Estado del Proyecto — Cierre Sprint 3
+
+| Área      | Estado               |
+| --------- | -------------------- |
+| Backend   | ✅ Congelado          |
+| Frontend  | ✅ Congelado          |
+| Dashboard | ✅ Cerrado            |
+| Tickets   | ✅ Operativo          |
+| Usuarios  | 🟡 Edición pendiente |
+| Sprint 3  | 🟢 CERRADO           |
+
+---
+
+# 🔜 Sprint 4 — Enfoque
+
+* Edición de usuario
+* Hardening de producción
+* Despliegue real
+* Testing post-deploy
+* Presentación ejecutiva
+* Integración futura con monitoreo
+
+---
+
+# 👨‍💻 Equipo
+
+**Carlos Benjamín Armenta Márquez**
+Rol:
+  * Dirección técnica del proyecto
+  * Arquitectura de software
+  * Desarrollo backend-frontend
+  * Integración
+  * Planeación de despliegue y evolución
+
+**Javier Fernández Cortez**
+Rol:
+   * Diseño UI/UX
+   * Mockups y apoyo visual
 
 ---
 
@@ -120,6 +279,7 @@ GestorTicketsDatra/
 ### 1️⃣ Requisitos Previos
 
 * Node.js 18+
+* Prisma ORM** **v5.16.1**
 * PostgreSQL 14+
 * npm 9+
 
@@ -197,240 +357,6 @@ npm run prisma:studio
 
 ---
 
-## 📊 Estado Actual del Proyecto
-
-✔ Backend funcional y estable
-
-✔ Reglas de negocio por rol aplicadas
-
-✔ Sistema listo para conexión con Frontend
-
-✔ Arquitectura preparada para métricas y reportes
-
-❌ Frontend aún no integrado
-
----
-
-## 🎯 Objetivo del Proyecto
-
-* Centralizar la gestión de tickets de Datra
-* Unificar backend y frontend en un solo repositorio
-* Mantener estándares profesionales de desarrollo
-* Facilitar escalabilidad y mantenimiento
-
----
-
-## 👨‍💻 Equipo
-
-**Carlos Benjamín Armenta Márquez**
-Roles: Líder de proyecto, arquitectura, planificación, desarrollo backend, integración frontend
-
-**Javier Fernández Cortez**
-Roles: Diseño y desarrollo del frontend
-
----
-
-# 🖥️ Frontend — Aplicación Web (`front-gestor-tickets`)
-
-El **Frontend del Gestor de Tickets Datra** corresponde a la capa de presentación del sistema y es responsable de proporcionar una **interfaz web segura, clara y controlada** para los distintos perfiles de usuario definidos por la organización.
-
-Esta capa se desarrolla con un enfoque **empresarial**, consumiendo exclusivamente la **API oficial del backend** y respetando estrictamente las reglas de negocio, permisos y flujos establecidos del lado servidor.
-
----
-
-## 📌 Alcance del Frontend
-
-El frontend está diseñado para:
-
-* Permitir el acceso seguro de usuarios mediante autenticación centralizada
-* Visualizar y gestionar tickets de soporte en tiempo real
-* Aplicar control de acceso visual según **rol del usuario**
-* Facilitar la operación diaria de técnicos e ingenieros
-* Proveer herramientas administrativas para supervisión y auditoría
-* Preparar la base para dashboards, métricas y reportes ejecutivos
-
-📌 **Principio arquitectónico**:
-El frontend **no implementa reglas críticas de negocio**.
-Todas las validaciones finales y autorizaciones se realizan en el backend.
-
----
-
-## 🧱 Stack Tecnológico (Frontend)
-
-* **Node.js**: 18.x
-* **React**: ^18.x
-* **TypeScript**: ^5.x
-* **Gestión de estado**: Context API / Zustand / Redux Toolkit (según evolución del proyecto)
-* **Cliente HTTP**: Axios
-* **Enrutamiento**: React Router DOM
-* **Estilos**: Bootstrap / Tailwind CSS (definición final según lineamientos visuales)
-* **Autenticación**: JWT (consumido desde backend)
-
-Este stack permite un desarrollo **modular, escalable y mantenible**, alineado con estándares actuales de aplicaciones empresariales.
-
----
-
-## 🔐 Autenticación y Seguridad
-
-### Acceso al sistema
-
-* Endpoint consumido: `POST /auth/login`
-* El frontend **solo expone funcionalidad de login**
-* No existe registro público de usuarios
-* El token JWT se gestiona de forma controlada para proteger la sesión
-
-### Gestión de sesión
-
-* Protección de rutas privadas
-* Manejo automático de sesión expirada (401)
-* Logout controlado
-* Interceptor HTTP para inyección de token y manejo centralizado de errores
-
-📌 **Decisión de seguridad**:
-La creación de usuarios y asignación de roles es responsabilidad exclusiva del **ADMIN**, fuera del alcance del frontend público.
-
----
-
-## 👤 Roles del Sistema (Vista Frontend)
-
-| Rol           | Funcionalidades visibles                                                                       |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| **ADMIN**     | Gestión global de tickets, aprobación/rechazo de eliminaciones, auditoría, historial, métricas |
-| **TECNICO**   | Creación, consulta, actualización y cierre de tickets propios. Solicitud de eliminación        |
-| **INGENIERO** | Gestión global de tickets, cierre, solicitud de eliminación y acceso a métricas                |
-
-📌 El frontend **controla la visibilidad de acciones** según rol.
-📌 El backend **valida siempre los permisos reales**.
-
----
-
-## 🎫 Funcionalidades del Frontend
-
-### Gestión de Tickets
-
-✔ Listado de tickets:
-
-* Tickets propios (`scope=mine`)
-* Tickets globales (`scope=all`)
-
-✔ Filtros operativos:
-
-* Estatus
-* Impacto
-* Rango de fechas
-* Búsqueda textual
-
-✔ Visualización de detalle de ticket
-
-✔ Creación de nuevos tickets
-
-✔ Actualización de información permitida
-
-✔ Cambio de estatus del ticket
-
-✔ Solicitud de eliminación (flujo controlado)
-
-✔ Visualización de historial (ADMIN)
-
----
-
-### Dashboard Operativo
-
-* Vista inicial con tickets recientes
-* Resumen operativo por rol
-* Espacio preparado para métricas y KPIs
-* Componentes administrativos exclusivos para perfiles autorizados
-
----
-
-## 🔌 Integración con Backend
-
-El frontend consume **únicamente** la API oficial del backend.
-
-### Endpoints principales utilizados
-
-| Función               | Endpoint                    |
-| --------------------- | --------------------------- |
-| Login                 | POST `/auth/login`          |
-| Listar tickets        | GET `/tickets`              |
-| Ver detalle           | GET `/tickets/:id`          |
-| Crear ticket          | POST `/tickets`             |
-| Actualizar ticket     | PATCH `/tickets/:id`        |
-| Cambiar estatus       | PATCH `/tickets/:id/status` |
-| Solicitar eliminación | DELETE `/tickets/:id`       |
-| Historial             | GET `/tickets/:id/history`  |
-
-📌 Los contratos de datos y tipos se mantienen **alineados con el backend**.
-
----
-
-## 📁 Arquitectura del Frontend
-
-```
-front-gestor-tickets-datra/
-│
-├── src/
-│   ├── api/
-│   │   ├── http.ts              # Axios base + interceptores
-│   │   ├── auth.api.ts          # /auth/login
-│   │   └── tickets.api.ts       # Endpoints de tickets
-│   │
-│   ├── auth/
-│   │   ├── AuthContext.tsx      # Estado global de sesión
-│   │   ├── AuthProvider.tsx
-│   │   ├── useAuth.ts
-│   │   ├── RequireAuth.tsx      # Protección de rutas
-│   │   └── RequireRole.tsx      # Protección por rol
-│   │
-│   ├── layouts/
-│   │   ├── MainLayout.tsx       # Layout para login
-│   │   ├── MainLayout.css  
-│   │   └── Sidebar.tsx        # Layout protegido (sidebar, navbar)
-│   │
-│   ├── pages/
-│   │   ├── Login/
-│   │   │   ├── Login.tsx
-│   │   │   └── Login.css
-│   │   │
-│   │   ├── Dashboard/
-│   │   │   ├── Dashboard.tsx
-│   │   │   └── Dashboard.css
-│   │   │
-│   │   └── Users/
-│   │       ├── Users.tsx
-│   │       └── Users.css
-│   │   
-│   │
-│   ├── tickets/
-│   │   ├── pages/
-│   │   ├── components/
-│   │   └── hooks/
-│   │
-│   ├── routes/
-│   │   └── AppRouter.tsx
-│   │
-│   ├── types/
-│   │   ├── auth.types.ts
-│   │   ├── user.types.ts
-│   │   └── ticket.types.ts
-│   │
-│   ├── utils/
-│   │   ├── constants.ts
-│   │   └── role.utils.ts
-│   │
-│   ├── App.tsx
-│   └── main.tsx
-│
-├── .env
-├── .env.production
-├── index.html
-└── README.md
-```
-
-Esta estructura permite **separación clara de responsabilidades** y facilita la evolución del sistema.
-
----
-
 ## 🔧 Instalación y Ejecución del Frontend
 
 ### 1️⃣ Requisitos Previos
@@ -440,6 +366,7 @@ Esta estructura permite **separación clara de responsabilidades** y facilita la
 * Backend operativo
 
 ---
+
 
 ### 2️⃣ Instalación
 
@@ -486,39 +413,18 @@ npm run build
 
 ---
 
-## 📊 Estado Actual del Frontend
-
-✔ Arquitectura frontend definida
-✔ Plan de desarrollo validado
-✔ Contrato backend claramente establecido
-
-🟡 Integración progresiva en curso
-
-❌ Aún no integrado completamente al repositorio principal
-
----
-
-## 🎯 Objetivo del Frontend
-
-* Proveer una interfaz profesional y confiable
-* Facilitar la operación diaria del área de soporte
-* Cumplir políticas de seguridad y control de acceso
-* Preparar el sistema para métricas y dashboards ejecutivos
-* Integrarse completamente con el backend Datra
-
----
-
 ## 📊 Diagrama Entidad–Relación (Base de Datos)
 
-La base de datos del **Gestor de Tickets Datra** está diseñada para soportar un sistema de tickets profesional, con **control de roles**, **auditoría completa**, **soft delete** y **trazabilidad de acciones**.
+La base de datos del **Gestor de Tickets Datra** está diseñada para soportar un sistema de tickets empresarial, con **control de roles**, **auditoría completa**, **soft delete**, **trazabilidad de acciones** y **gestión formal de clientes**.
 
-El modelo se compone principalmente de tres entidades centrales:
+El modelo se compone de **cuatro entidades centrales**:
 
 * **User**
+* **Client**
 * **Ticket**
 * **TicketHistory**
 
-Además, se utilizan **enums tipados** para garantizar consistencia en estados, roles e impacto.
+Además, se utilizan **enums tipados** para garantizar consistencia en estados, roles, impacto y tipo de cliente.
 
 ---
 
@@ -534,12 +440,36 @@ Representa a los usuarios del sistema (ADMIN, TÉCNICO, INGENIERO).
 * Realizar diagnósticos preliminares
 * Cerrar tickets
 * Solicitar o aprobar eliminaciones
-* Registrar acciones en el historial
+* Registrar acciones en el historial (auditoría)
 
-Relaciones clave:
+**Relaciones clave:**
 
-* Un usuario puede estar asociado a **muchos tickets** en distintos roles.
-* Un usuario puede realizar **muchas acciones de auditoría** (`TicketHistory`).
+* Un usuario puede estar asociado a **muchos tickets** en distintos roles:
+
+  * creador
+  * técnico de cierre
+  * diagnóstico preliminar
+  * aprobador de eliminación
+* Un usuario puede realizar **muchas acciones de auditoría** (`TicketHistory`)
+
+---
+
+#### 🏢 Client
+
+Representa a los **clientes de la empresa Datra**, identificados de forma única por su **RFC**.
+
+**Responsabilidades:**
+
+* Agrupar tickets por cliente
+* Permitir auditoría, filtros y métricas futuras
+* Facilitar integración con sistemas externos y monitoreo
+
+**Relaciones clave:**
+
+* Un cliente puede estar asociado a **muchos tickets**
+* El RFC del cliente se replica como **snapshot** en el historial para auditoría
+
+📌 El modelo de cliente es **definitivo y escalable**, preparado para uso empresarial real.
 
 ---
 
@@ -549,11 +479,14 @@ Entidad central del sistema. Representa un incidente o solicitud de soporte.
 
 **Características principales:**
 
-* Ciclo de vida completo (OPEN → IN_PROGRESS → RESOLVED → CLOSED)
-* Información del cliente e impacto
-* Diagnóstico, acciones y cierre
+* Código único de identificación
+* Ciclo de vida completo
+  (OPEN → IN_PROGRESS → ON_HOLD → RESOLVED → CLOSED / CANCELLED)
+* Asociación opcional a cliente
+* Diagnóstico y cierre estructurados
 * Eliminación controlada (soft delete)
-* Relación con múltiples usuarios según el rol que desempeñaron
+* Relación explícita con usuarios según su rol
+* Historial completo de auditoría
 
 ---
 
@@ -565,11 +498,13 @@ Registra **todas las acciones relevantes** realizadas sobre un ticket.
 
 * Auditoría completa
 * Trazabilidad de cambios
-* Cumplimiento y control administrativo
+* Cumplimiento administrativo
+* Base para métricas y reportes futuros
 
 Cada registro indica:
 
 * Qué ticket fue afectado
+* RFC del cliente (snapshot)
 * Qué acción se realizó
 * Valor anterior y nuevo
 * Quién realizó la acción
@@ -588,7 +523,7 @@ Cada registro indica:
 
 ---
 
-## 🧩 Diagrama ER (Mermaid)
+## 🧩 Diagrama ER (Mermaid — Actualizado a Prisma)
 
 ```mermaid
 erDiagram
@@ -603,6 +538,15 @@ erDiagram
         datetime updatedAt
     }
 
+    CLIENT {
+        string rfc PK
+        string companyName
+        string businessName
+        string location
+        datetime createdAt
+        datetime updatedAt
+    }
+
     TICKET {
         int id PK
         string code
@@ -611,26 +555,33 @@ erDiagram
         string requestedBy
         string contact
         enum clientType
+
         string serviceAffected
         string problemDesc
         string eventLocation
         datetime estimatedStart
         enum impactLevel
+
         string initialFindings
         string probableRootCause
+
         string actionsTaken
         datetime closedAt
         string serviceStatus
         string additionalNotes
         boolean correctiveAction
+
         boolean deleteRequested
         datetime deletedAt
+
         datetime createdAt
         datetime updatedAt
     }
 
     TICKETHISTORY {
         int id PK
+        int ticketId
+        string clientRfc
         string action
         string fromValue
         string toValue
@@ -638,9 +589,11 @@ erDiagram
     }
 
     USER ||--o{ TICKET : creates
-    USER ||--o{ TICKET : closes
     USER ||--o{ TICKET : preliminary
+    USER ||--o{ TICKET : closes
     USER ||--o{ TICKET : deletes
+
+    CLIENT ||--o{ TICKET : has
 
     TICKET ||--o{ TICKETHISTORY : has
     USER ||--o{ TICKETHISTORY : performs
@@ -650,14 +603,15 @@ erDiagram
 
 ## 🔗 Relaciones y cardinalidades
 
-| Relación                          | Tipo | Descripción                           |
-| --------------------------------- | ---- | ------------------------------------- |
-| User → Ticket (createdBy)         | 1:N  | Un usuario puede crear muchos tickets |
-| User → Ticket (preliminaryBy)     | 1:N  | Diagnóstico preliminar                |
-| User → Ticket (closingTechnician) | 1:N  | Usuario que cierra el ticket          |
-| User → Ticket (deletedBy)         | 1:N  | Usuario que aprueba eliminación       |
-| Ticket → TicketHistory            | 1:N  | Historial completo del ticket         |
-| User → TicketHistory              | 1:N  | Acciones realizadas por usuarios      |
+| Relación                          | Tipo | Descripción                          |
+| --------------------------------- | ---- | ------------------------------------ |
+| User → Ticket (createdBy)         | 1:N  | Usuario creador del ticket           |
+| User → Ticket (preliminaryBy)     | 1:N  | Diagnóstico preliminar               |
+| User → Ticket (closingTechnician) | 1:N  | Usuario que cierra el ticket         |
+| User → Ticket (deletedBy)         | 1:N  | Usuario que aprueba eliminación      |
+| Client → Ticket                   | 1:N  | Cliente asociado a múltiples tickets |
+| Ticket → TicketHistory            | 1:N  | Historial completo del ticket        |
+| User → TicketHistory              | 1:N  | Acciones realizadas por usuarios     |
 
 ---
 
@@ -665,8 +619,17 @@ erDiagram
 
 * ✅ **Soft delete** para preservar historial y trazabilidad
 * ✅ **Auditoría completa** mediante `TicketHistory`
-* ✅ **Relaciones explícitas** para cada rol del usuario en el ciclo del ticket
+* ✅ **Entidad Client separada y definitiva**
+* ✅ **Snapshot de RFC en historial** para auditoría robusta
+* ✅ **Relaciones explícitas por rol**
 * ✅ **Enums tipados** para evitar estados inválidos
-* ✅ Diseño listo para **escalar y agregar métricas**
+* ✅ Diseño preparado para **escalado, métricas y monitoreo futuro**
+
+---
+
+### 🔒 Estado del modelo
+
+📌 **Modelo congelado — Sprint 3 cerrado**
+📌 Cualquier cambio estructural pasa a **Sprint 4**
 
 ---

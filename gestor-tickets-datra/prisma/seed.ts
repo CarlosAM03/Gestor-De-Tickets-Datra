@@ -19,7 +19,7 @@ async function main() {
       },
       {
         name: 'Ingeniero Datra',
-        email: 'ingenieo@email.com',
+        email: 'ingeniero@email.com',
         password: ingPassword,
         role: UserRole.INGENIERO,
         active: true,

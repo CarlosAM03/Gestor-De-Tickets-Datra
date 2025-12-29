@@ -1,148 +1,164 @@
 
+---
 # 🎫 Gestor de Tickets Datra — Frontend
 
-Frontend oficial del sistema **Gestor de Tickets Datra**, desarrollado con **React + TypeScript**, orientado a un entorno empresarial y diseñado para consumir **directamente el backend en NestJS**, respetando estrictamente su contrato, reglas de negocio y control de roles.
+Frontend oficial del sistema **Gestor de Tickets Datra**, desarrollado con **React + TypeScript**, orientado a entorno **empresarial**, con consumo **directo y tipado** del backend en **NestJS**.
 
-El proyecto sigue una **arquitectura modular, escalable y preparada para producción**, con crecimiento incremental por sprints.
+El sistema está diseñado bajo principios de **arquitectura limpia**, **contratos estables**, **control de acceso por rol** y **preparación real para producción**.
 
 ---
 
 ## 🚀 Objetivo del Proyecto
 
-Construir una aplicación web profesional que permita:
+Proveer una aplicación web profesional para la gestión de tickets que permita:
 
-* Autenticación real contra backend (JWT)
-* Persistencia de sesión
-* Control de acceso por roles (ADMIN, INGENIERO, TECNICO)
-* Gestión de tickets alineada al contrato backend
+* Autenticación real con JWT
+* Persistencia segura de sesión
+* Control de acceso por roles
+* Visualización y gestión del ciclo de vida de tickets
 * Navegación protegida
-* Experiencia de usuario empresarial
-* Código mantenible y escalable
+* UX empresarial consistente
+* Escalabilidad sin refactor estructural
 
 ---
 
-## ✅ Estado Actual del Sistema (Cierre Sprint 2)
+## ✅ Estado Actual del Sistema
 
-El sistema frontend se encuentra en un **estado estable y funcional**, con el siguiente alcance confirmado:
+### 📌 **Sprint 3 — CERRADO (Sistema Congelado)**
 
-### 🔐 Autenticación y Seguridad
+El frontend se encuentra en **estado estable, funcional y congelado**, con el siguiente alcance confirmado:
 
-* Login real (`/auth/login`)
-* Manejo de sesión con Context API
+---
+
+## 🔐 Autenticación y Seguridad
+
+* Login real contra backend (`/auth/login`)
+* Manejo de sesión con `AuthContext`
 * Persistencia de token en `localStorage`
 * Interceptor Axios con JWT automático
-* Logout automático ante `401`
+* Logout forzado ante `401`
 * Protección de rutas privadas
 * Protección por rol (`RequireRole`)
+* Redirección dura ante sesión inválida
 
-### 🧭 Ruteo y Layouts
-
-* Ruteo centralizado con React Router v6
-* Layout público (login)
-* Layout protegido (navbar + contenido)
-* Rutas protegidas por sesión y rol
-* Redirecciones controladas
-
-### 📊 Dashboard
-
-* Dashboard conectado a backend real
-* Visualización de actividad reciente **global**
-* Información contextual del usuario autenticado
-* Sin acciones de edición (lectura informativa)
-
-### 🎫 Tickets (Core — Lectura)
-
-* Listado real de tickets desde backend
-* Filtros funcionales (status, búsqueda)
-* Acceso al detalle de ticket
-* Respeto de permisos desde backend
-* UI preparada para edición futura
-
-📌 **Nota:**
-La edición, creación y eliminación de tickets se encuentran **parcialmente implementadas** y **documentadas para Sprint 3**.
+📌 **Regla clave:**
+El frontend **no duplica validaciones críticas**.
+La seguridad es definida y validada en backend.
 
 ---
 
-## 🧠 Principios Clave de Arquitectura
+## 🧭 Ruteo y Layouts
 
-* El **backend define las reglas de negocio**
-* El frontend **no duplica validaciones críticas**
-* Los permisos se reflejan en UI, no se re-implementan
+* React Router DOM v6
+* Layout público (Login)
+* Layout protegido (`MainLayout`)
+* Navbar dinámico según rol
+* Fondo global para usuarios autenticados
+* Login aislado visual y estructuralmente
+* Redirecciones controladas
+
+---
+
+## 📊 Dashboard
+
+* Dashboard conectado a backend real
+* Actividad reciente global
+* Filtros por:
+
+  * RFC
+  * Estado
+  * Impacto
+  * Rango de fechas
+* Orden por:
+
+  * Más recientes
+  * Más antiguos
+  * Prioridad de impacto
+* Visualización contextual por rol
+* Sin acciones destructivas
+
+---
+
+## 🎫 Tickets (Core del Sistema)
+
+### Funcionalidades activas:
+
+* Listado real de tickets
+* Scope por rol definido por backend
+* Vista detalle de ticket
+* Creación de ticket
+* Edición controlada
+* Cambio de estado
+* Eliminación controlada
+* UX con estados:
+
+  * Loading
+  * Vacíos
+  * Errores claros
+
+📌 **Nota:**
+Toda acción respeta permisos definidos por backend.
+
+---
+
+## 👤 Usuarios
+
+### Funcionalidades activas:
+
+* Listado de usuarios (ADMIN)
+* Creación de usuario (ADMIN)
+* Vista de perfil de usuario
+
+### ❌ Funcionalidades NO incluidas (Sprint 4):
+
+* Edición de usuario
+
+---
+
+## 🧠 Principios de Arquitectura
+
+* Backend define reglas de negocio
+* Frontend refleja permisos, no los inventa
+* Tipado estricto compartido
 * Separación clara por dominio
-* Código tipado y predecible
-* Preparado para escalar sin refactor masivo
+* Sin lógica duplicada
+* Preparado para crecimiento modular
 
 ---
 
 ## 🧩 Tecnologías Utilizadas
 
-| Tecnología          | Uso               |
-| ------------------- | ----------------- |
-| React 18            | UI                |
-| TypeScript          | Tipado estricto   |
-| Vite                | Bundler           |
-| React Router DOM v6 | Ruteo             |
-| Axios               | Cliente HTTP      |
-| Bootstrap 5         | Base UI           |
-| JWT                 | Autenticación     |
-| ESLint              | Calidad de código |
+| Tecnología      | Uso                |
+| --------------- | ------------------ |
+| React 18        | UI                 |
+| TypeScript      | Tipado estricto    |
+| Vite            | Build / Dev Server |
+| React Router v6 | Ruteo              |
+| Axios           | HTTP Client        |
+| Bootstrap 5     | Base UI            |
+| JWT             | Autenticación      |
+| ESLint          | Calidad de código  |
 
 ---
 
 ## 📁 Arquitectura del Proyecto
 
 ```
-front-gestor-tickets-datra/
-│
-├── src/
-│   ├── api/
-│   │   ├── http.ts              # Axios base + interceptores
-│   │   ├── auth.api.ts          # /auth/login
-│   │   └── tickets.api.ts       # Endpoints de tickets
-│   │
-│   ├── auth/
-│   │   ├── AuthProvider.tsx
-│   │   ├── useAuth.ts
-│   │   ├── RequireAuth.tsx
-│   │   └── RequireRole.tsx
-│   │
-│   ├── layouts/
-│   │   ├── AuthLayout.tsx
-│   │   └── MainLayout.tsx
-│   │
-│   ├── pages/
-│   │   ├── Login/
-│   │   ├── Dashboard/
-│   │   ├── Tickets/
-│   │   ├── Users/
-│   │   ├── Unauthorized/
-│   │   └── NotFound/
-│   │
-│   ├── routes/
-│   │   └── AppRoutes.tsx
-│   │
-│   ├── types/
-│   │   ├── auth.types.ts
-│   │   ├── user.types.ts
-│   │   └── ticket.types.ts
-│   │
-│   ├── constants/
-│   │   └── ticketStatus.ts
-│   │
-│   ├── App.tsx
-│   └── main.tsx
-│
-├── .env
-├── .env.production
-├── index.html
-└── README.md
+src/
+├── api/                # Axios + endpoints
+├── auth/               # AuthContext y guards
+├── components/         # Navbar y UI común
+├── layouts/            # Layout público / protegido
+├── pages/              # Vistas por dominio
+├── routes/             # Definición de rutas
+├── types/              # Tipos compartidos
+├── App.tsx
+└── main.tsx
 ```
 
 ---
 
 ## 🔄 Contrato Frontend ↔ Backend
-
-El frontend consume directamente los siguientes endpoints:
 
 ### Autenticación
 
@@ -150,27 +166,33 @@ El frontend consume directamente los siguientes endpoints:
 
 ### Tickets
 
-* `GET /tickets?scope=mine`
-* `GET /tickets?scope=all`
+* `GET /tickets`
 * `GET /tickets/:id`
 * `POST /tickets`
 * `PATCH /tickets/:id`
 * `PATCH /tickets/:id/status`
 * `DELETE /tickets/:id`
 
-📌 Las reglas de acceso se validan **en el backend** mediante Guards y lógica de Service.
+### Usuarios
+
+* `GET /users`
+* `POST /users`
+* `GET /users/:id`
+
+📌
+Todas las reglas de acceso son validadas en backend.
 
 ---
 
 ## 🌍 Variables de Entorno
 
-### `.env`
+### Desarrollo
 
 ```env
 VITE_API_URL=http://localhost:3000
 ```
 
-### `.env.production`
+### Producción
 
 ```env
 VITE_API_URL=https://api.dominio.com
@@ -180,55 +202,44 @@ VITE_API_URL=https://api.dominio.com
 
 ## 🛠️ Instalación y Ejecución
 
-### 1️⃣ Clonar repositorio
-
-```bash
-git clone https://github.com/CarlosAM03/Gestor-De-Tickets-Datra.git
-cd front-gestor-tickets-datra
-```
-
-### 2️⃣ Instalar dependencias
-
 ```bash
 npm install
-```
-
-### 3️⃣ Ejecutar en desarrollo
-
-```bash
 npm run dev
 ```
 
 ---
 
-## 🧪 Usuarios de Prueba (Backend)
+## 🔒 Estado del Sistema
 
-| Rol       | Email                                             | Password   |
-| --------- | ------------------------------------------------- | ---------- |
-| Admin     | [admin@email.com](mailto:admin@email.com)         | keyAdmin01 |
-| Ingeniero | [ingeniero@email.com](mailto:ingeniero@email.com) | keyIng01   |
-| Técnico   | [tecnico@email.com](mailto:tecnico@email.com)     | keyTec01   |
+* ❌ No se agregan nuevas features
+* ❌ No se modifican rutas
+* ❌ No se modifican contratos
+* ❌ No se modifica lógica base
 
----
-
-## 🔜 Próximo Paso — Sprint 3
-
-Sprint 3 se enfoca en:
-
-* Consolidar el core de tickets
-* Corregir creación y edición
-* Ajustar scope personal de tickets
-* Implementar eliminación controlada
-* Perfil de usuario
-* Preparar administración de usuarios
-
-📄 El detalle del Sprint 3 se documenta en el archivo de sprints independiente.
+📌 **El sistema está congelado**
+Cualquier cambio posterior se considera **producción**.
 
 ---
 
-## 📌 Conclusión
+## 🔜 Sprint 4 — Planeado
 
-Este frontend se encuentra **listo para evolucionar a producción**, con una base sólida, alineada al backend real y con una arquitectura clara que permite crecimiento controlado por sprints.
+* Edición de usuario
+* Hardening de seguridad
+* Deploy productivo
+* Testing post-deploy
+* Monitoreo
+* Documentación de operación
 
-Sprint 2 deja un sistema **estable, usable y coherente**.
-Sprint 3 consolida el dominio principal.
+---
+
+## 🏁 Conclusión Técnica
+
+Este frontend está:
+
+* ✅ Funcional
+* ✅ Estable
+* ✅ Congelado
+* ✅ Listo para despliegue controlado
+* ✅ Preparado para escalar sin romper estructura
+
+---
