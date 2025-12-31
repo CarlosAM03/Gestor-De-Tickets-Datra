@@ -244,9 +244,12 @@ export default function Dashboard() {
             )}
 
             {!loading && tickets.length === 0 && (
-              <p className="text-muted">
+              <><p className="text-muted">
                 No hay actividad reciente
-              </p>
+              </p><img
+                  src="/src/assets/vacio.png"
+                  alt="Datra"
+                  className="ticket-vacio" /></>
             )}
 
             {!loading && tickets.length > 0 && (

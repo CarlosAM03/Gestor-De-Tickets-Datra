@@ -9,7 +9,7 @@ async function bootstrap() {
      🌐 CORS (NECESARIO PARA EL FRONT)
      ================================ */
   app.enableCors({
-    origin: 'http://localhost:5173', // Frontend (Vite)
+    origin: process.env.CORS_ORIGIN,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -34,8 +34,6 @@ async function bootstrap() {
      ================================ */
   const PORT = process.env.PORT || 3000;
   await app.listen(PORT);
-
-  console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
 }
 
 void bootstrap();

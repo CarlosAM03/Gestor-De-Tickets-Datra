@@ -243,3 +243,44 @@ Este frontend está:
 * ✅ Preparado para escalar sin romper estructura
 
 ---
+
+
+## 📄 2️⃣ Documentación de variables — FRONTEND
+
+En el `README.md` del frontend:
+
+### 🌐 Variables de entorno — Frontend (Vite)
+
+| Variable       | Obligatoria | Descripción                                      |
+| -------------- | ----------- | ------------------------------------------------ |
+| `VITE_API_URL` | ✅           | URL base del backend                             |
+| `VITE_APP_ENV` | ❌           | Entorno de la app (`development` / `production`) |
+
+📌 Todas las variables **DEBEN iniciar con `VITE_`**.
+
+---
+
+## 📁 3️⃣ `.env.example` (ambos repos)
+
+### Backend `.env.example`
+
+```env
+NODE_ENV=
+PORT=
+JWT_SECRET=
+JWT_EXPIRES=
+DATABASE_URL=
+CORS_ORIGIN=
+```
+
+### Frontend `.env.example`
+
+```env
+VITE_API_URL=
+VITE_APP_ENV=
+```
+
+✔ Esto es **documentación ejecutable**
+✔ Esto es **estándar empresarial**
+
+---

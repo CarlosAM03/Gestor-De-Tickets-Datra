@@ -274,7 +274,7 @@ npm run start:prod
 ✔️ Endpoints congelados
 ✔️ Contratos congelados
 ✔️ Modelo de datos definido
-❌ Edición de usuario → **Sprint 4**
+❌ Edición de usuario → **Sprint Futuro**
 
 ---
 
@@ -297,6 +297,28 @@ El backend se declara:
 * Monitoreo
 * Documentación final
 * Integración futura con sistema de monitoreo
+
+---
+## 📄 1️⃣ Documentación de variables — BACKEND
+
+Agrega esta sección en tu `README.md` del backend (o sección “Environment Variables”).
+
+### 🔐 Variables de entorno — Backend
+
+| Variable       | Obligatoria | Descripción                                       |
+| -------------- | ----------- | ------------------------------------------------- |
+| `NODE_ENV`     | ✅           | Define el entorno (`development` / `production`)  |
+| `PORT`         | ❌           | Puerto de escucha del servidor (default 3000)     |
+| `JWT_SECRET`   | ✅           | Clave secreta para firmar JWT (larga y aleatoria) |
+| `JWT_EXPIRES`  | ✅           | Tiempo de expiración del token (ej. `7h`)         |
+| `DATABASE_URL` | ✅           | Cadena de conexión PostgreSQL                     |
+| `CORS_ORIGIN`  | ✅           | Dominio permitido para CORS                       |
+
+📌 **Notas profesionales**
+
+* Nunca subir `.env` reales
+* `JWT_SECRET` debe rotarse en producción real
+* `DATABASE_URL` jamás debe ser localhost en producción
 
 ---
 

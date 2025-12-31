@@ -7,7 +7,6 @@ import { searchClients } from '@/api/clients.api';
 import type {
   TicketFormValues,
   TicketClient,
-  TicketStatus,
 } from '@/types/ticket.types';
 
 import './TicketForm.css';
@@ -22,14 +21,6 @@ const EMPTY_CLIENT: TicketClient = {
   location: '',
 };
 
-const STATUS_OPTIONS: TicketStatus[] = [
-  'OPEN',
-  'IN_PROGRESS',
-  'ON_HOLD',
-  'RESOLVED',
-  'CLOSED',
-  'CANCELLED',
-];
 
 /* =============================
    Props
@@ -40,6 +31,39 @@ interface TicketFormProps {
   onSubmit: (values: TicketFormValues) => Promise<void>;
   submitting?: boolean;
 }
+/* =============================
+   Servicios ofrecidos
+============================= */
+const SERVICE_AFFECTED_OPTIONS = [
+  {
+    group: 'Internet dedicado',
+    options: [
+      'Internet dedicado 100 Mbps',
+      'Internet dedicado 200 Mbps',
+      'Internet dedicado 500 Mbps',
+      'Internet dedicado 1 Gbps',
+      'Internet dedicado 2 Gbps',
+      'Internet dedicado 4 Gbps',
+      'Internet dedicado 10 Gbps',
+    ],
+  },
+  {
+    group: 'Internet compartido',
+    options: [
+      'Internet compartido 100 Mbps',
+      'Internet compartido 200 Mbps',
+      'Internet compartido 500 Mbps',
+      'Internet compartido 1 Gbps',
+      'Internet compartido 2 Gbps',
+      'Internet compartido 4 Gbps',
+      'Internet compartido 10 Gbps',
+    ],
+  },
+  {
+    group: 'Enlaces',
+    options: ['Enlace punto a punto'],
+  },
+];
 
 /* =============================
    Validación dinámica
@@ -55,6 +79,7 @@ const buildSchema = (mode: 'create' | 'edit') =>
         ? Yup.object({
             rfc: Yup.string().required('RFC obligatorio'),
             companyName: Yup.string().required('Razón social obligatoria'),
+            businessName: Yup.string().required('Nombre comercial obligatorio'),
           })
         : Yup.mixed().notRequired(),
 
@@ -101,7 +126,7 @@ function normalizePayload(
   if (
     !client ||
     !client.rfc?.trim() ||
-    !client.companyName?.trim()
+    (!client.companyName?.trim() && !client?.businessName?.trim())
   ) {
     delete payload.client;
   }
@@ -198,24 +223,6 @@ export default function TicketForm({
           </div>
 
           {/* =============================
-              Estatus (solo EDIT)
-          ============================== */}
-          {mode === 'edit' && (
-            <div className="mb-3">
-                <label className="form-label">Estatus del ticket</label>
-                <Field as="select" name="status" className="form-control">
-                {STATUS_OPTIONS.map(status => (
-                    <option key={status} value={status}>
-                    {status.replace('_', ' ')}
-                    </option>
-                ))}
-                </Field>
-                <ErrorMessage name="status" component="div" className="text-danger small" />
-            </div>
-            )}
-
-
-          {/* =============================
               Cliente
           ============================== */}
           <h5 className="form-section">Cliente</h5>
@@ -251,7 +258,11 @@ export default function TicketForm({
                 }
               }}
             />
-            <ErrorMessage name="client.rfc" component="div" className="text-danger small" />
+            <ErrorMessage 
+              name="client.rfc" 
+              component="div" 
+              className="text-danger small" 
+            />
 
             {existingClient && (
               <div className="text-success small mt-1">
@@ -287,6 +298,11 @@ export default function TicketForm({
                 className="form-control"
                 disabled={!!existingClient}
               />
+              <ErrorMessage
+              name="client.companyName"
+              component="div"
+              className="text-danger small"
+            />
             </div>
 
             <div className="col-md-6 mb-3">
@@ -295,6 +311,11 @@ export default function TicketForm({
                 name="client.businessName"
                 className="form-control"
                 disabled={!!existingClient}
+              />
+              <ErrorMessage
+              name="client.businessName"
+              component="div"
+              className="text-danger small"
               />
             </div>
           </div>
@@ -315,12 +336,42 @@ export default function TicketForm({
 
           <div className="mb-3">
             <label className="form-label">Servicio afectado</label>
-            <Field name="serviceAffected" className="form-control" />
+            <Field as="select" name="serviceAffected" className="form-control">
+              <option value="">Seleccionar servicio</option>
+              {SERVICE_AFFECTED_OPTIONS.map(group => (
+                <optgroup key={group.group} label={group.group}>
+                  {group.options.map(service => (
+                    <option key={service} value={service}>
+                      {service}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </Field>
+            <ErrorMessage
+              name="serviceAffected"
+              component="div"
+              className="text-danger small"
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Ubicacion del evento</label>
+            <Field name="eventLocation" as="textarea" rows={2} className="form-control" />
+            <ErrorMessage
+              name="eventLocation"
+              component="div"
+              className="text-danger small"
+            />
           </div>
 
           <div className="mb-3">
             <label className="form-label">Descripción del problema</label>
             <Field name="problemDesc" as="textarea" rows={4} className="form-control" />
+            <ErrorMessage
+              name="problemDesc"
+              component="div"
+              className="text-danger small"
+            />
           </div>
 
           {/* =============================

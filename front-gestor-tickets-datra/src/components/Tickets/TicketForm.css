@@ -33,29 +33,55 @@
 }
 
 /* ==========================
-   INPUTS
+   INPUTS / SELECTS / TEXTAREA
 ========================== */
 
 .ticket-form .form-control,
-.ticket-form .form-select,
+.ticket-form select.form-control,
 .ticket-form textarea {
   border-radius: 6px;
-  border-color: #d1d5db;
+  border: 1px solid #d1d5db;
   font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .ticket-form .form-control:focus,
-.ticket-form .form-select:focus,
+.ticket-form select.form-control:focus,
 .ticket-form textarea:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.2);
+  outline: none;
 }
 
 /* Disabled */
 .ticket-form .form-control:disabled,
-.ticket-form textarea:disabled {
+.ticket-form textarea:disabled,
+.ticket-form select:disabled {
   background-color: #f9fafb;
   color: #6b7280;
+}
+
+/* ==========================
+   SELECT – SERVICIO AFECTADO
+========================== */
+
+/* Evita que listas largas rompan el layout */
+.ticket-form select[name="serviceAffected"] {
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* Estilo visual para grupos */
+.ticket-form select optgroup {
+  font-weight: 600;
+  color: #1f2937;
+  background-color: #f9fafb;
+}
+
+/* Opciones */
+.ticket-form select option {
+  font-weight: 400;
+  color: #374151;
 }
 
 /* ==========================
@@ -79,6 +105,7 @@
 .ticket-form .list-group-item {
   cursor: pointer;
   font-size: 0.9rem;
+  border-color: #e5e7eb;
 }
 
 .ticket-form .list-group-item:hover {
@@ -121,6 +148,16 @@
 @media (max-width: 768px) {
   .ticket-form {
     padding: 0;
+  }
+
+  .ticket-form .form-section {
+    font-size: 0.95rem;
+  }
+
+  .ticket-form select,
+  .ticket-form textarea,
+  .ticket-form input {
+    font-size: 0.9rem;
   }
 
   .ticket-form .form-actions {

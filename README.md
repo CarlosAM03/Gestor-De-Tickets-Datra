@@ -633,3 +633,17 @@ erDiagram
 📌 Cualquier cambio estructural pasa a **Sprint 4**
 
 ---
+
+## Routing
+
+La aplicación utiliza React Router DOM 6.23.0
+
+### Estado frente a v7
+- No se utilizan rutas relativas
+- No se utilizan splat paths (`*`)
+- Arquitectura compatible con v7
+
+La migración a React Router DOM v7 está planificada
+post-producción y no representa riesgo funcional.
+
+---

@@ -120,7 +120,15 @@
 .dashboard .text-muted {
   font-size: 0.85rem;
 }
-
+.ticket-vacio{
+  height: auto; /* Ajusta aquí el tamaño del logo en la navbar */
+  width: auto;
+  margin-right: 8px;
+  vertical-align: middle;
+  border-radius: 4px;
+  background: #ffffffcc;
+  padding: 4px;
+}
 /* ==========================
    RESPONSIVE
 ========================== */

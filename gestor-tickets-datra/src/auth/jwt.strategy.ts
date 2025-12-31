@@ -13,6 +13,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     // Construimos las opciones con un secret garantizado (string)
     const secret = config.get<string>('JWT_SECRET') ?? '';
+    if (!secret) {
+      throw new Error('JWT_SECRET no definido');
+    }
     const opts: StrategyOptions = {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,

@@ -47,7 +47,7 @@ export class CreateTicketDto {
 
   @IsOptional()
   @IsIn(CLIENT_TYPES)
-  clientType?: string;
+  clientType?: ClientTypes;
 
   /* =========================
      Cliente (nuevo)

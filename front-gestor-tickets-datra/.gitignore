@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ⛔ Entornos y claves
+.env
+.env.*.local
+.env.production
+.env.development
