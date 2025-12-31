@@ -95,7 +95,7 @@ export class TicketService {
       },
     });
 
-    const formattedCode = `TT-${ticket.id.toString().padStart(6, '0')}`;
+    const formattedCode = `TT-${ticket.id.toString().padStart(9, '0')}`;
 
     // =========================
     // UPDATE CODE + HISTORY

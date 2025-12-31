@@ -39,17 +39,22 @@ http.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const status = error.response?.status;
+    const requestUrl = error.config?.url ?? '';
 
-    if (status === 401) {
-      // Sesión inválida o expirada
+    const isAuthLogin = requestUrl.includes('/auth/login');
+
+    if (status === 401 && !isAuthLogin) {
+      // ⚠️ 401 fuera del login = sesión inválida o expirada
       localStorage.clear();
 
-      // Redirección dura: estado limpio garantizado
+      // Redirección dura para limpiar estado
       window.location.replace('/login');
     }
 
+    // ⚠️ Importante: SIEMPRE propagar el error
     return Promise.reject(error);
   },
 );
+
 
 export default http;
