@@ -1,0 +1,371 @@
+
+---
+
+# 🔁 PLAN DE ROLLBACK — PRODUCCIÓN
+
+## Gestor de Tickets DATRA
+
+---
+
+## 🎯 Propósito
+
+Este plan define el **procedimiento formal para revertir el sistema a un estado estable anterior** en caso de falla crítica en producción, minimizando:
+
+* Tiempo de indisponibilidad
+* Riesgo de pérdida de datos
+* Impacto operativo en usuarios
+
+📌 *Rollback no es improvisación: es control.*
+
+---
+
+## 🚨 Escenarios que activan rollback
+
+El rollback se ejecuta **solo** ante fallas críticas, por ejemplo:
+
+* Backend no responde tras deploy
+* Error de autenticación generalizada
+* Pérdida de acceso al dashboard
+* Fallas de seguridad detectadas
+* Crash del sistema sin hotfix viable
+
+❌ **No se usa rollback** para errores menores o ajustes visuales.
+
+---
+
+## 🧱 Componentes cubiertos
+
+| Componente           | Estado                                   |
+| -------------------- | ---------------------------------------- |
+| Frontend             | Incluido                                 |
+| Backend              | Incluido                                 |
+| Base de datos        | Protegida (no revertida automáticamente) |
+| Variables de entorno | Conservadas                              |
+
+📌 *La base de datos NO se revierte salvo desastre mayor.*
+
+---
+
+## 🔙 Estrategia de rollback
+
+### Principio clave
+
+> **Código vuelve atrás, datos se conservan.**
+
+Esto evita pérdida de información operativa.
+
+---
+
+## 🛠️ Procedimiento de Rollback
+
+### 1️⃣ Identificación del último estado estable
+
+* Commit etiquetado:
+
+  ```bash
+  release: v1.0.0 – production deploy
+  ```
+* Verificado previamente en producción
+
+---
+
+### 2️⃣ Rollback Backend
+
+**Proveedor:** Railway
+
+Pasos:
+
+1. Acceder al panel del servicio
+2. Seleccionar último deploy estable
+3. Revertir a versión anterior
+4. Verificar:
+
+   * API responde
+   * Login funcional
+   * Logs sin errores críticos
+
+⏱️ **Tiempo estimado:** 5–10 minutos
+
+---
+
+### 3️⃣ Rollback Frontend
+
+**Proveedor:** Vercel
+
+Pasos:
+
+1. Acceder al proyecto
+2. Seleccionar deploy anterior exitoso
+3. Promover a producción
+4. Validar:
+
+   * Carga del sitio
+   * Login
+   * Navegación principal
+
+⏱️ **Tiempo estimado:** 2–5 minutos
+
+---
+
+### 4️⃣ Validación post-rollback
+
+Smoke test mínimo:
+
+* Login ADMIN
+* Acceso al dashboard
+* Visualización de tickets
+* Logout
+
+📌 *Si esto falla, se activa protocolo de contingencia.*
+
+---
+
+## 🗄️ Base de Datos
+
+### Política
+
+* **No se hace rollback automático**
+* Se conservan datos generados
+* Migraciones ya aplicadas permanecen
+
+### Excepción
+
+Solo si ocurre:
+
+* Corrupción de datos
+* Error estructural grave
+* Violación de integridad
+
+Entonces:
+
+1. Restaurar backup manual
+2. Confirmar integridad
+3. Notificar impacto
+
+⏱️ **Tiempo estimado:** 20–30 minutos
+
+---
+
+## 🔐 Variables de entorno
+
+* No se modifican durante rollback
+* Se revisan solo si la falla está relacionada con configuración
+
+---
+
+## 📢 Comunicación
+
+En caso de rollback:
+
+* Notificar a stakeholders técnicos
+* Registrar:
+
+  * Hora
+  * Motivo
+  * Acción tomada
+  * Resultado
+
+📌 *Transparencia técnica = confianza.*
+
+---
+
+## 🧠 Responsabilidad
+
+* **Responsable técnico:** Carlos Armenta
+* Decisión de rollback **no delegada**
+* Toda acción queda documentada
+
+---
+
+## ✅ Criterio de rollback exitoso
+
+Rollback se considera exitoso cuando:
+
+✔ Sistema operativo
+✔ Usuarios pueden trabajar
+✔ No hay errores críticos en logs
+✔ Datos intactos
+
+---
+
+## 🎯 Mensaje clave (ejecutivo)
+
+> *Tenemos la capacidad de volver a un estado estable en minutos sin perder información crítica. El sistema está bajo control.*
+
+---
+
+# 🧪 CHECKLIST DE VALIDACIÓN POST-ROLLBACK
+
+## Gestor de Tickets DATRA
+
+> **Objetivo:** Confirmar que el sistema quedó **operativo, estable y seguro** después de ejecutar un rollback.
+
+---
+
+## 1️⃣ Validación Técnica Básica (OBLIGATORIA)
+
+### Backend
+
+* [ ] API responde (`/health` o `/`)
+* [ ] Login responde sin error
+* [ ] JWT generado correctamente
+* [ ] Logs sin errores críticos nuevos
+* [ ] No hay reinicios continuos del servicio
+
+---
+
+### Frontend
+
+* [ ] Aplicación carga correctamente
+* [ ] Assets estáticos cargan sin 404
+* [ ] No hay errores críticos en consola
+* [ ] Navegación principal funcional
+
+---
+
+## 2️⃣ Validación Funcional (Smoke Test)
+
+### Autenticación
+
+* [ ] Login ADMIN
+* [ ] Token persistido
+* [ ] Acceso al dashboard
+* [ ] Logout funcional
+
+---
+
+### Tickets
+
+* [ ] Visualización de tickets
+* [ ] Creación de ticket
+* [ ] Cambio de estado
+* [ ] Acceso a detalle de ticket
+
+---
+
+### Roles
+
+* [ ] ADMIN → acceso completo
+* [ ] INGENIERO → acceso global
+* [ ] TECNICO → acceso restringido
+
+---
+
+## 3️⃣ Seguridad y Control
+
+* [ ] Rutas protegidas (sin token → bloqueado)
+* [ ] Token inválido → logout forzado
+* [ ] CORS sigue restringido al dominio autorizado
+* [ ] HTTPS activo
+
+---
+
+## 4️⃣ Base de Datos
+
+* [ ] Datos previos conservados
+* [ ] No pérdida de tickets
+* [ ] Relaciones críticas íntegras
+* [ ] Escrituras nuevas posibles
+
+---
+
+## 5️⃣ Cierre de Validación
+
+* [ ] Rollback documentado
+* [ ] Hora y motivo registrados
+* [ ] Sistema declarado estable
+
+📌 *Si cualquier punto falla → rollback incompleto.*
+
+---
+
+# 📄 ANEXO TÉCNICO PARA AUDITORÍA
+
+## Procedimiento de Rollback
+
+---
+
+## A. Objetivo del Proceso
+
+Garantizar la **continuidad operativa del sistema** ante fallas críticas, con:
+
+* Mínimo downtime
+* Cero improvisación
+* Trazabilidad completa
+
+---
+
+## B. Alcance
+
+Incluye:
+
+* Frontend (Vercel)
+* Backend (Railway)
+* Configuración de entorno
+
+Excluye:
+
+* Rollback automático de base de datos (solo bajo excepción)
+
+---
+
+## C. Control de Versiones
+
+* Commits versionados
+* Tags de release (`v1.0.0`)
+* Historial verificable
+
+---
+
+## D. Procedimiento Formal
+
+1. Identificación del último release estable
+2. Reversión de backend
+3. Reversión de frontend
+4. Validación técnica y funcional
+5. Registro del evento
+
+---
+
+## E. Gestión de Datos
+
+* Backups existentes
+* Restauración solo bajo desastre
+* Datos operativos protegidos
+
+---
+
+## F. Responsabilidad
+
+* Decisión centralizada
+* Responsable técnico asignado
+* Registro obligatorio del evento
+
+---
+
+## G. Evidencia Requerida
+
+* Logs del sistema
+* Capturas del estado post-rollback
+* Checklist firmado
+
+📌 *Este proceso es auditable, repetible y defendible.*
+
+---
+
+# 🎤 EXPLICACION PRACTICA
+
+> “En producción, los errores no se improvisan.
+>
+> Nuestro sistema tiene versiones controladas.
+> Si algo crítico falla, revertimos en minutos a una versión estable sin perder datos.
+>
+> El frontend y backend vuelven atrás, la base de datos se conserva y validamos que todo funcione.
+>
+> Esto nos permite operar con seguridad, continuidad y cero improvisación.”
+
+---
+
+> *No evitamos errores. Evitamos que se conviertan en crisis.*
+
+---
