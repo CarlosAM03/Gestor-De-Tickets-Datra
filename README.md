@@ -208,7 +208,7 @@ Proveer una **interfaz empresarial, segura y clara** para la operación diaria d
 
 * Listado (ADMIN)
 * Vista de perfil
-* ❌ Edición pendiente → Sprint 4
+* ❌ Edición pendiente → Sprint 4 o posterior
 
 ---
 
@@ -248,7 +248,7 @@ Proveer una **interfaz empresarial, segura y clara** para la operación diaria d
 
 # 🔜 Sprint 4 — Enfoque
 
-* Edición de usuario
+* Edición de usuario(pospuesta y documentada)
 * Hardening de producción
 * Despliegue real
 * Testing post-deploy
