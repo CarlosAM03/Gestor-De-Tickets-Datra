@@ -1,3 +1,6 @@
+
+---
+
 # 📄 Modelo de Datos Definitivo — Gestor de Tickets DATRA (v2.0.0)
 
 **Estado:** CONGELADO (Core del sistema)
@@ -74,7 +77,7 @@ Esta entidad define el **contexto operativo real** del ticket: prioridad, SLA y 
 ### Campos
 
 * `id` (PK): Identificador único del contrato
-* `name`: Nombre del servicio (ej. Enlace dedicado, VPN, Monitoreo)
+* `name`: Nombre del servicio (catálogo controlado)
 * `priorityLevel`: Nivel de prioridad operativa
 * `slaHours`: Horas de SLA comprometidas
 * `clientRfc` (FK): Cliente al que pertenece el contrato
@@ -100,6 +103,8 @@ Entidad central del sistema. Representa un **incidente operativo real** que debe
 
 Un ticket tiene un **ciclo de vida finito**, nunca se borra y todo su historial debe poder reconstruirse.
 
+---
+
 ### Estados oficiales
 
 * `OPEN`
@@ -107,7 +112,9 @@ Un ticket tiene un **ciclo de vida finito**, nunca se borra y todo su historial 
 * `CLOSED`
 * `CANCELLED`
 
-📌 El semáforo o estados intermedios **no son estados del sistema**, son reglas operativas externas.
+📌 Estados intermedios, semáforos o clasificaciones visuales **no son estados del sistema**.
+
+---
 
 ### Campos
 
@@ -119,8 +126,13 @@ Un ticket tiene un **ciclo de vida finito**, nunca se borra y todo su historial 
 
 * `createdAt`: Persistencia del registro
 * `openedAt`: Inicio efectivo del ticket
-* `closedAt`: Fecha de cierre (si aplica)
-* `cancelledAt`: Fecha de cancelación (si aplica)
+* `resolvedAt`: Fecha en que el ticket pasa a estado **RESOLVED**
+* `closedAt`: Fecha de cierre definitivo
+* `cancelledAt`: Fecha de cancelación
+
+📌 Un ticket puede estar **RESOLVED sin estar CLOSED**.
+
+---
 
 #### Contexto de negocio
 
@@ -130,18 +142,36 @@ Un ticket tiene un **ciclo de vida finito**, nunca se borra y todo su historial 
 * `problemDescription`: Descripción del problema
 * `eventLocation`: Ubicación del evento
 
+---
+
 #### Responsabilidad
 
 * `createdById`: Usuario que crea el ticket
 * `closedById`: Usuario que cierra el ticket
 * `cancelledById`: Usuario que cancela el ticket
 
+---
+
 ### Reglas importantes
 
 * Un ticket **nunca se elimina**
 * Cancelar un ticket **no borra información**
-* El estado final siempre es **CLOSED o CANCELLED**
-* Cambios relevantes generan historial
+* Todo cambio relevante genera historial
+
+---
+
+### Estados terminales
+
+Los estados terminales del sistema son:
+
+* `CLOSED`
+* `CANCELLED`
+
+Un ticket en estado terminal:
+
+* No puede cambiar de estado
+* No genera nuevos eventos de estado
+* Solo es accesible para auditoría y métricas
 
 ---
 
@@ -158,6 +188,8 @@ Es la **fuente única de verdad** para:
 * Métricas
 * Reconstrucción histórica
 
+---
+
 ### Campos
 
 * `id` (PK): Identificador del evento
@@ -169,24 +201,29 @@ Es la **fuente única de verdad** para:
 * `metadata`: Información adicional en formato JSON
 * `createdAt`: Fecha y hora del evento
 
+📌 `performedById` puede ser **null** cuando el evento es generado por el sistema (automatizaciones, importaciones, LibreNMS).
+
+---
+
 ### Tipos de evento (eventType)
 
 * `CREATED`
 * `STATUS_CHANGED`
-* `CANCEL_REQUESTED`
-* `CANCELLED`
 * `CLOSED`
+* `CANCELLED`
 * `UPDATED`
 * `COMMENT_ADDED`
-* `IMPORTED_FROM_LIBRENMS` (v3.0.0)
+* `IMPORTED_FROM_LIBRENMS`
 
 📌 **RESOLVED es un estado, no un evento**.
+
+---
 
 ### Reglas importantes
 
 * El historial es **append-only** (no se edita ni se borra)
 * Cada cambio relevante del ticket genera un evento
-* Auditoría y métricas se calculan desde aquí
+* Auditoría y métricas se calculan exclusivamente desde aquí
 
 ---
 
@@ -233,3 +270,5 @@ Ejemplos:
 
 > “Primero un sistema que funcione todos los días.
 > Después, uno que se automatice.”
+
+---

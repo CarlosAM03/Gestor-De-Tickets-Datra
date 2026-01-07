@@ -200,7 +200,7 @@ Responder con evidencia:
 ✔ Logs backend revisados
 ✔ Variables prod confirmadas
 ✔ CORS definitivo
-✔ `vacio.png` corregido (si aplica)
+✔ `vacio.png` corregido 
 ✔ Logout evaluado con criterio
 
 ---

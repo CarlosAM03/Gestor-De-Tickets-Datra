@@ -1,6 +1,10 @@
-# 🔒 Congelación de Estados y Transiciones
+
+---
+
+# 🔒 Congelación de Estados y Reglas de Transición
 
 **Gestor de Tickets DATRA — v2.0.0**
+
 **Estado:** CONGELADO (Core del sistema)
 
 Este documento define **de manera definitiva e inmutable**:
@@ -24,7 +28,7 @@ El sistema reconoce **exclusivamente** los siguientes estados:
 | `OPEN`      | Ticket activo, pendiente de resolución         |
 | `RESOLVED`  | Incidente resuelto técnicamente                |
 | `CLOSED`    | Ticket cerrado administrativa y operativamente |
-| `CANCELLED` | Ticket cancelado antes de cierre               |
+| `CANCELLED` | Ticket cancelado antes del cierre              |
 
 📌 No existen estados intermedios.
 📌 No existen estados temporales.
@@ -55,13 +59,13 @@ stateDiagram-v2
 
 | Estado actual | Nuevo estado | Condición                          |
 | ------------- | ------------ | ---------------------------------- |
-| —             | `OPEN`       | Creación de ticket                 |
+| —             | `OPEN`       | Creación del ticket                |
 | `OPEN`        | `RESOLVED`   | Resolución técnica                 |
 | `RESOLVED`    | `CLOSED`     | Cierre administrativo              |
 | `OPEN`        | `CANCELLED`  | Cancelación justificada            |
 | `RESOLVED`    | `CANCELLED`  | Cancelación posterior a resolución |
 
-📌 No existe ninguna otra transición válida.
+📌 **No existe ninguna otra transición válida.**
 
 ---
 
@@ -71,10 +75,10 @@ Las siguientes transiciones **deben ser rechazadas por el backend**, sin excepci
 
 | Origen      | Destino    | Motivo                    |
 | ----------- | ---------- | ------------------------- |
-| `OPEN`      | `CLOSED`   | Omite resolución          |
+| `OPEN`      | `CLOSED`   | Omite resolución técnica  |
 | `RESOLVED`  | `OPEN`     | No existe reapertura      |
-| `CLOSED`    | cualquiera | Estado final              |
-| `CANCELLED` | cualquiera | Estado final              |
+| `CLOSED`    | cualquiera | Estado terminal           |
+| `CANCELLED` | cualquiera | Estado terminal           |
 | `CANCELLED` | `CLOSED`   | Inconsistencia de dominio |
 
 📌 No hay reapertura de tickets.
@@ -84,14 +88,21 @@ Las siguientes transiciones **deben ser rechazadas por el backend**, sin excepci
 
 ## 5️⃣ Reglas explícitas por acción
 
+---
+
 ### 🟢 Crear Ticket
 
-* Estado inicial: `OPEN`
-* Evento: `CREATED`
+**Estado inicial:** `OPEN`
+
+**Acciones backend:**
+
+* Se crea el ticket en estado `OPEN`
+* Se genera evento `CREATED`
 * Se define `openedAt`
 * Se persiste `createdAt`
 
 📌 Todo ticket **nace en OPEN**.
+📌 No existen tickets creados directamente en otro estado.
 
 ---
 
@@ -102,16 +113,17 @@ Las siguientes transiciones **deben ser rechazadas por el backend**, sin excepci
 **Requisitos:**
 
 * Ticket en estado `OPEN`
-* Usuario autenticado
+* Usuario autenticado con rol permitido
 * Información mínima de resolución
 
 **Acciones backend:**
 
-* Cambio de estado
+* Cambio de estado a `RESOLVED`
+* Seteo de `resolvedAt`
 * Evento `STATUS_CHANGED`
-* Registro de timestamp de resolución
 
 📌 Resolver es una acción **técnica**, no administrativa.
+📌 `RESOLVED` **no es un estado terminal**.
 
 ---
 
@@ -126,11 +138,12 @@ Las siguientes transiciones **deben ser rechazadas por el backend**, sin excepci
 
 **Acciones backend:**
 
-* Cambio de estado
+* Cambio de estado a `CLOSED`
 * Seteo de `closedAt`
 * Evento `CLOSED`
 
 📌 Un ticket cerrado es **inmutable**.
+📌 No admite nuevas transiciones.
 
 ---
 
@@ -148,33 +161,36 @@ Las siguientes transiciones **deben ser rechazadas por el backend**, sin excepci
 
 **Acciones backend:**
 
-* Cambio de estado
+* Cambio de estado a `CANCELLED`
 * Seteo de `cancelledAt`
 * Evento `CANCELLED`
 
-📌 Cancelar **no borra** información.
+📌 Cancelar **no borra información**.
 📌 El historial permanece íntegro.
+📌 `CANCELLED` es estado terminal.
 
 ---
 
 ## 6️⃣ Control por rol (regla de dominio)
 
-| Acción                | Permitido           |
-| --------------------- | ------------------- |
-| Crear ticket          | Usuario autenticado |
-| Resolver ticket       | Técnico / Ingeniero |
-| Cerrar ticket         | Técnico / Admin     |
-| Cancelar ticket       | Admin / Autorizado  |
-| Editar ticket activo  | Técnico             |
-| Editar ticket cerrado | ❌                   |
-| Modificar historial   | ❌                   |
+| Acción                | Permitido                  |
+| --------------------- | -------------------------- |
+| Crear ticket          | Usuario autenticado        |
+| Resolver ticket       | Técnico / Ingeniero        |
+| Cerrar ticket         | Técnico / Admin            |
+| Cancelar ticket       | Admin / Usuario autorizado |
+| Editar ticket activo  | Técnico / Ingeniero        |
+| Editar ticket cerrado | ❌                          |
+| Modificar historial   | ❌                          |
 
 📌 El backend valida todas las reglas.
-📌 El frontend **no decide**.
+📌 El frontend **no decide ni infiere permisos**.
 
 ---
 
 ## 7️⃣ Casos límite obligatorios
+
+---
 
 ### Caso 1 — Cierre directo
 
@@ -182,7 +198,8 @@ Las siguientes transiciones **deben ser rechazadas por el backend**, sin excepci
 OPEN → CLOSED
 ```
 
-❌ Rechazado. Debe pasar por `RESOLVED`.
+❌ Rechazado.
+Debe pasar obligatoriamente por `RESOLVED`.
 
 ---
 
@@ -192,7 +209,8 @@ OPEN → CLOSED
 CLOSED → CANCELLED
 ```
 
-❌ Prohibido. El ticket ya es histórico.
+❌ Prohibido.
+El ticket ya es histórico.
 
 ---
 
@@ -203,26 +221,33 @@ CLOSED → OPEN
 CANCELLED → OPEN
 ```
 
-❌ No existe. Se crea un nuevo ticket.
+❌ No existe reapertura.
+Se crea un **nuevo ticket**.
 
 ---
 
 ### Caso 4 — Correcciones post-cierre
 
-✔ Permitidas solo para:
+✔ Permitidas **solo** para:
 
 * Campos no críticos
 * Correcciones administrativas
 
-📌 Siempre generan evento `UPDATED`.
+**Condiciones:**
+
+* No cambia estado
+* Genera evento `UPDATED`
+* No modifica timestamps de ciclo de vida
 
 ---
 
 ### Caso 5 — Error humano grave
 
-* No se corrige el estado
-* Se documenta en historial
+* El estado **no se corrige**
+* El error se documenta en historial
 * Se crea un nuevo ticket
+
+📌 El sistema prioriza **trazabilidad**, no conveniencia.
 
 ---
 
@@ -238,6 +263,9 @@ CANCELLED → OPEN
 
 ## 🔒 Estado del artefacto
 
-📌 Estados y transiciones **CONGELADOS**
+📌 Estados y transiciones **CONGELADOS para v2.0.0**
 📌 Reglas listas para implementación técnica
 📌 A prueba de auditoría, KPIs y operación real
+
+---
+

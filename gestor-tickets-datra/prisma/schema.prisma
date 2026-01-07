@@ -1,7 +1,7 @@
 // ================================
 // Prisma Schema — Gestor de Tickets Datra
-// Versión: Sprint 3 (Producción Ready)
-// Fecha: 22-Dic-2025
+// Versión: v2.0.0
+// Fecha: 06-Enero-2026
 // ================================
 
 generator client {
@@ -13,24 +13,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ================================
+//////////////////////////////////////////////////////
 // ENUMS
-// ================================
+//////////////////////////////////////////////////////
 
-// Estados de Ticket
 enum TicketStatus {
   OPEN
-  IN_PROGRESS
-  ON_HOLD
   RESOLVED
   CLOSED
   CANCELLED
-}
-
-enum UserRole {
-  ADMIN
-  TECNICO
-  INGENIERO
 }
 
 enum ImpactLevel {
@@ -41,14 +32,54 @@ enum ImpactLevel {
   INFO
 }
 
-enum ClientType {
-  INTERNO
-  EXTERNO
+enum UserRole {
+  ADMIN
+  TECNICO
+  INGENIERO
 }
 
-// ================================
-// MODELS
-// ================================
+enum TicketEventType {
+  CREATED
+  STATUS_CHANGED
+  CLOSED
+  CANCELLED
+  UPDATED
+  COMMENT_ADDED
+  IMPORTED_FROM_LIBRENMS
+}
+
+enum TicketSource {
+  MANUAL       // Creado por usuario del sistema
+  LIBRENMS     // Generado automáticamente
+  IMPORTED     // Importado de otro sistema
+}
+
+enum ServiceContractName {
+  // Internet dedicado
+  INTERNET_DEDICADO_100_MB
+  INTERNET_DEDICADO_200_MB
+  INTERNET_DEDICADO_500_MB
+  INTERNET_DEDICADO_1_GB
+  INTERNET_DEDICADO_2_GB
+  INTERNET_DEDICADO_4_GB
+  INTERNET_DEDICADO_10_GB
+
+  // Internet compartido
+  INTERNET_COMPARTIDO_100_MB
+  INTERNET_COMPARTIDO_200_MB
+  INTERNET_COMPARTIDO_500_MB
+  INTERNET_COMPARTIDO_1_GB
+  INTERNET_COMPARTIDO_2_GB
+  INTERNET_COMPARTIDO_4_GB
+  INTERNET_COMPARTIDO_10_GB
+
+  // Enlaces
+  ENLACE_PUNTO_A_PUNTO
+}
+
+//////////////////////////////////////////////////////
+// USER
+//////////////////////////////////////////////////////
 
 model User {
   id       Int      @id @default(autoincrement())
@@ -58,138 +89,155 @@ model User {
   role     UserRole @default(TECNICO)
   active   Boolean  @default(true)
 
+  deactivatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relaciones
-  ticketsCreated    Ticket[] @relation("TicketCreatedBy")
-  ticketsClosed     Ticket[] @relation("TicketClosedBy")
-  ticketsPreliminar Ticket[] @relation("TicketPreliminaryBy")
-  ticketsDeleted    Ticket[] @relation("TicketDeletedBy")
+  ticketsCreated   Ticket[] @relation("TicketCreatedBy")
+  ticketsClosed    Ticket[] @relation("TicketClosedBy")
+  ticketsCancelled Ticket[] @relation("TicketCancelledBy")
 
-  // Auditoría
-  ticketHistory TicketHistory[]
+  history TicketHistory[]
 }
 
-// ================================
-// CLIENTE (NUEVO — DEFINITIVO)
-// ================================
+//////////////////////////////////////////////////////
+// CLIENT
+//////////////////////////////////////////////////////
 
 model Client {
-  /// RFC es el identificador único del cliente
-  rfc String @id
+  rfc          String @id
+  clientNumber String @unique
 
-  companyName  String
+  companyName  String?
   businessName String?
   location     String?
 
+  active Boolean @default(true)
+  deactivatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relaciones
-  tickets Ticket[]
+  serviceContracts ServiceContract[]
+  tickets          Ticket[]
 }
 
-// ================================
+//////////////////////////////////////////////////////
+// SERVICE CONTRACT
+//////////////////////////////////////////////////////
+
+model ServiceContract {
+  id Int @id @default(autoincrement())
+
+  /// Servicio contratado (catálogo controlado)
+  name ServiceContractName
+
+  /// Prioridad contractual (1 = más alta)
+  priorityLevel Int
+
+  /// SLA en horas (ej. 4, 8, 24)
+  slaHours Int
+
+  active Boolean @default(true)
+  deactivatedAt DateTime?
+
+  clientRfc String
+  client    Client @relation(fields: [clientRfc], references: [rfc])
+
+  tickets Ticket[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([priorityLevel])
+}
+
+//////////////////////////////////////////////////////
 // TICKET
-// ================================
+//////////////////////////////////////////////////////
 
 model Ticket {
   id   Int    @id @default(autoincrement())
-  code String @unique
+  code String @unique // Prefijo TT- controlado por backend
 
-  // Información general
-  openedAt DateTime     @default(now())
-  status   TicketStatus @default(OPEN)
+  /// Estado del ciclo de vida
+  status TicketStatus @default(OPEN)
 
-  requestedBy String?
-  contact    String?
-  clientType ClientType?
+  /// Origen del ticket
+  source TicketSource @default(MANUAL)
 
-  // =========================
-  // CLIENTE
-  // =========================
-  clientRfc String?
-  client    Client? @relation(fields: [clientRfc], references: [rfc])
+  createdAt   DateTime @default(now())
+  openedAt    DateTime @default(now())
+  resolvedAt  DateTime?
+  closedAt    DateTime?
+  cancelledAt DateTime?
 
   // =========================
-  // Incidente
+  // CLIENTE / SERVICIO
   // =========================
-  serviceAffected String?
-  problemDesc     String?
-  eventLocation   String?
-  estimatedStart  DateTime?
-  impactLevel     ImpactLevel?
+  clientRfc String
+  client    Client @relation(fields: [clientRfc], references: [rfc])
+
+  serviceContractId Int
+  serviceContract   ServiceContract @relation(fields: [serviceContractId], references: [id])
 
   // =========================
-  // Diagnóstico
+  // INCIDENTE
   // =========================
-  initialFindings   String?
-  probableRootCause String?
+  impactLevel ImpactLevel
+
+  problemDescription String
+  eventLocation      String?
 
   // =========================
-  // Cierre
-  // =========================
-  actionsTaken     String?
-  closedAt         DateTime?
-  serviceStatus    String?
-  additionalNotes  String?
-  correctiveAction Boolean?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // =========================
-  // Soft delete & control
-  // =========================
-  deleteRequested Boolean  @default(false)
-  deletedAt       DateTime?
-  deletedById     Int?
-  deletedBy       User? @relation("TicketDeletedBy", fields: [deletedById], references: [id])
-
-  // =========================
-  // Relaciones de usuarios
+  // USUARIOS
   // =========================
   createdById Int?
   createdBy   User? @relation("TicketCreatedBy", fields: [createdById], references: [id])
 
-  preliminaryById Int?
-  preliminaryBy   User? @relation("TicketPreliminaryBy", fields: [preliminaryById], references: [id])
+  closedById Int?
+  closedBy   User? @relation("TicketClosedBy", fields: [closedById], references: [id])
 
-  closingTechnicianId Int?
-  closingTechnician   User? @relation("TicketClosedBy", fields: [closingTechnicianId], references: [id])
+  cancelledById Int?
+  cancelledBy   User? @relation("TicketCancelledBy", fields: [cancelledById], references: [id])
 
-  // Auditoría
+  // =========================
+  // AUDITORÍA
+  // =========================
   history TicketHistory[]
+
+  @@index([status])
+  @@index([source])
+  @@index([clientRfc])
+  @@index([serviceContractId])
+  @@index([createdAt])
 }
 
-// ================================
-// HISTORIAL DE TICKET (AUDITORÍA)
-// ================================
+//////////////////////////////////////////////////////
+// TICKET HISTORY (CORE)
+//////////////////////////////////////////////////////
 
 model TicketHistory {
   id Int @id @default(autoincrement())
 
-  // =========================
-  // Relaciones
-  // =========================
   ticketId Int
   ticket   Ticket @relation(fields: [ticketId], references: [id])
 
-  /// Snapshot del RFC del cliente para auditoría y filtros
-  clientRfc String?
+  eventType TicketEventType
 
-  action    String
-  fromValue String?
-  toValue   String?
+  fromStatus TicketStatus?
+  toStatus   TicketStatus?
 
   performedById Int?
   performedBy   User? @relation(fields: [performedById], references: [id])
 
+  metadata Json?
+
   createdAt DateTime @default(now())
 
-  // Índices recomendados para auditoría futura
   @@index([ticketId])
-  @@index([clientRfc])
+  @@index([eventType])
   @@index([createdAt])
 }

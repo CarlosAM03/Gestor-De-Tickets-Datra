@@ -1,6 +1,3 @@
-Perfecto.
-A partir de aquí entramos en **territorio core definitivo**.
-Te entrego el **artefacto formal**, con criterio **senior, auditable y productivo**, listo para compartir con tu compañero y para usar como **fuente de verdad** en backend.
 
 ---
 
@@ -252,22 +249,3 @@ Durante la migración:
 📌 Apto para crecimiento futuro (v3.0.0)
 
 ---
-
-### 🧠 Nota arquitectónica final
-
-> *Un sistema sin historial confiable no es software,
-> es una hoja de Excel con API.*
-
----
-
-## 👉 Siguiente paso lógico (ya sí)
-
-Ahora sí, con todo el core cerrado:
-
-1️⃣ **Traducir contratos a backend (servicios / guards)**
-2️⃣ **Traducir contratos a Prisma definitivo**
-3️⃣ **Diseñar scripts de migración (Opción A)**
-
-Cuando quieras, dime:
-👉 **“Pasemos a los contratos de backend”**
-y seguimos sin improvisar.

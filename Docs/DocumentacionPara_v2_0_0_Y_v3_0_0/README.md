@@ -152,9 +152,9 @@ Define:
 
 - OnePager: ✅ Actualizado
 - Roadmap: ✅ Actualizado
-- Modelo de datos: ⏳ En definición (Semana 1)
-- Estados y reglas: ⏳ En definición (Semana 1)
-- Historial y métricas: ⏳ En definición (Semana 1)
+- Modelo de datos: ✅ Actualizado
+- Estados y reglas: ✅ Actualizado
+- Historial y métricas: ✅ Actualizado
 
 📌 **Semana 1 está dedicada a cerrar estos documentos.**
 

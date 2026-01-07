@@ -301,7 +301,7 @@ El backend se declara:
 ---
 ## 📄 1️⃣ Documentación de variables — BACKEND
 
-Agrega esta sección en tu `README.md` del backend (o sección “Environment Variables”).
+
 
 ### 🔐 Variables de entorno — Backend
 

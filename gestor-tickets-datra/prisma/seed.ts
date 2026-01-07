@@ -12,21 +12,21 @@ async function main() {
     data: [
       {
         name: 'Admin Datra',
-        email: 'admin@email.com',
+        email: 'admin@datra.mx',
         password: adminPassword,
         role: UserRole.ADMIN,
         active: true,
       },
       {
         name: 'Ingeniero Datra',
-        email: 'ingeniero@email.com',
+        email: 'ingeniero@datra.mx',
         password: ingPassword,
         role: UserRole.INGENIERO,
         active: true,
       },
       {
         name: 'Tecnico Datra',
-        email: 'tecnico@email.com',
+        email: 'tecnico@datra.mx',
         password: tecPassword,
         role: UserRole.TECNICO,
         active: true,
