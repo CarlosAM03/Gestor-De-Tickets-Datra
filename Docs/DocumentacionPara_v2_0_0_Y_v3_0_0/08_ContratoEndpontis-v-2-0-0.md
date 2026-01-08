@@ -1,11 +1,30 @@
+Perfecto. A continuación te entrego el **CONTRATO DE ENDPOINTS COMPLETO, DEPURADO Y 100 % ALINEADO** con:
+
+* Dominio v2.0.0
+* Contrato Backend v2.0.0
+* Apéndice Frontend 1:1
+* Prisma Schema v2.0.0
+
+👉 **Este documento ya no es borrador**.
+👉 Es **copiable, publicable y congelable**.
+
+---
+
+# 🌐 CONTRATO DE ENDPOINTS — GESTOR DE TICKETS DATRA
+
+**Versión:** v2.0.0
+**Estado:** 🔒 CONGELADO
+**Autoridad:** Backend
+**Frontend:** Consumidor pasivo
+**Ámbito:** Integración Frontend 1:1
 
 ---
 
 ## 0️⃣ Convenciones Globales (OBLIGATORIAS)
 
-### Autenticación
+### 🔐 Autenticación
 
-* Header requerido en todos los endpoints (excepto login):
+Header requerido en **todos** los endpoints, excepto `/auth/login`:
 
 ```http
 Authorization: Bearer <JWT>
@@ -13,9 +32,9 @@ Authorization: Bearer <JWT>
 
 ---
 
-### Formato de respuesta estándar
+### 📦 Formato de respuesta estándar
 
-#### Éxito
+#### ✅ Éxito
 
 ```json
 {
@@ -26,7 +45,7 @@ Authorization: Bearer <JWT>
 }
 ```
 
-#### Error
+#### ❌ Error
 
 ```json
 {
@@ -37,11 +56,14 @@ Authorization: Bearer <JWT>
 }
 ```
 
+📌 El frontend **NO traduce** códigos
+📌 El frontend **NO asume lógica**
+
 ---
 
-### Mapeo de errores de dominio → HTTP
+### 🔁 Mapeo Error Dominio → HTTP
 
-| Error de Dominio        | HTTP |
+| Error Dominio           | HTTP |
 | ----------------------- | ---- |
 | Unauthorized            | 401  |
 | ForbiddenAction         | 403  |
@@ -50,6 +72,8 @@ Authorization: Bearer <JWT>
 | TicketImmutable         | 409  |
 | ValidationError         | 422  |
 | ServiceContractInactive | 422  |
+
+📌 El dominio **no conoce HTTP**
 
 ---
 
@@ -81,13 +105,16 @@ Authorization: Bearer <JWT>
 }
 ```
 
+📌 No existe registro público
+📌 Login es **solo inicio de sesión**
+
 ---
 
-## 👤 2️⃣ Usuarios
+## 👤 2️⃣ Usuarios (ADMIN)
 
-### `POST /users`
+> Gestión **administrativa**, no operativa
 
-**Request**
+### `POST /users` (ADMIN)
 
 ```json
 {
@@ -107,52 +134,17 @@ Authorization: Bearer <JWT>
 
 ### `GET /users`
 
-**Query params**
-
-```
-?role=TECNICO
-```
-
-**Response**
-
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "name": "Ana López",
-      "email": "ana@datra.com",
-      "role": "TECNICO",
-      "active": true
-    }
-  ]
-}
+```http
+GET /users?role=TECNICO
 ```
 
 ---
 
 ### `GET /users/:id`
 
-**Response**
-
-```json
-{
-  "data": {
-    "id": 1,
-    "name": "Ana López",
-    "email": "ana@datra.com",
-    "role": "TECNICO",
-    "active": true,
-    "deactivatedAt": null
-  }
-}
-```
-
 ---
 
 ### `PATCH /users/:id`
-
-**Request**
 
 ```json
 {
@@ -165,8 +157,6 @@ Authorization: Bearer <JWT>
 
 ### `PATCH /users/:id/deactivate`
 
-**Request**
-
 ```json
 {
   "reason": "Baja administrativa"
@@ -178,13 +168,13 @@ Authorization: Bearer <JWT>
 * `active = false`
 * `deactivatedAt = now()`
 
+❌ No existe DELETE
+
 ---
 
 ## 🏢 3️⃣ Clientes
 
-### `POST /clients`
-
-**Request**
+### `POST /clients` (ADMIN)
 
 ```json
 {
@@ -199,20 +189,6 @@ Authorization: Bearer <JWT>
 
 ### `GET /clients`
 
-**Response**
-
-```json
-{
-  "data": [
-    {
-      "rfc": "DAT123456789",
-      "companyName": "Datra SA de CV",
-      "active": true
-    }
-  ]
-}
-```
-
 ---
 
 ### `GET /clients/:rfc`
@@ -220,8 +196,6 @@ Authorization: Bearer <JWT>
 ---
 
 ### `PATCH /clients/:rfc`
-
-**Request**
 
 ```json
 {
@@ -233,21 +207,19 @@ Authorization: Bearer <JWT>
 
 ### `PATCH /clients/:rfc/deactivate`
 
-**Request**
-
 ```json
 {
   "reason": "Cliente inactivo"
 }
 ```
 
+📌 Clientes **no se eliminan**
+
 ---
 
 ## 📄 4️⃣ Contratos de Servicio
 
-### `POST /service-contracts`
-
-**Request**
+### `POST /service-contracts` (ADMIN)
 
 ```json
 {
@@ -258,6 +230,8 @@ Authorization: Bearer <JWT>
 }
 ```
 
+📌 `name` es enum cerrado
+
 ---
 
 ### `GET /service-contracts`
@@ -265,8 +239,6 @@ Authorization: Bearer <JWT>
 ---
 
 ### `PATCH /service-contracts/:id`
-
-**Request**
 
 ```json
 {
@@ -279,8 +251,6 @@ Authorization: Bearer <JWT>
 
 ### `PATCH /service-contracts/:id/deactivate`
 
-**Request**
-
 ```json
 {
   "reason": "Contrato vencido"
@@ -292,8 +262,6 @@ Authorization: Bearer <JWT>
 ## 🎫 5️⃣ Tickets (CORE)
 
 ### `POST /tickets`
-
-**Request**
 
 ```json
 {
@@ -308,16 +276,17 @@ Authorization: Bearer <JWT>
 **Efectos**
 
 * `status = OPEN`
+* `openedAt = now()`
 * Evento `CREATED`
+
+📌 El frontend **no envía estado**
 
 ---
 
 ### `GET /tickets`
 
-**Query params**
-
-```
-?status=OPEN&clientRfc=DAT123456789
+```http
+GET /tickets?status=OPEN&clientRfc=DAT123456789
 ```
 
 ---
@@ -328,29 +297,30 @@ Authorization: Bearer <JWT>
 
 ### `PATCH /tickets/:id`
 
-**Permitido solo si estado ≠ CLOSED, CANCELLED**
-
-**Request**
+**Permitido solo si estado ≠ `CLOSED`, `CANCELLED`**
 
 ```json
 {
   "problemDescription": "Intermitencia total",
-  "eventLocation": "Sucursal Norte"
+  "eventLocation": "Sucursal Norte",
+  "impactLevel": "CRITICAL"
 }
 ```
 
-**Evento:** `UPDATED`
+**Evento**
+
+* `UPDATED`
+
+📌 ❌ No cambia estado
 
 ---
 
 ### `POST /tickets/:id/resolve`
 
-**Request**
-
 ```json
 {
-  "diagnosis": "Falla en CPE",
-  "resolutionNotes": "Equipo reiniciado"
+  "initialFindings": "Falla en CPE",
+  "actionsTaken": "Equipo reiniciado"
 }
 ```
 
@@ -360,15 +330,17 @@ Authorization: Bearer <JWT>
 OPEN → RESOLVED
 ```
 
+**Evento**
+
+* `STATUS_CHANGED`
+
 ---
 
 ### `POST /tickets/:id/close`
 
-**Request**
-
 ```json
 {
-  "closureNotes": "Validado con cliente"
+  "additionalNotes": "Validado con cliente"
 }
 ```
 
@@ -378,11 +350,13 @@ OPEN → RESOLVED
 RESOLVED → CLOSED
 ```
 
+**Evento**
+
+* `CLOSED`
+
 ---
 
-### `POST /tickets/:id/cancel`
-
-**Request**
+### `POST /tickets/:id/cancel` (ADMIN)
 
 ```json
 {
@@ -397,13 +371,15 @@ OPEN → CANCELLED
 RESOLVED → CANCELLED
 ```
 
+**Evento**
+
+* `CANCELLED`
+
 ---
 
-## 📜 6️⃣ Historial
+## 📜 6️⃣ Historial (READ-ONLY)
 
 ### `GET /tickets/:id/history`
-
-**Response**
 
 ```json
 {
@@ -412,30 +388,68 @@ RESOLVED → CANCELLED
       "eventType": "CREATED",
       "fromStatus": null,
       "toStatus": "OPEN",
+      "performedById": 3,
+      "metadata": {},
       "createdAt": "2026-01-07T01:00:00Z"
     }
   ]
 }
 ```
 
----
-
-## 🚫 7️⃣ Endpoints prohibidos (NO EXISTEN)
-
-* `DELETE /users/*`
-* `DELETE /clients/*`
-* `DELETE /tickets/*`
-* `PATCH /tickets/:id/status`
-* Cualquier cambio directo de estado
+📌 El frontend **no modifica ni recalcula**
 
 ---
 
-## 🔒 Estado del contrato
+## 🚫 7️⃣ Endpoints que NO EXISTEN
+
+❌ `DELETE /users/*`
+❌ `DELETE /clients/*`
+❌ `DELETE /tickets/*`
+❌ `PATCH /tickets/:id/status`
+❌ Reapertura de tickets
+❌ Edición de historial
+
+---
+
+## 🔗 8️⃣ Alineación directa con Prisma
+
+| API           | Prisma                     |
+| ------------- | -------------------------- |
+| Ticket.status | `TicketStatus`             |
+| Historial     | `TicketHistory`            |
+| SLA           | `ServiceContract.slaHours` |
+| Rol           | `User.role`                |
+| Cliente       | `Client.rfc`               |
+
+📌 No hay campos “fantasma”
+📌 No hay lógica duplicada
+
+---
+
+## 🔒 Estado del Contrato
 
 ✔️ Endpoints cerrados
-✔️ Payloads definidos
-✔️ Errores mapeados
-✔️ Alineado con Prisma v2.0.0
-✔️ Compatible con auditoría, KPIs y operación real
+✔️ Payloads alineados a dominio
+✔️ Estados protegidos
+✔️ Historial obligatorio
+✔️ Compatible con auditoría y KPIs reales
+✔️ Preparado para frontend productivo
+
+📌 **CONTRATO DE ENDPOINTS CONGELADO — v2.0.0**
+📌 Cambios → **v3.0.0**
 
 ---
+
+##Estado de implementacion actual
+---
+| Componente             | Estado      |
+| ---------------------- | ----------- |
+| Prisma Schema v2.0.0   | ✅ Cerrado   |
+| Contratos de Dominio   | ✅ Cerrados  |
+| Contratos de Endpoints | ✅ Cerrados  |
+| Servicios principales  | 🟡 Parcial   |
+| Controladores          | ⏳ Pendiente |
+| TicketHistory          | ⏳ Pendiente |
+| ServiceContracts       | ⏳ Pendiente |
+| AdminImportClients     | ⏳ Pendiente |
+| Módulos NestJS         | ⏳ Pendiente |

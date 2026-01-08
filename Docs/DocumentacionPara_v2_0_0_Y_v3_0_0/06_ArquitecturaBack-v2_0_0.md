@@ -1,39 +1,46 @@
 
 ---
+
 # 🎫 Gestor de Tickets Datra — Backend (NestJS)
 
 Backend oficial del sistema **Gestor de Tickets Datra**, desarrollado con **NestJS + Prisma**, diseñado como un **sistema empresarial con reglas de dominio estrictas**, **auditoría obligatoria** y **contratos congelados para frontend productivo**.
 
-📌 Este backend es la **fuente única de verdad del sistema**.  
-📌 El frontend es un **consumidor pasivo de contratos**.
+📌 Este backend es la **fuente única de verdad del sistema**  
+📌 El frontend es un **consumidor pasivo de contratos**  
 
 ---
 
 ## 🚀 Objetivo del Backend
 
-Proveer una API robusta y segura que garantice:
+Construir y consolidar un backend que:
 
-- Autenticación real con JWT
-- Control estricto de acceso por roles
-- Gestión completa del ciclo de vida de tickets
-- Estados controlados por dominio (no por frontend)
-- **No eliminación de datos (desactivación / cancelación por estado)**
-- Auditoría completa y trazabilidad
-- Contratos estables y congelados
-- Escalabilidad sin refactor crítico
+- Centralice todas las reglas de negocio
+- Controle estrictamente estados y transiciones
+- Garantice auditoría y trazabilidad completa
+- Permita métricas reales basadas en historial
+- Sea **estable para v2.0.0**
+- Esté **preparado estructuralmente para v3.0.0**
+- Pueda migrarse a infraestructura on-prem sin refactor crítico
 
 ---
 
-## ✅ Estado Actual del Sistema
+## ⚠️ Estado Actual del Sistema
 
-> **🟢 FUNCIONAL · 🟢 ESTABLE · 🟢 CONGELADO (v2.0.0)**
+> **🟡 EN DESARROLLO CONTROLADO · v2.0.0 (Preparado para v3.0.0)**
 
-Listo para:
+### Situación real (enero, semana 1)
 
-- Integración frontend real
-- Demo funcional
-- Producción controlada
-- Auditoría de negocio
+- El **modelo de dominio está definido**
+- Los **contratos están congelados**
+- El backend **no está aún desplegado en producción**
+- Se encuentra en **fase de cierre técnico del core**
+- Se trabaja con visión directa a:
+  - Migración on-prem
+  - Integración frontend 1:1
+  - Operación real
+
+📌 Este estado es **intencional y planificado**  
+📌 No representa inestabilidad, sino **ejecución por fases**
 
 ---
 
@@ -41,14 +48,14 @@ Listo para:
 
 | Funcionalidad                | Estado |
 | ---------------------------- | ------ |
-| Login con JWT                | ✅ |
+| Login con JWT                | ✅ Implementado |
 | Expiración de token          | ✅ |
 | `JwtAuthGuard`               | ✅ |
 | Usuario inyectado en request | ✅ |
 | Logout forzado por 401       | ✅ |
 
 📌 El backend controla completamente la sesión  
-📌 El frontend **no replica lógica crítica**
+📌 El frontend **no replica ni infiere lógica de seguridad**
 
 ---
 
@@ -56,11 +63,11 @@ Listo para:
 
 ### Roles definidos
 
-| Rol | Capacidades |
-|----|------------|
-| **ADMIN** | Control total, auditoría, aprobación de cancelaciones |
-| **INGENIERO** | Gestión global de tickets |
-| **TECNICO** | Gestión de tickets propios |
+| Rol | Responsabilidad |
+|----|----------------|
+| **ADMIN** | Control total, auditoría, cancelaciones, importaciones |
+| **INGENIERO** | Gestión operativa global |
+| **TECNICO** | Operación diaria de tickets |
 
 ### Implementación
 
@@ -69,30 +76,30 @@ Listo para:
 | Enum `UserRole` | ✅ |
 | Decorador `@Roles()` | ✅ |
 | `RolesGuard` | ✅ |
-| Validación en Services | ✅ |
+| Validación en services | ✅ |
 
-📌 Guards = acceso  
-📌 Services = reglas de negocio  
+📌 Guards controlan acceso  
+📌 Services aplican reglas de dominio  
 
 ---
 
 ## 🎫 3. Tickets — Core del Sistema
 
-### Funcionalidades implementadas
+### Capacidades actuales
 
 | Funcionalidad | Estado |
 |--------------|--------|
 | Crear ticket | ✅ |
 | Código autogenerado (`TT-000001`) | ✅ |
 | Asignación automática de creador | ✅ |
-| Ver tickets propios / globales | ✅ |
-| Ver detalle | ✅ |
-| Actualizar información | ✅ |
-| Resolver ticket | ✅ |
-| Cerrar ticket | ✅ |
-| Cancelar ticket | ✅ |
+| Listado propio / global | ✅ |
+| Detalle de ticket | ✅ |
+| Actualización controlada | ✅ |
+| Resolución | ✅ |
+| Cierre | ✅ |
+| Cancelación | ✅ |
 
-🟢 **Ciclo de vida completo implementado**
+📌 El ciclo de vida **está completamente definido y validado**
 
 ---
 
@@ -110,27 +117,26 @@ RESOLVED → CANCELLED
 
 ❌ Cualquier otra transición es **error de dominio**
 
-📌 El backend **NO expone endpoints genéricos de cambio de estado**  
-📌 Solo existen **acciones de dominio**
+📌 No existen endpoints genéricos de cambio de estado  
+📌 Solo existen **acciones explícitas de dominio**
 
 ---
 
-## 🧠 5. Acciones de Dominio (Use Cases Oficiales)
+## 🧠 5. Acciones de Dominio Oficiales
 
 | Acción | Transición | Evento |
 |------|-----------|--------|
 | `createTicket` | — → OPEN | CREATED |
 | `resolveTicket` | OPEN → RESOLVED | STATUS_CHANGED |
 | `closeTicket` | RESOLVED → CLOSED | CLOSED |
-| `cancelTicket` | OPEN/RESOLVED → CANCELLED | CANCELLED |
+| `cancelTicket` | OPEN / RESOLVED → CANCELLED | CANCELLED |
 | `updateTicket` | — | UPDATED |
 
-📌 Todas las acciones validan:
-- Estado actual
-- Rol del usuario
-- Reglas de negocio
-
-📌 Todas generan historial obligatorio
+📌 Todas:
+- Validan estado
+- Validan rol
+- Ejecutan reglas
+- Generan historial obligatorio
 
 ---
 
@@ -139,20 +145,21 @@ RESOLVED → CANCELLED
 Si `status ∈ { CLOSED, CANCELLED }`:
 
 - ❌ No se permite cambiar estado
-- ❌ No se permite editar información
-- ❌ No se permite cancelar / resolver
-- ✔️ Solo lectura + auditoría
+- ❌ No se permite reabrir
+- ❌ No se permite eliminar
+- ✔️ Solo lectura
+- ✔️ Correcciones administrativas limitadas y auditadas
 
 ---
 
-## 📜 7. Auditoría / Historial (Obligatoria)
+## 📜 7. Auditoría / Historial (CORE)
 
-Modelo `TicketHistory`:
+`TicketHistory` es **append-only**:
 
-- Append-only
-- Una entrada por acción válida
+- Inmutable
 - No editable
 - No eliminable
+- Una entrada por acción válida
 
 ```ts
 createHistory({
@@ -165,63 +172,52 @@ createHistory({
 })
 ````
 
-❌ Si falla el historial → rollback completo
+❌ Si el historial falla → rollback total
 
 ---
 
-## 🧠 8. Reglas de Negocio Críticas
+## 🧠 8. Reglas de Negocio No Negociables
 
-| Regla                       | Aplicación |
-| --------------------------- | ---------- |
-| Backend es árbitro absoluto | Global     |
-| No reabrir tickets          | Dominio    |
-| No eliminación física       | Global     |
-| No cambiar estados directo  | Dominio    |
-| Historial obligatorio       | Dominio    |
-
-🟢 Reglas aplicadas donde corresponde
+| Regla                        | Nivel   |
+| ---------------------------- | ------- |
+| Backend es árbitro absoluto  | Sistema |
+| No reabrir tickets           | Dominio |
+| No DELETE físico             | Global  |
+| No cambio directo de estados | Dominio |
+| Historial obligatorio        | Dominio |
 
 ---
 
-## 👥 9. Modelo Cliente (Definitivo)
+## 👥 9. Modelo Cliente (Real y Definitivo)
 
-### Modelo `Client`
+Principios:
 
-```prisma
-model Client {
-  rfc String @id
-  companyName  String
-  businessName String?
-  location     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+* El cliente **debe existir**
+* El cliente **debe estar activo**
+* El contrato **debe estar activo**
+* El backend **no crea clientes implícitos**
 
-  tickets Ticket[]
-}
-```
+📌 Alta / baja / importación:
 
-### Relación con Ticket
-
-```prisma
-clientRfc String?
-client    Client? @relation(fields: [clientRfc], references: [rfc])
-```
-
-✔️ RFC como identificador único
-✔️ No destructivo
-✔️ Escalable
+* Rol **ADMIN**
+* Procesos controlados
+* Fuera del frontend
 
 ---
 
-## 🔄 10. Flujo Cliente al Crear Ticket
+## 🔄 10. Flujo al Crear Ticket
 
-* Si RFC existe → se reutiliza
-* Si no existe → se crea automáticamente
-* El frontend **no decide**
+1. Validar RFC
+2. Validar cliente activo
+3. Validar contrato activo
+4. Crear ticket
+5. Registrar historial
+
+📌 El frontend **no decide ni crea entidades**
 
 ---
 
-## 📡 11. Endpoints Principales (Congelados)
+## 📡 11. Endpoints Congelados (v2.0.0)
 
 ### Auth
 
@@ -242,62 +238,33 @@ client    Client? @relation(fields: [clientRfc], references: [rfc])
 
 * `GET /clients/:rfc`
 
-📌 Contrato congelado v2.0.0
-
----
-
-## 🌍 12. Variables de Entorno
-
-```env
-NODE_ENV=production
-PORT=3000
-JWT_SECRET=
-JWT_EXPIRES=8h
-DATABASE_URL=
-CORS_ORIGIN=
-```
-
-📌 Nunca subir `.env` reales
-📌 JWT_SECRET debe rotarse en producción
-
----
-
-## 🛠️ 13. Instalación y Ejecución
-
-```bash
-npm install
-npm run start:dev
-```
-
-Producción:
-
-```bash
-npm run build
-npm run start:prod
-```
+📌 Estos endpoints **no cambiarán en v2.0.0**
 
 ---
 
 ## 🔒 Estado del Artefacto
 
-✔️ Contratos congelados
-✔️ Modelo de dominio definido
-✔️ Auditoría obligatoria
-✔️ Backend listo para frontend real
+* 🟡 En desarrollo controlado
+* ✔️ Contratos congelados
+* ✔️ Dominio alineado a Prisma
+* ✔️ Auditoría definida
+* ✔️ Preparado para v3.0.0
+* ⏳ Pendiente despliegue on-prem
 
 ---
 
-## 🏁 Conclusión
+## 🏁 Nota Final
 
-Este backend **no es un prototipo**.
+Este backend:
 
-Es un **sistema empresarial real**, diseñado para:
+* **No es un prototipo**
+* **No es aún producción**
+* Es un **core empresarial en cierre técnico**
+* Avanza según **cronograma explícito**
+* Está diseñado para **no romperse al crecer**
 
-* crecer
-* auditarse
-* integrarse
-* mantenerse sin deuda técnica
+📌 **Backend v2.0.0 — Desarrollo Controlado**
 
-📌 **Backend v2.0.0 — CONGELADO**
+
 
 ---

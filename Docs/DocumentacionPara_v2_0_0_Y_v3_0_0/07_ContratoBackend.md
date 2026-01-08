@@ -1,12 +1,24 @@
 
 ---
+
 # 🧩 Contratos de Backend — Gestor de Tickets DATRA
 
 **Versión:** v2.0.0  
 **Nivel:** Dominio / Aplicación  
-**Estado:** 🔒 CONGELADO  
+**Estado:** 🔒 CONTRATO CONGELADO (Implementación en desarrollo controlado)  
 **Autoridad:** Backend  
 **Frontend:** Consumidor pasivo (no decide)
+
+---
+
+## ⚠️ Declaración de Estado Real
+
+Este documento define **contratos de dominio y aplicación** que:
+
+- ✔️ **NO cambian durante v2.0.0**
+- ✔️ Son válidos para integración frontend
+- ✔️ Están diseñados pensando ya en v3.0.0
+- ⏳ Se encuentran **en fase de implementación y endurecimiento**
 
 ---
 
@@ -22,7 +34,7 @@
   - genera historial
 
 📌 **Sin historial → rollback total**  
-📌 No existen excepciones en producción
+📌 No existen atajos ni excepciones por capa
 
 ---
 
@@ -31,7 +43,7 @@
 ❌ No existe endpoint genérico para cambiar estado  
 ❌ No se aceptan estados enviados desde frontend  
 
-✅ El backend expone **acciones de dominio explícitas**:
+✅ El backend expone **acciones de dominio explícitas**, estables y versionadas:
 
 - Crear ticket
 - Resolver ticket
@@ -47,9 +59,11 @@ Cada acción:
 4. Registra evento en `TicketHistory`
 5. Confirma transacción
 
+📌 Este flujo **no depende del frontend**
+
 ---
 
-## 3️⃣ Estados y transiciones válidas
+## 3️⃣ Estados y transiciones válidas (CONTRATO DE DOMINIO)
 
 ```
 
@@ -61,6 +75,9 @@ RESOLVED → CANCELLED
 
 📌 `CLOSED` y `CANCELLED` son **estados terminales**  
 📌 Cualquier otra transición es **error de dominio**
+
+❌ No existe reapertura  
+❌ No existe bypass de `RESOLVED`
 
 ---
 
@@ -79,7 +96,8 @@ RESOLVED → CANCELLED
 - Evento `CREATED`
 
 **Validaciones:**
-- Cliente existente y activo
+- Cliente existente
+- Cliente activo
 - Contrato de servicio activo
 
 **Errores de dominio:**
@@ -212,14 +230,18 @@ Toda acción válida genera **exactamente un evento**:
 | Cancelar   | CANCELLED      |
 | Actualizar | UPDATED        |
 
+📌 El historial:
+
 * No se edita
 * No se elimina
 * No se corrige
-* Si falla → rollback total
+* No se “recalcula”
+
+❌ Si falla → rollback total
 
 ---
 
-## 7️⃣ Errores de dominio (no HTTP genéricos)
+## 7️⃣ Errores de dominio (agnósticos a HTTP)
 
 | Error                   | Significado                    |
 | ----------------------- | ------------------------------ |
@@ -230,8 +252,8 @@ Toda acción válida genera **exactamente un evento**:
 | ServiceContractInactive | Contrato desactivado           |
 | ForbiddenFieldUpdate    | Campo no editable              |
 
-📌 Se mapean luego a HTTP (`403`, `409`, `422`)
 📌 El dominio **no conoce HTTP**
+📌 El mapeo a `403 / 409 / 422` es responsabilidad de la capa API
 
 ---
 
@@ -252,14 +274,15 @@ El backend **NUNCA**:
 ## 🔒 Estado del contrato
 
 📌 **CONTRATO CONGELADO — v2.0.0**
-📌 Fuente única de verdad del backend
+📌 Implementación en desarrollo controlado
 📌 Alineado con:
 
 * Modelo Prisma v2.0.0
 * Estados y transiciones oficiales
-* Endpoints definitivos
-* Auditoría, KPIs y operación real
+* Endpoints congelados
+* Auditoría y KPIs reales
+* Roadmap enero–febrero 2026
 
-📌 Cualquier cambio → **nueva versión mayor**
+📌 Cualquier cambio estructural → **v3.0.0**
 
 ---

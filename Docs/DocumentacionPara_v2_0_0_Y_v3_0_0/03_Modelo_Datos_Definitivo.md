@@ -4,7 +4,6 @@
 # 📄 Modelo de Datos Definitivo — Gestor de Tickets DATRA (v2.0.0)
 
 **Estado:** CONGELADO (Core del sistema)
-
 **Responsable técnico:** Carlos Armenta
 **Fecha:** Enero 2026
 
@@ -12,27 +11,69 @@
 
 ## 🎯 Propósito del documento
 
-Este documento define el **modelo de datos definitivo** del sistema **Gestor de Tickets DATRA**, a nivel **conceptual y de dominio**, independiente de cualquier implementación técnica (Prisma, SQL, NestJS, etc.).
+Este documento define el **modelo de datos definitivo** del sistema **Gestor de Tickets DATRA**, alineado **estrictamente** al schema Prisma v2.0.0 congelado.
 
-📌 Este modelo:
+📌 Este documento:
 
-* Es la **fuente de verdad del core del sistema**
-* No debe reinterpretarse desde frontend
-* No depende de herramientas específicas
-* Está diseñado para **operación real**, auditoría y métricas
+* Es la **fuente única de verdad del dominio**
+* Describe **exactamente** lo que existe en base de datos
+* No introduce abstracciones externas
+* No define reglas que no estén respaldadas por el modelo
+* Es válido para auditoría, operación y métricas reales
 
-Cualquier implementación técnica **debe ajustarse a este documento**, no al revés.
+Cualquier implementación (backend, frontend, integraciones) **debe ajustarse a este modelo**, no al revés.
 
 ---
 
 ## 🧠 Principios rectores del modelo
 
-1. **El backend y la base de datos son el sistema**
-2. **Nada crítico vive solo en frontend**
-3. **Cancelar ≠ borrar**
-4. **Todo cambio relevante genera historial**
-5. **Auditoría y métricas comparten la misma fuente**
-6. **El modelo prioriza integridad y trazabilidad sobre comodidad**
+1. El **backend y la base de datos representan el sistema**
+2. Ninguna decisión crítica vive solo en frontend
+3. No existen eliminaciones físicas
+4. Todo cambio relevante queda registrado
+5. Auditoría y métricas comparten la misma fuente
+6. La trazabilidad tiene prioridad sobre la flexibilidad
+
+---
+
+## 👤 Entidad: User
+
+### Descripción
+
+Representa a los **usuarios internos del sistema** que interactúan con tickets y eventos.
+
+Los usuarios se mantienen como **referencias históricas**, incluso cuando dejan de operar.
+
+---
+
+### Campos
+
+* `id` (PK): Identificador interno
+* `name`: Nombre del usuario
+* `email` (unique): Identificador de autenticación
+* `password`: Credencial cifrada
+* `role`: Rol operativo (`ADMIN`, `TECNICO`, `INGENIERO`)
+* `active`: Indica si el usuario puede operar
+* `deactivatedAt`: Fecha de desactivación (si aplica)
+* `createdAt`: Fecha de creación
+* `updatedAt`: Última actualización
+
+---
+
+### Relaciones
+
+* **User 1:N Ticket (createdBy)**
+* **User 1:N Ticket (closedBy)**
+* **User 1:N Ticket (cancelledBy)**
+* **User 1:N TicketHistory**
+
+---
+
+### Reglas de dominio
+
+* Un usuario **no se elimina físicamente**
+* La desactivación **no rompe referencias históricas**
+* Los eventos históricos conservan al usuario que los ejecutó
 
 ---
 
@@ -40,9 +81,11 @@ Cualquier implementación técnica **debe ajustarse a este documento**, no al re
 
 ### Descripción
 
-Representa a los **clientes reales de DATRA**, identificados legal y operativamente.
+Representa a los **clientes reales de DATRA**, identificados fiscal y operativamente.
 
-Es una entidad **estable**, diseñada para agrupar tickets, contratos de servicio y permitir auditoría histórica.
+Es una entidad **estable**, diseñada para agrupar contratos de servicio y tickets, preservando trazabilidad histórica.
+
+---
 
 ### Campos
 
@@ -50,19 +93,27 @@ Es una entidad **estable**, diseñada para agrupar tickets, contratos de servici
 * `clientNumber` (unique): Identificador interno de cliente
 * `companyName`: Razón social
 * `businessName`: Nombre comercial
-* `location`: Ubicación principal del cliente
-* `createdAt`: Fecha de creación del registro
+* `location`: Ubicación principal
+* `active`: Estado operativo del cliente
+* `deactivatedAt`: Fecha de desactivación (si aplica)
+* `createdAt`: Fecha de creación
 * `updatedAt`: Última actualización
+
+---
 
 ### Relaciones
 
 * **Client 1:N ServiceContract**
 * **Client 1:N Ticket**
 
-### Reglas importantes
+---
 
-* Un cliente **no se elimina** si tiene tickets asociados
-* El RFC se considera **dato estable e inmutable**
+### Reglas de dominio
+
+* El RFC es **inmutable**
+* Un cliente **no se elimina**
+* Un cliente puede desactivarse sin perder historial
+* La desactivación **no elimina contratos ni tickets**
 
 ---
 
@@ -72,26 +123,36 @@ Es una entidad **estable**, diseñada para agrupar tickets, contratos de servici
 
 Representa un **servicio contratado específico** por un cliente.
 
-Esta entidad define el **contexto operativo real** del ticket: prioridad, SLA y criticidad.
+Define el **contexto contractual** que afecta la operación del ticket: prioridad y SLA.
+
+---
 
 ### Campos
 
-* `id` (PK): Identificador único del contrato
-* `name`: Nombre del servicio (catálogo controlado)
-* `priorityLevel`: Nivel de prioridad operativa
-* `slaHours`: Horas de SLA comprometidas
-* `clientRfc` (FK): Cliente al que pertenece el contrato
+* `id` (PK): Identificador único
+* `name`: Tipo de servicio (ENUM `ServiceContractName`)
+* `priorityLevel`: Prioridad contractual (entero, menor = más prioridad)
+* `slaHours`: SLA comprometido en horas
 * `active`: Indica si el contrato está vigente
+* `deactivatedAt`: Fecha de desactivación
+* `clientRfc` (FK): Cliente propietario
+* `createdAt`: Fecha de creación
+* `updatedAt`: Última actualización
+
+---
 
 ### Relaciones
 
 * **ServiceContract N:1 Client**
 * **ServiceContract 1:N Ticket**
 
-### Reglas importantes
+---
 
-* Un contrato puede desactivarse sin perder historial
-* La prioridad del contrato **no sustituye** el impacto del ticket
+### Reglas de dominio
+
+* Un contrato **no se elimina**
+* Puede desactivarse sin afectar historial
+* La prioridad contractual **no sustituye** el impacto del ticket
 
 ---
 
@@ -99,79 +160,82 @@ Esta entidad define el **contexto operativo real** del ticket: prioridad, SLA y 
 
 ### Descripción
 
-Entidad central del sistema. Representa un **incidente operativo real** que debe ser atendido, resuelto, cerrado o cancelado.
+Entidad central del sistema. Representa un **incidente operativo real** que atraviesa un ciclo de vida controlado.
 
-Un ticket tiene un **ciclo de vida finito**, nunca se borra y todo su historial debe poder reconstruirse.
+Un ticket **nunca se elimina** y su estado siempre es explícito.
 
 ---
 
-### Estados oficiales
+### Estados oficiales (`TicketStatus`)
 
 * `OPEN`
 * `RESOLVED`
 * `CLOSED`
 * `CANCELLED`
 
-📌 Estados intermedios, semáforos o clasificaciones visuales **no son estados del sistema**.
+📌 Estados visuales, semáforos o clasificaciones **no forman parte del modelo**.
 
 ---
 
-### Campos
+### Campos principales
 
 * `id` (PK): Identificador interno
-* `code`: Código legible del ticket
-* `status`: Estado actual del ticket
+* `code` (unique): Código legible del ticket
+* `status`: Estado actual
+* `source`: Origen del ticket (`MANUAL`, `LIBRENMS`, `IMPORTED`)
 
-#### Timestamps
+---
+
+### Timestamps del ciclo de vida
 
 * `createdAt`: Persistencia del registro
-* `openedAt`: Inicio efectivo del ticket
-* `resolvedAt`: Fecha en que el ticket pasa a estado **RESOLVED**
-* `closedAt`: Fecha de cierre definitivo
-* `cancelledAt`: Fecha de cancelación
+* `openedAt`: Apertura efectiva
+* `resolvedAt`: Paso a estado `RESOLVED`
+* `closedAt`: Cierre definitivo
+* `cancelledAt`: Cancelación
 
 📌 Un ticket puede estar **RESOLVED sin estar CLOSED**.
 
 ---
 
-#### Contexto de negocio
+### Contexto de negocio
 
-* `clientRfc` (FK): Cliente asociado
+* `clientRfc` (FK): Cliente afectado
 * `serviceContractId` (FK): Servicio afectado
-* `impactLevel`: Impacto real del incidente
+* `impactLevel`: Impacto del incidente
 * `problemDescription`: Descripción del problema
 * `eventLocation`: Ubicación del evento
+* `estimatedStart`: Inicio estimado del incidente
 
 ---
 
-#### Responsabilidad
+### Información auditable
 
-* `createdById`: Usuario que crea el ticket
-* `closedById`: Usuario que cierra el ticket
-* `cancelledById`: Usuario que cancela el ticket
-
----
-
-### Reglas importantes
-
-* Un ticket **nunca se elimina**
-* Cancelar un ticket **no borra información**
-* Todo cambio relevante genera historial
+* `requestedBy`: Solicitante declarado
+* `contactInfo`: Información de contacto
+* `initialFindings`: Hallazgos iniciales
+* `probableRootCause`: Causa probable
+* `actionsTaken`: Acciones realizadas
+* `serviceStatus`: Estado del servicio al cierre
+* `additionalNotes`: Notas adicionales
+* `correctiveAction`: Indica si hubo acción correctiva
 
 ---
 
-### Estados terminales
+### Responsabilidad de usuarios
 
-Los estados terminales del sistema son:
+* `createdById`
+* `closedById`
+* `cancelledById`
 
-* `CLOSED`
-* `CANCELLED`
+---
 
-Un ticket en estado terminal:
+### Reglas de dominio
 
-* No puede cambiar de estado
-* No genera nuevos eventos de estado
-* Solo es accesible para auditoría y métricas
+* Un ticket **no se elimina**
+* Cancelar ≠ borrar
+* Los estados `CLOSED` y `CANCELLED` son terminales
+* Los tickets terminales no cambian de estado
 
 ---
 
@@ -179,14 +243,9 @@ Un ticket en estado terminal:
 
 ### Descripción
 
-Registra **todas las acciones relevantes** realizadas sobre un ticket.
+Registra **todos los eventos relevantes** ocurridos sobre un ticket.
 
-Es la **fuente única de verdad** para:
-
-* Auditoría
-* KPIs
-* Métricas
-* Reconstrucción histórica
+Es la **fuente única de verdad** para auditoría, métricas y reconstrucción histórica.
 
 ---
 
@@ -194,81 +253,55 @@ Es la **fuente única de verdad** para:
 
 * `id` (PK): Identificador del evento
 * `ticketId` (FK): Ticket afectado
-* `eventType`: Tipo de evento ocurrido
+* `eventType`: Tipo de evento
 * `fromStatus`: Estado anterior (si aplica)
-* `toStatus`: Estado nuevo (si aplica)
-* `performedById`: Usuario que realizó la acción
-* `metadata`: Información adicional en formato JSON
+* `toStatus`: Estado resultante (si aplica)
+* `performedById`: Usuario que ejecutó la acción
+* `metadata`: Información adicional (JSON)
 * `createdAt`: Fecha y hora del evento
 
-📌 `performedById` puede ser **null** cuando el evento es generado por el sistema (automatizaciones, importaciones, LibreNMS).
+📌 `performedById` puede ser **null** para eventos del sistema.
 
 ---
 
-### Tipos de evento (eventType)
+### Tipos de evento (`TicketEventType`)
 
 * `CREATED`
 * `STATUS_CHANGED`
+* `UPDATED`
 * `CLOSED`
 * `CANCELLED`
-* `UPDATED`
 * `COMMENT_ADDED`
 * `IMPORTED_FROM_LIBRENMS`
 
-📌 **RESOLVED es un estado, no un evento**.
+📌 `RESOLVED` es un **estado**, no un evento.
 
 ---
 
-### Reglas importantes
+### Reglas de dominio
 
-* El historial es **append-only** (no se edita ni se borra)
-* Cada cambio relevante del ticket genera un evento
-* Auditoría y métricas se calculan exclusivamente desde aquí
-
----
-
-## 👤 Entidad: User (referencia)
-
-### Regla de dominio
-
-Los usuarios:
-
-* **No se eliminan físicamente**
-* Se desactivan cuando dejan de operar
-* Permanecen referenciables para auditoría
+* El historial es **append-only**
+* No se edita ni se borra
+* Cada cambio relevante genera un evento
+* Toda auditoría se basa exclusivamente en este registro
 
 ---
 
 ## 📊 KPIs y métricas
 
-Todos los KPIs del sistema se derivan **exclusivamente** de:
+Todas las métricas se derivan **exclusivamente** de:
 
 * `Ticket`
 * `TicketHistory`
 
-Ejemplos:
-
-* Tiempo OPEN → RESOLVED
-* Tiempo RESOLVED → CLOSED
-* Tiempo total del ticket
-* Tiempo por estado
-* Volumen por cliente
-* Volumen por servicio
-* Tickets cancelados vs cerrados
-
-📌 No existen tablas de métricas separadas.
+No existen tablas de métricas ni estados calculados persistidos.
 
 ---
 
 ## 🔒 Estado del modelo
 
-📌 **Modelo definitivo congelado para v2.0.0**
-📌 Cualquier cambio estructural requiere revisión de arquitectura
-📌 Prisma y la base de datos deben implementarse conforme a este documento
-
----
-
-> “Primero un sistema que funcione todos los días.
-> Después, uno que se automatice.”
+📌 Modelo **definitivo congelado en v2.0.0**
+📌 Compatible con v3.0.0 sin cambios estructurales
+📌 Cualquier modificación requiere revisión de arquitectura
 
 ---

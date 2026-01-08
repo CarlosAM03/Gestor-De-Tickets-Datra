@@ -120,7 +120,7 @@ Las siguientes transiciones **deben ser rechazadas por el backend**, sin excepci
 
 * Cambio de estado a `RESOLVED`
 * Seteo de `resolvedAt`
-* Evento `STATUS_CHANGED`
+* Evento `STATUS_CHANGED` (`fromStatus=OPEN`, `toStatus=RESOLVED`)
 
 📌 Resolver es una acción **técnica**, no administrativa.
 📌 `RESOLVED` **no es un estado terminal**.
@@ -244,14 +244,29 @@ Se crea un **nuevo ticket**.
 ### Caso 5 — Error humano grave
 
 * El estado **no se corrige**
-* El error se documenta en historial
+* El error se documenta en historial (`UPDATED` + metadata)
 * Se crea un nuevo ticket
 
 📌 El sistema prioriza **trazabilidad**, no conveniencia.
 
 ---
 
-## 8️⃣ Principios no negociables
+## 8️⃣ Compatibilidad futura (v3.0.0)
+
+📌 Este documento **permanece válido en v3.0.0** bajo las siguientes reglas:
+
+* No se agregan nuevos estados al ciclo de vida
+* No se modifican transiciones existentes
+* Nuevos comportamientos se expresan mediante:
+
+  * Nuevos `eventType` **solo si hay migración formal**
+  * O `UPDATED` + metadata estructurada
+
+📌 El core del ciclo de vida **no se versiona**, se preserva.
+
+---
+
+## 9️⃣ Principios no negociables
 
 1. El ciclo de vida es finito
 2. Los estados terminales no mutan
@@ -264,8 +279,8 @@ Se crea un **nuevo ticket**.
 ## 🔒 Estado del artefacto
 
 📌 Estados y transiciones **CONGELADOS para v2.0.0**
-📌 Reglas listas para implementación técnica
-📌 A prueba de auditoría, KPIs y operación real
+📌 Alineado con modelo de datos real
+📌 Compatible hacia adelante con v3.0.0
+📌 Apto para auditoría, KPIs y operación real
 
 ---
-
