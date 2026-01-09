@@ -12,9 +12,7 @@ Sin prisas, sin saturarte.
 
 # 📘 DOCUMENTACIÓN TÉCNICA — DECISIONES Y RIESGOS CONOCIDOS
 
-**Sprint 4 — Día 1**
-
-Esta sección debe quedar **por escrito** en tu documentación técnica (README backend o `/docs/architecture.md`).
+**Sprint 4 — Día 1 (30/12)**
 
 ---
 
