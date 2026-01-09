@@ -1,5 +1,8 @@
 import { useMemo, useEffect, useState } from 'react';
-import { Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
+import { Card, Row, Col, Badge, Spinner, Alert, ButtonGroup, Button } from 'react-bootstrap';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { format, startOfWeek, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { getTickets } from '@/api/tickets.api';
 import type { Ticket } from '@/types/ticket.types';
 
@@ -12,6 +15,7 @@ export default function TicketsAnalyticsDashboard() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month'>('day');
 
   // Cargar tickets reales al montar el componente
   useEffect(() => {
@@ -114,6 +118,79 @@ export default function TicketsAnalyticsDashboard() {
     const remainingHours = Math.round(hours % 24);
     return `${days}d ${remainingHours}h`;
   };
+
+  // 📊 DATOS PARA LA GRÁFICA
+  const chartData = useMemo(() => {
+    if (tickets.length === 0) return [];
+
+    // Función para obtener la clave de agrupación según el período
+    const getGroupKey = (date: Date) => {
+      switch (timePeriod) {
+        case 'day':
+          return format(date, 'yyyy-MM-dd');
+        case 'week':
+          const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Lunes como inicio de semana
+          return format(weekStart, "'Sem' ww yyyy", { locale: es });
+        case 'month':
+          return format(date, 'yyyy-MM');
+        default:
+          return format(date, 'yyyy-MM-dd');
+      }
+    };
+
+    // Función para obtener la etiqueta legible para el eje X
+    const getLabel = (date: Date) => {
+      switch (timePeriod) {
+        case 'day':
+          return format(date, 'dd/MM', { locale: es });
+        case 'week':
+          const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+          return format(weekStart, "'Sem' ww", { locale: es });
+        case 'month':
+          return format(date, 'MMM yyyy', { locale: es });
+        default:
+          return format(date, 'dd/MM', { locale: es });
+      }
+    };
+
+    // Agrupar tickets por período
+    const grouped = tickets.reduce((acc, ticket) => {
+      const date = parseISO(ticket.openedAt);
+      const key = getGroupKey(date);
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Convertir a array ordenado para la gráfica
+    return Object.entries(grouped)
+      .map(([key, count]) => {
+        // Para obtener la fecha representativa del grupo
+        let representativeDate: Date;
+        if (timePeriod === 'day') {
+          representativeDate = parseISO(key);
+        } else if (timePeriod === 'week') {
+          // Extraer el número de semana y año del key
+          const match = key.match(/Sem (\d+) (\d+)/);
+          if (match) {
+            const weekNum = parseInt(match[1]);
+            const year = parseInt(match[2]);
+            representativeDate = new Date(year, 0, 1 + (weekNum - 1) * 7);
+          } else {
+            representativeDate = new Date();
+          }
+        } else { // month
+          representativeDate = new Date(key + '-01');
+        }
+
+        return {
+          date: key,
+          label: getLabel(representativeDate),
+          tickets: count,
+          fullDate: representativeDate,
+        };
+      })
+      .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime());
+  }, [tickets, timePeriod]);
 
   // Mostrar loading
   if (loading) {
@@ -338,6 +415,68 @@ export default function TicketsAnalyticsDashboard() {
                       </div>
                     </div>
                   ))}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ======================
+          GRÁFICA DE TENDENCIA
+      ====================== */}
+      <Row className="g-3 mt-4">
+        <Col xs={12}>
+          <Card className="chart-container">
+            <Card.Header className="chart-header">
+              <h5 className="chart-title">Tendencia de Creación de Tickets</h5>
+              <ButtonGroup size="sm" className="time-selector">
+                <Button
+                  variant={timePeriod === 'day' ? 'primary' : 'outline-primary'}
+                  onClick={() => setTimePeriod('day')}
+                >
+                  Por Día
+                </Button>
+                <Button
+                  variant={timePeriod === 'week' ? 'primary' : 'outline-primary'}
+                  onClick={() => setTimePeriod('week')}
+                >
+                  Por Semana
+                </Button>
+                <Button
+                  variant={timePeriod === 'month' ? 'primary' : 'outline-primary'}
+                  onClick={() => setTimePeriod('month')}
+                >
+                  Por Mes
+                </Button>
+              </ButtonGroup>
+            </Card.Header>
+            <Card.Body>
+              <div style={{ width: '100%', height: '400px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      labelFormatter={(label) => `Período: ${label}`}
+                      formatter={(value) => [value, 'Tickets']}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="tickets"
+                      stroke="#0d6efd"
+                      strokeWidth={3}
+                      dot={{ fill: '#0d6efd', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#0d6efd', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </Card.Body>
           </Card>

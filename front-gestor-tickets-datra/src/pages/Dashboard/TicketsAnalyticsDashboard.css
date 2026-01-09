@@ -88,3 +88,60 @@
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
 }
+
+/* ======================
+   GRÁFICA DE TENDENCIA
+====================== */
+.chart-container {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chart-title {
+  margin: 0;
+  color: #495057;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.time-selector .btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.time-selector .btn:hover {
+  transform: translateY(-1px);
+}
+
+.time-selector .btn-outline-primary {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.time-selector .btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+/* Responsive para gráfica */
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .time-selector {
+    justify-content: center;
+  }
+}
