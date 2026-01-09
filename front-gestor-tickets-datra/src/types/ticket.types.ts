@@ -186,3 +186,22 @@ export interface GetTicketsParams {
   to?: string;
   search?: string;
 }
+
+/* =====================================================
+   HISTORIAL DE TICKETS
+===================================================== */
+
+export interface TicketHistory {
+  id: number;
+  ticketId: number;
+  clientRfc?: string;
+  action: string;
+  fromValue?: string;
+  toValue?: string;
+  performedBy?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+}

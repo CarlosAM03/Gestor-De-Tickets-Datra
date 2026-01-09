@@ -1,4 +1,9 @@
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -8,35 +13,42 @@ if (!API_URL) {
 
 const http: AxiosInstance = axios.create({
   baseURL: API_URL,
-  timeout: 10000, // 10s estándar empresarial
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 /**
- * Interceptor de REQUEST
+ * =============================
+ * REQUEST INTERCEPTOR
  * Adjunta JWT automáticamente
+ * =============================
  */
 http.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token');
 
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.set(
+        'Authorization',
+        `Bearer ${token}`,
+      );
     }
 
     return config;
   },
-  (error) => Promise.reject(error),
+  (error: AxiosError) => Promise.reject(error),
 );
 
 /**
- * Interceptor de RESPONSE
+ * =============================
+ * RESPONSE INTERCEPTOR
  * Manejo global de errores
+ * =============================
  */
 http.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => response,
   (error: AxiosError) => {
     const status = error.response?.status;
     const requestUrl = error.config?.url ?? '';
@@ -44,17 +56,16 @@ http.interceptors.response.use(
     const isAuthLogin = requestUrl.includes('/auth/login');
 
     if (status === 401 && !isAuthLogin) {
-      // ⚠️ 401 fuera del login = sesión inválida o expirada
+      // Sesión inválida o expirada
       localStorage.clear();
 
       // Redirección dura para limpiar estado
       window.location.replace('/login');
     }
 
-    // ⚠️ Importante: SIEMPRE propagar el error
+    // propagacion de error
     return Promise.reject(error);
   },
 );
-
 
 export default http;

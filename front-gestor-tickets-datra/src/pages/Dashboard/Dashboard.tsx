@@ -12,6 +12,7 @@ import type {
 } from '@/types/ticket.types';
 
 import './Dashboard.css';
+import vacio from '@/assets/vacio.png';
 
 /* =============================
    LABELS Y COLORES
@@ -116,7 +117,7 @@ export default function Dashboard() {
   if (!user) return null;
 
   const canViewHistory =
-    user.role === 'ADMIN' || user.role === 'INGENIERO';
+    user.role === 'ADMIN' || user.role === 'INGENIERO' || user.role === 'TECNICO';
 
   return (
     <div className="dashboard">
@@ -224,9 +225,18 @@ export default function Dashboard() {
             {canViewHistory && (
               <button
                 className="btn btn-outline-secondary w-100"
-              /*onClick={() => navigate('/historial')} //descomentar cuando se cree la ruta */
+                onClick={() => navigate('/historial')}
               >
                 Ver historial
+              </button>
+            )}
+
+            {canViewHistory && (
+              <button
+                className="btn btn-outline-primary w-100 mt-2"
+                onClick={() => navigate('/dashboard/analytics')}
+              >
+                📊 Ver análisis
               </button>
             )}
           </Card>
@@ -247,7 +257,7 @@ export default function Dashboard() {
               <><p className="text-muted">
                 No hay actividad reciente
               </p><img
-                  src="/src/assets/vacio.png"
+                  src={vacio}
                   alt="Datra"
                   className="ticket-vacio" /></>
             )}

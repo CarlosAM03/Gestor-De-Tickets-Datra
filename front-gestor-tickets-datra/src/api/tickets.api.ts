@@ -1,6 +1,7 @@
 import http from './http';
 import type {
   Ticket,
+  TicketHistory,
   CreateTicketDto,
   UpdateTicketDto,
   TicketStatus,
@@ -109,8 +110,8 @@ export const rejectTicketDeletion = async (id: number) => {
 /* =====================================================
    ADMIN – HISTORY
 ===================================================== */
-export const getTicketHistory = async (id: number) => {
-  const { data } = await http.get(
+export const getTicketHistory = async (id: number): Promise<TicketHistory[]> => {
+  const { data } = await http.get<TicketHistory[]>(
     `/tickets/${id}/history`,
   );
   return data;
