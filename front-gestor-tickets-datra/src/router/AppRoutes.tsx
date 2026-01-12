@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import Login from '@/pages/Login/Login';
 import Dashboard from '@/pages/Dashboard/Dashboard';
+import TicketsAnalyticsDashboard from '@/pages/Dashboard/TicketsAnalyticsDashboard';
 
 import Users from '@/pages/Users/Users';
 import UserCreate from '@/pages/Users/UserCreate';
@@ -11,6 +12,8 @@ import TicketsList from '@/pages/Tickets/TicketsList';
 import TicketView from '@/pages/Tickets/TicketView';
 import TicketCreate from '@/pages/Tickets/TicketCreate';
 import TicketEdit from '@/pages/Tickets/TicketEdit';
+
+import History from '@/pages/History/History';
 
 import MainLayout from '@/layouts/MainLayout';
 import RequireAuth from '@/auth/RequireAuth';
@@ -34,6 +37,16 @@ export default function AppRoutes() {
 
           {/* Dashboard */}
           <Route path="dashboard" element={<Dashboard />} />
+
+          {/* Analytics Dashboard */}
+          <Route
+            path="dashboard/analytics"
+            element={
+              <RequireRole allowedRoles={['ADMIN', 'INGENIERO', 'TECNICO']}>
+                <TicketsAnalyticsDashboard />
+              </RequireRole>
+            }
+          />
 
           {/* =======================
               USERS (ADMIN)
@@ -64,6 +77,18 @@ export default function AppRoutes() {
           <Route path="tickets/create" element={<TicketCreate />} />
           <Route path="tickets/:id" element={<TicketView />} />
           <Route path="tickets/:id/edit" element={<TicketEdit />} />
+
+          {/* =======================
+              HISTORY (ADMIN/ENGINEER)
+          ======================= */}
+          <Route
+            path="historial"
+            element={
+              <RequireRole allowedRoles={['ADMIN', 'INGENIERO']}>
+                <History />
+              </RequireRole>
+            }
+          />
         </Route>
       </Route>
 

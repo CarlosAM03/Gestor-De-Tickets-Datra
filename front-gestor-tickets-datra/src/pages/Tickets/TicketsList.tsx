@@ -95,7 +95,7 @@ export default function TicketList() {
         user.role === 'ADMIN'
           ? data
           : data.filter(
-              (t) =>
+              (t: Ticket) =>
                 !t.deleteRequested ||
                 t.createdBy.id === user.id,
             ),

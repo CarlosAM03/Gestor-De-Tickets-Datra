@@ -8,6 +8,7 @@ import { useAuth } from '@/auth/useAuth';
 import type { Ticket, TicketStatus } from '@/types/ticket.types';
 
 import './TicketView.css';
+import siteLogo from '@/assets/datra-logo.png';
 
 /* =============================
    Labels y colores
@@ -147,7 +148,7 @@ export default function TicketView() {
         <div className="ticket-header">
           <div className="ticket-header-left">
             <img
-              src="/src/assets/datra-logo.png"
+              src={siteLogo}
               alt="Datra"
               className="ticket-logo"
             />

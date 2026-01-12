@@ -21,6 +21,15 @@ const EMPTY_CLIENT: TicketClient = {
   location: '',
 };
 
+// 🔥 MAPPER: impactLevel → priority (para backend)
+const impactToPriorityMap: Record<string, 'LOW' | 'MEDIUM' | 'HIGH'> = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'HIGH',
+  INFO: 'LOW',
+};
+
 
 /* =============================
    Props
@@ -100,28 +109,36 @@ function normalizePayload(
   mode: 'create' | 'edit',
   values: TicketFormValues
 ): TicketFormValues {
-  const payload: TicketFormValues = { ...values };
+  const payload: any = { ...values };
+
+  // mapear impacto → priority
+  if (payload.impactLevel) {
+    payload.priority = impactToPriorityMap[payload.impactLevel];
+    delete payload.impactLevel;
+  }
+
+  // ❌ campos que backend no acepta
+  delete payload.clientType;
+  delete payload.eventLocation;
 
   if (mode === 'edit') {
-    // backend no acepta client en PATCH
     delete payload.client;
 
-    // limpiar campos vacíos (evita PATCH inútil)
     Object.keys(payload).forEach(key => {
-      const value = payload[key as keyof TicketFormValues];
       if (
-        value === undefined ||
-        value === null ||
-        value === ''
+        payload[key] === undefined ||
+        payload[key] === null ||
+        payload[key] === ''
       ) {
-        delete payload[key as keyof TicketFormValues];
+        delete payload[key];
       }
     });
 
     return payload;
   }
 
-  // CREATE
+
+
   const client = values.client;
   if (
     !client ||
