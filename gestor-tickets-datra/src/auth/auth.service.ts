@@ -1,8 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from '@nestjs/config';
+import { DomainError } from '../common/errors/domain.error';
+import { AppLogger } from '../common/logger/app.logger';
 
 @Injectable()
 export class AuthService {
@@ -18,14 +20,21 @@ export class AuthService {
   private async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
 
-    if (!user || !user.active) {
-      throw new UnauthorizedException('Credenciales inválidas');
+    if (!user) {
+      AppLogger.error('Login fallido - usuario inexistente', { email });
+      throw new DomainError('Credenciales inválidas', 'UNAUTHORIZED');
+    }
+
+    if (!user.active) {
+      AppLogger.error('Login bloqueado - usuario inactivo', { email });
+      throw new DomainError('Usuario inactivo', 'FORBIDDEN');
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      throw new UnauthorizedException('Credenciales inválidas');
+      AppLogger.error('Login fallido - password incorrecto', { email });
+      throw new DomainError('Credenciales inválidas', 'UNAUTHORIZED');
     }
 
     return user;
@@ -45,6 +54,7 @@ export class AuthService {
 
     const accessToken = await this.jwt.signAsync(payload);
 
+    AppLogger.log('Login exitoso', { userId: user.id });
     return {
       message: 'Login exitoso',
       access_token: accessToken,

@@ -2,414 +2,353 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  ImpactLevel,
+  TicketStatus,
+  TicketEventType,
+  TicketSource,
+  Prisma,
+} from '@prisma/client';
+
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
+
 import {
-  Prisma,
-  ClientType,
-  ImpactLevel,
-  TicketStatus as PrismaTicketStatus,
-  UserRole,
-} from '@prisma/client';
-import type { TicketStatus } from './types/ticket-status.type';
+  TicketCreatedMetadataDto,
+  TicketUpdatedMetadataDto,
+  TicketClosedMetadataDto,
+} from './dto/history';
 
-interface FindTicketsParams {
-  userId: number;
-  scope?: 'mine' | 'all';
-  status?: TicketStatus;
-  impact?: string;
-
-  // NUEVOS (no rompen nada)
-  rfc?: string;
-  code?: string;
-
-  from?: string;
-  to?: string;
-  search?: string;
+// ======================================================
+// JSON SERIALIZATION BOUNDARY (INTENTIONAL)
+// ======================================================
+function toJson<T>(data: T): Prisma.InputJsonValue {
+  return data as unknown as Prisma.InputJsonValue;
 }
 
 @Injectable()
 export class TicketService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // =========================
+  // ======================================================
   // CREATE
-  // =========================
+  // ======================================================
   async create(data: CreateTicketDto, userId: number) {
-    let clientRfc: string | null = null;
-    // =========================
-    // UPSERT CLIENT (RFC)
-    // =========================
-    if (data.client && typeof data.client.rfc === 'string') {
-      const client = await this.prisma.client.upsert({
-        where: { rfc: data.client.rfc },
-        update: {
-          companyName: data.client.companyName,
-          businessName: data.client.businessName,
-          location: data.client.location,
-        },
-        create: {
-          rfc: data.client.rfc,
-          companyName: data.client.companyName,
-          businessName: data.client.businessName,
-          location: data.client.location,
-        },
-      });
+    const client = await this.prisma.client.findUnique({
+      where: { rfc: data.clientRfc },
+    });
 
-      clientRfc = client.rfc;
+    if (!client || !client.active) {
+      throw new BadRequestException('Cliente inválido o desactivado');
     }
 
-    // =========================
-    // CREATE TICKET
-    // =========================
+    const contract = await this.prisma.serviceContract.findUnique({
+      where: { id: data.serviceContractId },
+    });
+
+    if (!contract || !contract.active) {
+      throw new BadRequestException('Contrato inválido o desactivado');
+    }
+
     const ticket = await this.prisma.ticket.create({
       data: {
-        requestedBy: data.requestedBy,
-        contact: data.contact,
-        clientType: data.clientType ? (data.clientType as ClientType) : null,
-        serviceAffected: data.serviceAffected,
-        problemDesc: data.problemDesc,
+        code: 'TEMP',
+        status: TicketStatus.OPEN,
+        source: TicketSource.MANUAL,
+
+        clientRfc: data.clientRfc,
+        serviceContractId: data.serviceContractId,
+
+        impactLevel: data.impactLevel as ImpactLevel,
+        problemDescription: data.problemDescription,
         eventLocation: data.eventLocation,
-        impactLevel: data.impactLevel
-          ? (data.impactLevel as ImpactLevel)
-          : null,
-
-        initialFindings: data.initialFindings,
-        probableRootCause: data.probableRootCause,
-        actionsTaken: data.actionsTaken,
-        additionalNotes: data.additionalNotes,
-        correctiveAction: data.correctiveAction,
-
-        createdById: userId,
-        openedAt: data.openedAt ? new Date(data.openedAt) : new Date(),
         estimatedStart: data.estimatedStart
           ? new Date(data.estimatedStart)
-          : null,
-        closedAt: data.closedAt ? new Date(data.closedAt) : null,
+          : undefined,
 
-        clientRfc, // 🔗 asociación cliente-ticket
-
-        code: 'TEMP',
+        createdById: userId,
       },
     });
 
-    const formattedCode = `TT-${ticket.id.toString().padStart(9, '0')}`;
+    const code = `TT-${ticket.id.toString().padStart(9, '0')}`;
 
-    // =========================
-    // UPDATE CODE + HISTORY
-    // =========================
-    await this.prisma.ticketHistory.create({
-      data: {
-        ticketId: ticket.id,
-        action: 'CREATE_TICKET',
-        fromValue: null,
-        toValue: `clientRfc=${clientRfc ?? 'N/A'}`,
-        performedById: userId,
-        clientRfc,
-      },
+    const metadata = new TicketCreatedMetadataDto({
+      requestedBy: data.requestedBy,
+      contactInfo: data.contactInfo,
+      initialFindings: data.initialFindings,
+      probableRootCause: data.probableRootCause,
     });
 
-    return this.prisma.ticket.update({
-      where: { id: ticket.id },
-      data: { code: formattedCode },
-    });
+    await this.prisma.$transaction([
+      this.prisma.ticket.update({
+        where: { id: ticket.id },
+        data: { code },
+      }),
+      this.prisma.ticketHistory.create({
+        data: {
+          ticketId: ticket.id,
+          eventType: TicketEventType.CREATED,
+          toStatus: TicketStatus.OPEN,
+          performedById: userId,
+          metadata: toJson(metadata),
+        },
+      }),
+    ]);
+
+    return this.findOne(ticket.id);
   }
 
-  // =========================
-  // FIND ALL
-  // =========================
-  async findAll(params: FindTicketsParams) {
-    const { userId, scope, status, impact, rfc, code, from, to, search } =
-      params;
+  // ======================================================
+  // FIND ALL (LISTADO CONTROLADO)
+  // ======================================================
+  async findAll(filters: {
+    userId: number;
+    scope?: 'mine' | 'all';
+    status?: TicketStatus;
+    impact?: string;
+    code?: string;
+    rfc?: string;
+    from?: string;
+    to?: string;
+    search?: string;
+  }) {
+    const where: Prisma.TicketWhereInput = {};
 
-    const where: Prisma.TicketWhereInput = {
-      deletedAt: null,
-    };
-
-    if (scope === 'mine') {
-      where.createdById = userId;
+    if (filters.scope !== 'all') {
+      where.createdById = filters.userId;
     }
 
-    if (status) {
-      where.status = status as PrismaTicketStatus;
+    if (filters.status) {
+      where.status = filters.status;
     }
 
-    if (impact) {
-      where.impactLevel = impact as ImpactLevel;
-    }
-    if (code) {
-      where.code = {
-        contains: code,
-        mode: 'insensitive',
-      };
+    if (filters.impact) {
+      where.impactLevel = filters.impact as ImpactLevel;
     }
 
-    if (rfc) {
-      where.clientRfc = {
-        contains: rfc,
-        mode: 'insensitive',
-      };
+    if (filters.code) {
+      where.code = { contains: filters.code };
     }
 
-    if (from || to) {
-      where.openedAt = {};
-      if (from) where.openedAt.gte = new Date(from);
-      if (to) where.openedAt.lte = new Date(to);
+    if (filters.rfc) {
+      where.clientRfc = filters.rfc;
     }
 
-    if (search) {
+    if (filters.from || filters.to) {
+      where.createdAt = {};
+      if (filters.from) where.createdAt.gte = new Date(filters.from);
+      if (filters.to) where.createdAt.lte = new Date(filters.to);
+    }
+
+    if (filters.search) {
       where.OR = [
-        { code: { contains: search, mode: 'insensitive' } },
-        { requestedBy: { contains: search, mode: 'insensitive' } },
-        { contact: { contains: search, mode: 'insensitive' } },
-        { serviceAffected: { contains: search, mode: 'insensitive' } },
-        { clientRfc: { contains: search, mode: 'insensitive' } },
+        { code: { contains: filters.search } },
+        { problemDescription: { contains: filters.search } },
       ];
     }
 
     return this.prisma.ticket.findMany({
       where,
+      orderBy: { createdAt: 'desc' },
       include: {
         client: true,
-        createdBy: true,
-        preliminaryBy: true,
-        closingTechnician: true,
+        serviceContract: true,
       },
-      orderBy: { id: 'desc' },
     });
   }
 
-  // =========================
-  // FIND ONE
-  // =========================
+  // ======================================================
+  // UPDATE (INFORMATIVO)
+  // ======================================================
+  async update(id: number, data: UpdateTicketDto, userId: number) {
+    const ticket = await this.findOne(id);
+
+    if (
+      ticket.status === TicketStatus.CLOSED ||
+      ticket.status === TicketStatus.CANCELLED
+    ) {
+      throw new ForbiddenException(
+        'No se puede editar un ticket cerrado o cancelado',
+      );
+    }
+
+    const metadata = new TicketUpdatedMetadataDto({
+      eventLocation: data.eventLocation,
+      estimatedStart: data.estimatedStart,
+      initialFindings: data.initialFindings,
+      probableRootCause: data.probableRootCause,
+      actionsTaken: data.actionsTaken,
+      additionalNotes: data.additionalNotes,
+      correctiveAction: data.correctiveAction,
+    });
+
+    await this.prisma.$transaction([
+      this.prisma.ticket.update({
+        where: { id },
+        data: {
+          eventLocation: data.eventLocation,
+          estimatedStart: data.estimatedStart
+            ? new Date(data.estimatedStart)
+            : undefined,
+        },
+      }),
+      this.prisma.ticketHistory.create({
+        data: {
+          ticketId: id,
+          eventType: TicketEventType.UPDATED,
+          performedById: userId,
+          metadata: toJson(metadata),
+        },
+      }),
+    ]);
+
+    return this.findOne(id);
+  }
+
+  // ======================================================
+  // RESOLVE
+  // OPEN → RESOLVED
+  // ======================================================
+  async resolve(id: number, userId: number) {
+    const ticket = await this.findOne(id);
+
+    if (ticket.status !== TicketStatus.OPEN) {
+      throw new ForbiddenException('Solo tickets OPEN pueden resolverse');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.ticket.update({
+        where: { id },
+        data: {
+          status: TicketStatus.RESOLVED,
+          resolvedAt: new Date(),
+        },
+      }),
+      this.prisma.ticketHistory.create({
+        data: {
+          ticketId: id,
+          eventType: TicketEventType.STATUS_CHANGED,
+          fromStatus: TicketStatus.OPEN,
+          toStatus: TicketStatus.RESOLVED,
+          performedById: userId,
+        },
+      }),
+    ]);
+
+    return this.findOne(id);
+  }
+
+  // ======================================================
+  // CLOSE
+  // RESOLVED → CLOSED
+  // ======================================================
+  async close(id: number, userId: number, serviceStatus?: string) {
+    const ticket = await this.findOne(id);
+
+    if (ticket.status !== TicketStatus.RESOLVED) {
+      throw new ForbiddenException('Solo tickets RESOLVED pueden cerrarse');
+    }
+
+    const metadata = new TicketClosedMetadataDto({
+      serviceStatus,
+      closedAt: new Date().toISOString(),
+    });
+
+    await this.prisma.$transaction([
+      this.prisma.ticket.update({
+        where: { id },
+        data: {
+          status: TicketStatus.CLOSED,
+          closedAt: new Date(),
+          closedById: userId,
+        },
+      }),
+      this.prisma.ticketHistory.create({
+        data: {
+          ticketId: id,
+          eventType: TicketEventType.CLOSED,
+          fromStatus: TicketStatus.RESOLVED,
+          toStatus: TicketStatus.CLOSED,
+          performedById: userId,
+          metadata: toJson(metadata),
+        },
+      }),
+    ]);
+
+    return this.findOne(id);
+  }
+
+  // ======================================================
+  // CANCEL
+  // OPEN / RESOLVED → CANCELLED
+  // ======================================================
+  async cancel(id: number, userId: number, reason: string) {
+    if (!reason || reason.trim().length === 0) {
+      throw new BadRequestException(
+        'La cancelación requiere una justificación',
+      );
+    }
+
+    const ticket = await this.findOne(id);
+
+    if (
+      ticket.status !== TicketStatus.OPEN &&
+      ticket.status !== TicketStatus.RESOLVED
+    ) {
+      throw new ForbiddenException(
+        'Solo tickets OPEN o RESOLVED pueden cancelarse',
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.ticket.update({
+        where: { id },
+        data: {
+          status: TicketStatus.CANCELLED,
+          cancelledAt: new Date(),
+          cancelledById: userId,
+        },
+      }),
+      this.prisma.ticketHistory.create({
+        data: {
+          ticketId: id,
+          eventType: TicketEventType.CANCELLED,
+          fromStatus: ticket.status,
+          toStatus: TicketStatus.CANCELLED,
+          performedById: userId,
+          metadata: toJson({ reason }),
+        },
+      }),
+    ]);
+
+    return this.findOne(id);
+  }
+
+  // ======================================================
+  // FIND ONE (DETALLE + HISTORIAL)
+  // ======================================================
   async findOne(id: number) {
-    const ticket = await this.prisma.ticket.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id },
       include: {
-        client: true, // ✅ CLIENTE
+        client: true,
+        serviceContract: true,
         createdBy: true,
-        preliminaryBy: true,
-        closingTechnician: true,
-        deletedBy: true, // ✅ AUDITORÍA
+        closedBy: true,
+        cancelledBy: true,
         history: {
-          // ✅ HISTORIAL
           orderBy: { createdAt: 'asc' },
         },
       },
     });
 
     if (!ticket) {
-      throw new NotFoundException(`Ticket con id ${id} no existe`);
+      throw new NotFoundException(`Ticket ${id} no encontrado`);
     }
 
     return ticket;
-  }
-
-  // =========================
-  // UPDATE INFO
-  // =========================
-  async update(id: number, data: UpdateTicketDto) {
-    return this.prisma.ticket.update({
-      where: { id },
-      data: {
-        requestedBy: data.requestedBy,
-        contact: data.contact,
-        clientType: data.clientType ? (data.clientType as ClientType) : null,
-        serviceAffected: data.serviceAffected,
-        problemDesc: data.problemDesc,
-        eventLocation: data.eventLocation,
-        impactLevel: data.impactLevel
-          ? (data.impactLevel as ImpactLevel)
-          : null,
-        initialFindings: data.initialFindings,
-        probableRootCause: data.probableRootCause,
-        actionsTaken: data.actionsTaken,
-        additionalNotes: data.additionalNotes,
-        correctiveAction: data.correctiveAction,
-        estimatedStart: data.estimatedStart
-          ? new Date(data.estimatedStart)
-          : null,
-        closedAt: data.closedAt ? new Date(data.closedAt) : null,
-      },
-    });
-  }
-
-  // =========================
-  // UPDATE STATUS / CLOSE
-  // =========================
-  async updateStatus(id: number, status: TicketStatus) {
-    const ticket = await this.prisma.ticket.findUnique({ where: { id } });
-
-    if (!ticket) {
-      throw new NotFoundException('Ticket no encontrado');
-    }
-
-    return this.prisma.ticket.update({
-      where: { id },
-      data: {
-        status: status as PrismaTicketStatus,
-        closedAt:
-          status === PrismaTicketStatus.CLOSED ? new Date() : ticket.closedAt,
-      },
-    });
-  }
-
-  // =========================
-  // REQUEST DELETE
-  // =========================
-  async requestDelete(ticketId: number, userId: number) {
-    const ticket = await this.prisma.ticket.findFirst({
-      where: {
-        id: ticketId,
-        deletedAt: null,
-      },
-      include: {
-        createdBy: true,
-      },
-    });
-
-    if (!ticket) {
-      throw new NotFoundException('Ticket no encontrado');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new ForbiddenException('Usuario inválido');
-    }
-
-    // 🔐 REGLAS POR ROL
-    if (user.role === UserRole.TECNICO && ticket.createdById !== userId) {
-      throw new ForbiddenException(
-        'Solo puedes solicitar eliminación de tus propios tickets',
-      );
-    }
-
-    // INGENIERO → puede solicitar cualquiera
-    // ADMIN → puede solicitar cualquiera
-
-    return this.prisma.ticket.update({
-      where: { id: ticketId },
-      data: {
-        deleteRequested: true,
-      },
-    });
-  }
-
-  // =========================
-  // ADMIN – APPROVE DELETE
-  // =========================
-  async approveDelete(ticketId: number, adminId: number) {
-    const ticket = await this.prisma.ticket.findFirst({
-      where: {
-        id: ticketId,
-        deleteRequested: true,
-        deletedAt: null,
-      },
-    });
-
-    if (!ticket) {
-      throw new NotFoundException(
-        'Ticket no encontrado o sin solicitud de eliminación',
-      );
-    }
-
-    return this.prisma.$transaction([
-      this.prisma.ticket.update({
-        where: { id: ticketId },
-        data: {
-          deletedAt: new Date(),
-          deletedById: adminId,
-          deleteRequested: false,
-          status: PrismaTicketStatus.CANCELLED,
-        },
-      }),
-
-      this.prisma.ticketHistory.create({
-        data: {
-          ticketId,
-          action: 'APPROVE_DELETE',
-          fromValue: 'deleteRequested=true',
-          toValue: 'status=CANCELLED, deletedAt=SET',
-          performedById: adminId,
-        },
-      }),
-    ]);
-  }
-
-  // =========================
-  // ADMIN – LIST DELETE REQUESTS
-  // =========================
-  async findDeleteRequests() {
-    return this.prisma.ticket.findMany({
-      where: {
-        deleteRequested: true,
-        deletedAt: null,
-      },
-      include: {
-        createdBy: true,
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
-  }
-
-  // =========================
-  // ADMIN – HISTORY
-  // =========================
-  async getHistory(ticketId: number) {
-    return this.prisma.ticketHistory.findMany({
-      where: { ticketId },
-      include: {
-        performedBy: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  // =========================
-  // ADMIN – REJECT DELETE
-  // =========================
-  async rejectDelete(ticketId: number, adminId: number) {
-    const ticket = await this.prisma.ticket.findFirst({
-      where: {
-        id: ticketId,
-        deleteRequested: true,
-        deletedAt: null,
-      },
-    });
-
-    if (!ticket) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
-
-    return this.prisma.$transaction([
-      this.prisma.ticket.update({
-        where: { id: ticketId },
-        data: {
-          deleteRequested: false,
-        },
-      }),
-
-      this.prisma.ticketHistory.create({
-        data: {
-          ticketId,
-          action: 'REJECT_DELETE',
-          fromValue: 'deleteRequested=true',
-          toValue: 'deleteRequested=false',
-          performedById: adminId,
-        },
-      }),
-    ]);
   }
 }

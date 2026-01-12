@@ -5,9 +5,6 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  /* ================================
-     🌐 CORS (NECESARIO PARA EL FRONT)
-     ================================ */
   app.enableCors({
     origin: process.env.CORS_ORIGIN,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -15,23 +12,17 @@ async function bootstrap() {
     credentials: true,
   });
 
-  /* ================================
-     ✅ Validación global de DTOs
-     ================================ */
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Elimina propiedades no definidas en DTO
-      forbidNonWhitelisted: true, // Lanza error si llegan campos extra
-      transform: true, // Convierte tipos automáticamente
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       transformOptions: {
         enableImplicitConversion: true,
       },
     }),
   );
 
-  /* ================================
-     🚀 Arranque del servidor
-     ================================ */
   const PORT = process.env.PORT || 3000;
   await app.listen(PORT);
 }

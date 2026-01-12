@@ -160,12 +160,12 @@ model ServiceContract {
 
 model Ticket {
   id   Int    @id @default(autoincrement())
-  code String @unique // Prefijo TT- controlado por backend
+  code String @unique
 
-  /// Estado del ciclo de vida
+  // =========================
+  // CICLO DE VIDA
+  // =========================
   status TicketStatus @default(OPEN)
-
-  /// Origen del ticket
   source TicketSource @default(MANUAL)
 
   createdAt   DateTime @default(now())
@@ -184,12 +184,32 @@ model Ticket {
   serviceContract   ServiceContract @relation(fields: [serviceContractId], references: [id])
 
   // =========================
+  // INFORMACIÓN GENERAL (AUDITABLE)
+  // =========================
+  requestedBy   String?        // Nombre declarado del solicitante
+  contactInfo   String?        // Tel / Email / Extensión
+
+  // =========================
   // INCIDENTE
   // =========================
   impactLevel ImpactLevel
-
   problemDescription String
   eventLocation      String?
+  estimatedStart     DateTime?
+
+  // =========================
+  // DIAGNÓSTICO
+  // =========================
+  initialFindings   String?
+  probableRootCause String?
+
+  // =========================
+  // CIERRE
+  // =========================
+  actionsTaken     String?
+  serviceStatus    String?
+  additionalNotes  String?
+  correctiveAction Boolean?
 
   // =========================
   // USUARIOS
@@ -214,6 +234,7 @@ model Ticket {
   @@index([serviceContractId])
   @@index([createdAt])
 }
+
 
 //////////////////////////////////////////////////////
 // TICKET HISTORY (CORE)
