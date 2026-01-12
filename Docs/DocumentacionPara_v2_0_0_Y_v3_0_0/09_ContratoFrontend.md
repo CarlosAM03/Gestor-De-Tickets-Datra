@@ -3,9 +3,9 @@
 
 # 📎 APÉNDICE — CONTRATO DE INTEGRACIÓN FRONTEND 1:1
 
-**Gestor de Tickets DATRA — v2.0.0**
+**Gestor de Tickets DATRA — v2.0.0 (FINAL / CONGELADO)**
 
-> Este apéndice define **exactamente** cómo el frontend debe integrarse con el backend.
+> Este apéndice define **exactamente** cómo el frontend se integra con el backend.
 > No amplía reglas de dominio.
 > No permite interpretación.
 > No habilita shortcuts.
@@ -40,35 +40,45 @@ Authorization: Bearer <JWT>
 ```
 
 📌 Obligatorio en **todos los endpoints**, excepto `/auth/login`
-📌 Tokens inválidos o ausentes → `401 Unauthorized`
+📌 Token inválido o ausente → `401 Unauthorized`
 
 ---
 
-## 2️⃣ Convenciones de respuesta (NO NEGOCIABLES)
+## 2️⃣ Convenciones de respuesta (ALINEADAS A IMPLEMENTACIÓN REAL)
 
-### Éxito
+📌 **NO existe un wrapper universal obligatorio (`data/meta`) en v2.0.0**
+📌 El contrato válido es **el payload real de cada endpoint**
+
+### Respuestas exitosas
+
+El frontend debe **consumir exactamente** el payload retornado por el backend.
+
+Ejemplo (`/auth/login`):
 
 ```json
 {
-  "data": {},
-  "meta": {
-    "timestamp": "2026-01-07T01:30:00Z"
+  "message": "Login exitoso",
+  "access_token": "jwt-token",
+  "expires_in": "3600s",
+  "user": {
+    "id": "uuid",
+    "name": "Juan Pérez",
+    "email": "admin@datra.mx",
+    "role": "ADMIN"
   }
 }
 ```
 
-### Error
+### Errores de dominio
 
 ```json
 {
-  "error": {
-    "code": "InvalidTicketState",
-    "message": "El ticket no puede resolverse en su estado actual"
-  }
+  "message": "El ticket no puede resolverse en su estado actual",
+  "code": "InvalidTicketState"
 }
 ```
 
-📌 El frontend **NO traduce** códigos de error
+📌 El frontend **NO traduce códigos de error**
 📌 El frontend **NO asume estados futuros**
 
 ---
@@ -94,26 +104,11 @@ Authorization: Bearer <JWT>
 
 ### `POST /auth/login`
 
-✔️ **Endpoint único de inicio de sesión**
+✔️ Endpoint único de inicio de sesión
 ✔️ No existe registro público
 
-**Response**
-
-```json
-{
-  "data": {
-    "accessToken": "jwt-token",
-    "user": {
-      "id": 1,
-      "name": "Juan Pérez",
-      "role": "TECNICO"
-    }
-  }
-}
-```
-
 📌 El frontend **no infiere permisos**
-📌 El rol solo se usa para UI condicional
+📌 El rol solo se usa para **UI condicional**, nunca para lógica
 
 ---
 
@@ -122,11 +117,12 @@ Authorization: Bearer <JWT>
 📌 El frontend **no asume** que puede crear usuarios
 📌 La UI debe ocultar acciones no autorizadas
 
-Endpoints permitidos:
+Endpoints existentes:
 
 * `POST /users`
 * `GET /users`
 * `GET /users/:id`
+* `PATCH /users/me`
 * `PATCH /users/:id`
 * `PATCH /users/:id/deactivate`
 
@@ -136,16 +132,17 @@ Endpoints permitidos:
 
 ## 🏢 6️⃣ Clientes
 
-Endpoints soportados:
+Endpoints existentes:
 
-* `POST /clients`
 * `GET /clients`
 * `GET /clients/:rfc`
-* `PATCH /clients/:rfc`
+* `PATCH /clients/:rfc/activate`
 * `PATCH /clients/:rfc/deactivate`
 
 📌 `rfc` es **ID canónico**
 📌 Clientes desactivados **no se eliminan**
+
+📌 Aunque existen endpoints administrativos, el frontend operativo solo los expone bajo flujos explícitos autorizados.
 
 ---
 
@@ -155,11 +152,13 @@ Endpoints:
 
 * `POST /service-contracts`
 * `GET /service-contracts`
+* `GET /service-contracts/client/:rfc`
+* `GET /service-contracts/:id`
 * `PATCH /service-contracts/:id`
 * `PATCH /service-contracts/:id/deactivate`
 
 📌 `name` es un **enum cerrado**
-📌 El frontend **no puede enviar strings libres**
+📌 El frontend **NO envía strings libres**
 
 ---
 
@@ -167,7 +166,9 @@ Endpoints:
 
 ### Crear ticket
 
-`POST /tickets`
+```http
+POST /tickets
+```
 
 📌 El frontend **NO envía estado**
 📌 El backend asigna:
@@ -180,7 +181,9 @@ Endpoints:
 
 ### Actualizar ticket (NO cambia estado)
 
-`PATCH /tickets/:id`
+```http
+PATCH /tickets/:id
+```
 
 Campos permitidos:
 
@@ -192,44 +195,34 @@ Campos permitidos:
 
 ---
 
-### Resolver ticket
+### Acciones de dominio (no transiciones manuales)
 
-`POST /tickets/:id/resolve`
+📌 El verbo HTTP **no forma parte del dominio**
+📌 La acción está definida por la **ruta**
 
-📌 El frontend **solicita acción**, no transición
-📌 Estado válido: `OPEN`
-
----
-
-### Cerrar ticket
-
-`POST /tickets/:id/close`
-
-📌 Estado requerido: `RESOLVED`
-
----
-
-### Cancelar ticket
-
-`POST /tickets/:id/cancel`
-
-📌 Motivo obligatorio
-📌 Estado ≠ `CLOSED`
+```http
+PATCH /tickets/:id/resolve   (estado requerido: OPEN)
+PATCH /tickets/:id/close     (estado requerido: RESOLVED)
+PATCH /tickets/:id/cancel    (motivo obligatorio, estado ≠ CLOSED)
+```
 
 ---
 
 ## 📜 9️⃣ Historial (solo lectura)
 
-`GET /tickets/:id/history`
+```http
+GET /tickets/:ticketId/history
+```
 
-📌 El frontend:
+El frontend:
 
-* No edita
-* No recalcula
-* No agrupa
-* No corrige
+* ❌ No edita
+* ❌ No recalcula
+* ❌ No corrige
+* ❌ No infiere métricas
 
-📌 El historial **es la verdad**
+📌 Puede ordenar o paginar **solo para visualización**
+📌 El historial **es la verdad del sistema**
 
 ---
 
@@ -262,13 +255,38 @@ El frontend **NO debe asumir ni simular**:
 
 ## 🔒 Estado del Apéndice
 
-✔️ Alineado con Contrato Backend v2.0.0
-✔️ Alineado con Prisma Schema v2.0.0
+✔️ Alineado con Contrato de Dominio
+✔️ Alineado con Contrato de Aplicación
+✔️ Alineado con implementación NestJS real
+✔️ Seguridad validada
 ✔️ Endpoints cerrados
-✔️ Payloads definidos
 ✔️ Sin ambigüedad funcional
 
-📌 Cambios → **v3.0.0**
+📌 **Cambios → v3.0.0**
 
 ---
 
+## 📊 Estado de Implementación Actual
+
+| Componente              | Estado      |
+| ----------------------- | ----------- |
+| Prisma Schema v2.0.0    | ✅ Cerrado   |
+| Contratos de Dominio    | ✅ Cerrados  |
+| Contratos de Aplicación | ✅ Cerrados  |
+| Endpoints               | ✅ Cerrados  |
+| Seguridad (JWT + Roles) | ✅ Operativa |
+| TicketHistory           | ✅ Cerrado   |
+| Importación Clientes    | ✅ Cerrada   |
+
+---
+
+## 🧠 Nota Final para Frontend
+
+* No reinventar lógica
+* No “arreglar” respuestas
+* No inferir estados
+* Confiar en el backend
+* El frontend **consume y representa**
+* El backend **decide**
+
+---
