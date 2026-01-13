@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '@/pages/Login/Login';
 import Dashboard from '@/pages/Dashboard/Dashboard';
 import TicketsAnalyticsDashboard from '@/pages/Dashboard/TicketsAnalyticsDashboard';
+import Rankings from '@/pages/Dashboard/Rankings';
 
 import Users from '@/pages/Users/Users';
 import UserCreate from '@/pages/Users/UserCreate';
@@ -44,6 +45,16 @@ export default function AppRoutes() {
             element={
               <RequireRole allowedRoles={['ADMIN', 'INGENIERO', 'TECNICO']}>
                 <TicketsAnalyticsDashboard />
+              </RequireRole>
+            }
+          />
+
+          {/* Rankings Dashboard */}
+          <Route
+            path="dashboard/rankings"
+            element={
+              <RequireRole allowedRoles={['ADMIN', 'INGENIERO', 'TECNICO']}>
+                <Rankings />
               </RequireRole>
             }
           />
