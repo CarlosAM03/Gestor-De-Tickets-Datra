@@ -14,7 +14,7 @@ import TicketEditStatus from '@/components/Tickets/TicketEditStatus';
 
 import { useAuth } from '@/auth/useAuth';
 
-import type { Ticket, TicketFormValues, TicketStatus } from '@/types/ticket.types';
+import type { Ticket, TicketFormValues, TicketStatus } from '@/types/ticket-types/ticket.types';
 
 export default function TicketEdit() {
   const { id } = useParams<{ id: string }>();

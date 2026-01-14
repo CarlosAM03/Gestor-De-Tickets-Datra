@@ -9,7 +9,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { createUser } from '@/api/users.api';
-import type { UserRole } from '@/types/user.types';
+import { UserRole } from '@/types/enums';
 
 import './Users.css';
 
@@ -22,7 +22,7 @@ export default function UserCreate() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('TECNICO');
+  const [role, setRole] = useState<UserRole>(UserRole.TECNICO);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

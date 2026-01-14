@@ -22,7 +22,7 @@ import type {
   Ticket,
   TicketStatus,
   ImpactLevel,
-} from '@/types/ticket.types';
+} from '@/types/ticket-types/ticket.types';
 
 import './TicketList.css';
 

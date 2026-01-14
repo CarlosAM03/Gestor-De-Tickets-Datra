@@ -19,6 +19,8 @@ import MainLayout from '@/layouts/MainLayout';
 import RequireAuth from '@/auth/RequireAuth';
 import { RequireRole } from '@/auth/RequireRole';
 
+import { UserRole } from '@/types/enums';
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -42,49 +44,103 @@ export default function AppRoutes() {
           <Route
             path="dashboard/analytics"
             element={
-              <RequireRole allowedRoles={['ADMIN', 'INGENIERO', 'TECNICO']}>
+              <RequireRole
+                allowedRoles={[
+                  UserRole.ADMIN,
+                  UserRole.INGENIERO,
+                ]}
+              >
                 <TicketsAnalyticsDashboard />
               </RequireRole>
             }
           />
 
           {/* =======================
-              USERS (ADMIN)
+              USERS (ADMIN ONLY)
           ======================= */}
           <Route
             path="users"
             element={
+              <RequireRole allowedRoles={[UserRole.ADMIN]}>
                 <Users />
+              </RequireRole>
             }
           />
 
           <Route
             path="users/create"
             element={
-              <RequireRole allowedRoles={['ADMIN']}>
+              <RequireRole allowedRoles={[UserRole.ADMIN]}>
                 <UserCreate />
               </RequireRole>
             }
           />
 
-          {/* Vista de usuario */} 
-          <Route path="users/:id" element={ <UserView /> } />
+          {/* Vista de usuario (admin o self → validación fina en módulo) */}
+          <Route
+            path="users/:id"
+            element={
+              <RequireRole
+                allowedRoles={[
+                  UserRole.ADMIN,
+                  UserRole.INGENIERO,
+                  UserRole.TECNICO,
+                ]}
+              >
+                <UserView />
+              </RequireRole>
+            }
+          />
 
           {/* =======================
               TICKETS
           ======================= */}
           <Route path="tickets" element={<TicketsList />} />
-          <Route path="tickets/create" element={<TicketCreate />} />
+
+          <Route
+            path="tickets/create"
+            element={
+              <RequireRole
+                allowedRoles={[
+                  UserRole.ADMIN,
+                  UserRole.INGENIERO,
+                  UserRole.TECNICO,
+                ]}
+              >
+                <TicketCreate />
+              </RequireRole>
+            }
+          />
+
           <Route path="tickets/:id" element={<TicketView />} />
-          <Route path="tickets/:id/edit" element={<TicketEdit />} />
+
+          <Route
+            path="tickets/:id/edit"
+            element={
+              <RequireRole
+                allowedRoles={[
+                  UserRole.ADMIN,
+                  UserRole.INGENIERO,
+                  UserRole.TECNICO,
+                ]}
+              >
+                <TicketEdit />
+              </RequireRole>
+            }
+          />
 
           {/* =======================
-              HISTORY (ADMIN/ENGINEER)
+              HISTORY
           ======================= */}
           <Route
             path="historial"
             element={
-              <RequireRole allowedRoles={['ADMIN', 'INGENIERO']}>
+              <RequireRole
+                allowedRoles={[
+                  UserRole.ADMIN,
+                  UserRole.INGENIERO,
+                ]}
+              >
                 <History />
               </RequireRole>
             }

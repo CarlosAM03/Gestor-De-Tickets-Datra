@@ -1,4 +1,4 @@
-import type { UserRole } from '@/types/user.types';
+import { UserRole } from '@/types/enums';
 
 export interface MenuItem {
   label: string;
@@ -10,16 +10,16 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: 'Dashboard',
     path: '/dashboard',
-    roles: ['ADMIN', 'INGENIERO', 'TECNICO'],
+    roles: [UserRole.ADMIN, UserRole.INGENIERO, UserRole.TECNICO],
   },
   {
     label: 'Tickets',
     path: '/tickets',
-    roles: ['ADMIN', 'INGENIERO', 'TECNICO'],
+    roles: [UserRole.ADMIN, UserRole.INGENIERO, UserRole.TECNICO],
   },
   {
     label: 'Usuarios',
     path: '/users',
-    roles: ['ADMIN'],
+    roles: [UserRole.ADMIN],
   },
 ];

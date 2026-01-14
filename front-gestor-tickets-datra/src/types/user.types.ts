@@ -1,16 +1,14 @@
-/**
- * Roles soportados por el sistema
- * (alineados con Prisma / backend)
- */
-export type UserRole = 'ADMIN' | 'INGENIERO' | 'TECNICO';
+import type { UserRole } from './enums';
 
-/**
- * Usuario base del sistema
- */
 export interface User {
   id: number;
   name: string;
   email: string;
   role: UserRole;
-}
+  active: boolean;
 
+  deactivatedAt: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+}

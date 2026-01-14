@@ -1,11 +1,5 @@
 import http from './http';
-import type { AuthUser } from '@/types/auth.types';
-
-export interface LoginResponse {
-  access_token: string;
-  expires_in?: string;
-  user: AuthUser;
-}
+import type { LoginResponse } from '@/types/auth.types';
 
 export const loginRequest = async (
   email: string,

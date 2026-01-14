@@ -1,53 +1,107 @@
-import http from './http';
-import type {
-  Ticket,
-  TicketHistory,
-  CreateTicketDto,
-  UpdateTicketDto,
-  TicketStatus,
-  ImpactLevel,
-} from '@/types/ticket.types';
+// ================================
+// Tickets API — Dominio real v2.0.0
+// ================================
 
-/* =====================================================
-   LISTADO
-===================================================== */
-export const getTickets = async (params?: {
+import http from './http';
+import type { Ticket } from '@/types/ticket-types/ticket.types';
+import type { ImpactLevel, TicketStatus } from '@/types/enums';
+
+// ======================================================
+// QUERY PARAMS — GET /tickets
+// ======================================================
+
+export interface GetTicketsParams {
   scope?: 'mine' | 'all';
   status?: TicketStatus;
   impact?: ImpactLevel;
-  rfc?: string;
   code?: string;
+  rfc?: string;
   from?: string;
   to?: string;
   search?: string;
-}) => {
-  const { data } = await http.get<Ticket[]>('/tickets', { params });
+}
+
+// ======================================================
+// CREATE — POST /tickets
+// ======================================================
+
+export interface CreateTicketPayload {
+  // =========================
+  // CLIENTE / SERVICIO
+  // =========================
+  clientRfc: string;
+  serviceContractId: number;
+
+  // =========================
+  // INCIDENTE
+  // =========================
+  impactLevel: ImpactLevel;
+  problemDescription: string;
+  eventLocation?: string;
+  estimatedStart?: string;
+
+  // =========================
+  // INFORMACIÓN GENERAL
+  // =========================
+  requestedBy?: string;
+  contactInfo?: string;
+}
+
+// ======================================================
+// UPDATE INFO — PATCH /tickets/:id
+// (NO cambia estado)
+// ======================================================
+
+export interface UpdateTicketPayload {
+  requestedBy?: string;
+  contactInfo?: string;
+
+  impactLevel?: ImpactLevel;
+  problemDescription?: string;
+  eventLocation?: string;
+  estimatedStart?: string;
+
+  initialFindings?: string;
+  probableRootCause?: string;
+
+  actionsTaken?: string;
+  additionalNotes?: string;
+  correctiveAction?: boolean;
+}
+
+// ======================================================
+// API CALLS
+// ======================================================
+
+export const getTickets = async (
+  params?: GetTicketsParams,
+): Promise<Ticket[]> => {
+  const { data } = await http.get<Ticket[]>('/tickets', {
+    params,
+  });
   return data;
 };
 
-/* =====================================================
-   DETALLE
-===================================================== */
-export const getTicketById = async (id: number) => {
+export const getTicketById = async (id: number): Promise<Ticket> => {
   const { data } = await http.get<Ticket>(`/tickets/${id}`);
   return data;
 };
 
-/* =====================================================
-   CREATE
-===================================================== */
-export const createTicket = async (payload: CreateTicketDto) => {
+export const createTicket = async (
+  payload: CreateTicketPayload,
+): Promise<Ticket> => {
   const { data } = await http.post<Ticket>('/tickets', payload);
   return data;
 };
 
-/* =====================================================
-   UPDATE INFO (PATCH)
-===================================================== */
+/**
+ * Update de información (NO STATUS)
+ * Backend valida estados ilegales
+ */
 export const updateTicket = async (
   id: number,
-  payload: UpdateTicketDto,
-) => {
+  payload: UpdateTicketPayload,
+): Promise<Ticket> => {
   const { data } = await http.patch<Ticket>(
     `/tickets/${id}`,
     payload,
@@ -55,64 +109,43 @@ export const updateTicket = async (
   return data;
 };
 
-/* =====================================================
-   UPDATE STATUS
-===================================================== */
-export const updateTicketStatus = async (
-  id: number,
-  status: TicketStatus,
-) => {
+/**
+ * =========================
+ * ACCIONES DE DOMINIO
+ * =========================
+ */
+
+/**
+ * OPEN → RESOLVED
+ */
+export const resolveTicket = async (id: number): Promise<Ticket> => {
   const { data } = await http.patch<Ticket>(
-    `/tickets/${id}/status`,
-    { status },
+    `/tickets/${id}/resolve`,
   );
   return data;
 };
 
-/* =====================================================
-   REQUEST DELETE (soft delete)
-===================================================== */
-export const requestTicketDeletion = async (id: number) => {
-  const { data } = await http.delete(`/tickets/${id}`);
-  return data;
-};
-
-/* =====================================================
-   ADMIN – LIST DELETE REQUESTS
-===================================================== */
-export const getDeleteRequests = async () => {
-  const { data } = await http.get<Ticket[]>(
-    '/tickets/admin/delete-requests',
+/**
+ * RESOLVED → CLOSED
+ */
+export const closeTicket = async (id: number): Promise<Ticket> => {
+  const { data } = await http.patch<Ticket>(
+    `/tickets/${id}/close`,
   );
   return data;
 };
 
-/* =====================================================
-   ADMIN – APPROVE DELETE
-===================================================== */
-export const approveDeleteTicket = async (id: number) => {
-  const { data } = await http.patch(
-    `/tickets/admin/${id}/approve-delete`,
-  );
-  return data;
-};
-
-/* =====================================================
-   ADMIN – REJECT DELETE
-===================================================== */
-export const rejectTicketDeletion = async (id: number) => {
-  const { data } = await http.patch(
-    `/tickets/admin/${id}/reject-delete`,
-  );
-  return data;
-};
-
-/* =====================================================
-   ADMIN – HISTORY
-===================================================== */
-export const getTicketHistory = async (id: number): Promise<TicketHistory[]> => {
-  const { data } = await http.get<TicketHistory[]>(
-    `/tickets/${id}/history`,
+/**
+ * OPEN / RESOLVED → CANCELLED
+ * reason obligatorio (backend)
+ */
+export const cancelTicket = async (
+  id: number,
+  reason: string,
+): Promise<Ticket> => {
+  const { data } = await http.patch<Ticket>(
+    `/tickets/${id}/cancel`,
+    { reason },
   );
   return data;
 };

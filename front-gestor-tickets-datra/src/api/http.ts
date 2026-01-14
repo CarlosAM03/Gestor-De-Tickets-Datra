@@ -4,6 +4,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from 'axios';
+import type { HttpError } from '../types/http-error.types';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -30,41 +31,83 @@ http.interceptors.request.use(
     const token = localStorage.getItem('token');
 
     if (token) {
-      config.headers.set(
-        'Authorization',
-        `Bearer ${token}`,
-      );
+      config.headers.set('Authorization', `Bearer ${token}`);
     }
 
     return config;
   },
-  (error: AxiosError) => Promise.reject(error),
+  (error) => Promise.reject(error),
 );
 
 /**
  * =============================
  * RESPONSE INTERCEPTOR
- * Manejo global de errores
+ * HARDENED ERROR HANDLING
  * =============================
  */
 http.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    const status = error.response?.status;
-    const requestUrl = error.config?.url ?? '';
+    const status = error.response?.status ?? null;
+    const payload = error.response?.data as any;
 
-    const isAuthLogin = requestUrl.includes('/auth/login');
+    const normalizedError: HttpError = {
+      status,
+      code: 'UNKNOWN_ERROR',
+      message: 'Ocurrió un error inesperado',
+      raw: payload,
+    };
 
-    if (status === 401 && !isAuthLogin) {
-      // Sesión inválida o expirada
-      localStorage.clear();
+    // =============================
+    // Clasificación por HTTP STATUS
+    // =============================
+    switch (status) {
+      case 401:
+        normalizedError.code = 'UNAUTHORIZED';
+        normalizedError.message =
+          payload?.message ?? 'Sesión inválida o expirada';
 
-      // Redirección dura para limpiar estado
-      window.location.replace('/login');
+        localStorage.clear();
+        window.location.replace('/login');
+        break;
+
+      case 403:
+        normalizedError.code = 'FORBIDDEN';
+        normalizedError.message =
+          payload?.message ?? 'Acción no permitida';
+        break;
+
+      case 404:
+        normalizedError.code = 'NOT_FOUND';
+        normalizedError.message =
+          payload?.message ?? 'Recurso no encontrado';
+        break;
+
+      case 409:
+        normalizedError.code = 'INVALID_STATE';
+        normalizedError.message =
+          payload?.message ?? 'Estado inválido para esta acción';
+        break;
+
+      case 422:
+        normalizedError.code = 'VALIDATION_ERROR';
+        normalizedError.message =
+          payload?.message ?? 'Datos inválidos';
+        break;
+
+      case null:
+        normalizedError.code = 'NETWORK_ERROR';
+        normalizedError.message =
+          'No se pudo conectar con el servidor';
+        break;
+
+      default:
+        normalizedError.code = 'SERVER_ERROR';
+        normalizedError.message =
+          payload?.message ?? 'Error interno del servidor';
     }
 
-    // propagacion de error
-    return Promise.reject(error);
+    return Promise.reject(normalizedError);
   },
 );
 

@@ -7,7 +7,7 @@ import { searchClients } from '@/api/clients.api';
 import type {
   TicketFormValues,
   TicketClient,
-} from '@/types/ticket.types';
+} from '@/types/ticket-types/ticket.types';
 
 import './TicketForm.css';
 

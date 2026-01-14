@@ -2,7 +2,7 @@ import type { User } from './user.types';
 
 /**
  * Usuario autenticado
- * (por ahora igual a User, pero puede extenderse)
+ * (idéntico al User expuesto por backend)
  */
 export type AuthUser = User;
 
@@ -11,5 +11,6 @@ export type AuthUser = User;
  */
 export interface LoginResponse {
   access_token: string;
-  expires_in: string;
+  expires_in?: string;
+  user: AuthUser;
 }

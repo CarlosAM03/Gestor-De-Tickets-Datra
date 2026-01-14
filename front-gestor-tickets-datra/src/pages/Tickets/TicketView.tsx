@@ -5,7 +5,7 @@ import { Card, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import { getTicketById } from '@/api/tickets.api';
 import { useAuth } from '@/auth/useAuth';
 
-import type { Ticket, TicketStatus } from '@/types/ticket.types';
+import type { Ticket, TicketStatus } from '@/types/ticket-types/ticket.types';
 
 import './TicketView.css';
 import siteLogo from '@/assets/datra-logo.png';

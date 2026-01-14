@@ -1,5 +1,6 @@
 import {
   Controller,
+  Post,
   Get,
   Param,
   Query,
@@ -7,6 +8,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Body,
 } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -15,11 +17,23 @@ import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { toClientResponseDto } from './mappers/clients.mapper';
 import { ClientResponseDto } from './dto/client-response.dto';
-
+import { CreateClientDto } from './dto/create-client.dto';
 @Controller('clients')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
+
+  // ======================================================
+  // POST /clients
+  // ADMIN ONLY
+  // ======================================================
+  @Post()
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() dto: CreateClientDto): Promise<ClientResponseDto> {
+    const client = await this.clientsService.create(dto);
+    return toClientResponseDto(client);
+  }
 
   // ======================================================
   // GET /clients/:rfc

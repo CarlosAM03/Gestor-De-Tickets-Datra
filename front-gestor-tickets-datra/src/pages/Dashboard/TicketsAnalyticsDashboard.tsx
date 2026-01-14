@@ -4,7 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, startOfWeek, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getTickets } from '@/api/tickets.api';
-import type { Ticket } from '@/types/ticket.types';
+import type { Ticket } from '@/types/ticket-types/ticket.types';
 
 import './TicketsAnalyticsDashboard.css';
 

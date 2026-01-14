@@ -4,7 +4,7 @@ import { Card, Badge, Spinner, Alert, Form, Button } from 'react-bootstrap';
 import { getTickets, getTicketHistory } from '@/api/tickets.api';
 import { useAuth } from '@/auth/useAuth';
 
-import type { Ticket, TicketHistory as TicketHistoryType } from '@/types/ticket.types';
+import type { Ticket, TicketHistory as TicketHistoryType } from '@/types/ticket-types/ticket.types';
 
 import './History.css';
 

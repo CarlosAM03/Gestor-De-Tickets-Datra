@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Spinner, Alert, Form } from 'react-bootstrap';
 
 import { updateTicketStatus } from '@/api/tickets.api';
-import type { TicketStatus } from '@/types/ticket.types';
+import type { TicketStatus } from '@/types/ticket-types/ticket.types';
 
 /* =============================
    Props
