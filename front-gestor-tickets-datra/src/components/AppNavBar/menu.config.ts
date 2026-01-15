@@ -10,12 +10,20 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: 'Dashboard',
     path: '/dashboard',
-    roles: [UserRole.ADMIN, UserRole.INGENIERO, UserRole.TECNICO],
+    roles: [
+      UserRole.ADMIN,
+      UserRole.INGENIERO,
+      UserRole.TECNICO,
+    ],
   },
   {
     label: 'Tickets',
     path: '/tickets',
-    roles: [UserRole.ADMIN, UserRole.INGENIERO, UserRole.TECNICO],
+    roles: [
+      UserRole.ADMIN,
+      UserRole.INGENIERO,
+      UserRole.TECNICO,
+    ],
   },
   {
     label: 'Usuarios',

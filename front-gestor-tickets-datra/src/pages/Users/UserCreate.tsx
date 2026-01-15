@@ -1,3 +1,4 @@
+// src/pages/Users/UserCreate.tsx
 import { useState } from 'react';
 import {
   Card,
@@ -30,7 +31,7 @@ export default function UserCreate() {
   /* =============================
      SUBMIT (ADMIN)
   ============================= */
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!name || !email || !password) {
@@ -81,13 +82,16 @@ export default function UserCreate() {
             NOMBRE
         ===================== */}
         <Form.Group className="mb-3" controlId="user-name">
-          <Form.Label>Nombre</Form.Label>
+          <Form.Label id="label-user-name">
+            Nombre
+          </Form.Label>
           <Form.Control
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Nombre completo"
             disabled={loading}
             required
+            aria-labelledby="label-user-name"
           />
         </Form.Group>
 
@@ -95,7 +99,9 @@ export default function UserCreate() {
             EMAIL
         ===================== */}
         <Form.Group className="mb-3" controlId="user-email">
-          <Form.Label>Email</Form.Label>
+          <Form.Label id="label-user-email">
+            Email
+          </Form.Label>
           <Form.Control
             type="email"
             value={email}
@@ -103,6 +109,7 @@ export default function UserCreate() {
             placeholder="correo@datra.mx"
             disabled={loading}
             required
+            aria-labelledby="label-user-email"
           />
         </Form.Group>
 
@@ -110,7 +117,9 @@ export default function UserCreate() {
             PASSWORD
         ===================== */}
         <Form.Group className="mb-3" controlId="user-password">
-          <Form.Label>Contraseña</Form.Label>
+          <Form.Label id="label-user-password">
+            Contraseña
+          </Form.Label>
           <Form.Control
             type="password"
             value={password}
@@ -118,23 +127,24 @@ export default function UserCreate() {
             placeholder="Mínimo 6 caracteres"
             disabled={loading}
             required
+            aria-labelledby="label-user-password"
           />
         </Form.Group>
 
         {/* =====================
-            ROL (AXE FIX)
+            ROL (AXE OK)
         ===================== */}
         <Form.Group className="mb-4" controlId="user-role">
-          <Form.Label>Rol</Form.Label>
+          <Form.Label id="label-user-role">
+            Rol
+          </Form.Label>
           <Form.Select
-            id="user-role"
-            aria-label="Seleccionar rol del usuario"
-            title="Rol del usuario"
             value={role}
             onChange={e =>
               setRole(e.target.value as UserRole)
             }
             disabled={loading}
+            aria-labelledby="label-user-role"
           >
             <option value="ADMIN">ADMIN</option>
             <option value="INGENIERO">INGENIERO</option>

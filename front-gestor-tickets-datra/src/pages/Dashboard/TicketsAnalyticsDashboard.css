@@ -92,6 +92,11 @@
 /* ======================
    GRÁFICA DE TENDENCIA
 ====================== */
+.chart-wrapper {
+  width: 100%;
+  height: 400px;
+}
+
 .chart-container {
   background: white;
   border-radius: 8px;

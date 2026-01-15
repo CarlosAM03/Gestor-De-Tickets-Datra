@@ -243,3 +243,4 @@ Que **NO ROMPAN BUILD**, no que queden “bonitos”.
 * [ ] Sin warnings críticos
 
 ---
+

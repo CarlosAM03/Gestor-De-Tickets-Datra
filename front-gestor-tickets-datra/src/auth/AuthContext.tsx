@@ -3,13 +3,17 @@ import type { AuthUser } from '@/types/auth.types';
 
 /**
  * Estados explícitos de autenticación
- * Fuente única de verdad para guards y UI
+ * Fuente única de verdad para guards, layout y UI
  */
 export type AuthStatus =
-  | 'checking'
-  | 'authenticated'
-  | 'unauthenticated';
+  | 'checking'          // Verificando sesión (bootstrap)
+  | 'authenticated'    // Sesión válida
+  | 'unauthenticated'; // No autenticado
 
+/**
+ * Contrato del contexto de autenticación
+ * No incluye lógica de navegación
+ */
 export interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
@@ -21,7 +25,8 @@ export interface AuthContextType {
 
 /**
  * Contexto de autenticación
- * Se inicializa como undefined para forzar uso correcto
+ * Se inicializa como undefined para forzar uso exclusivo
+ * mediante el hook useAuth()
  */
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined,

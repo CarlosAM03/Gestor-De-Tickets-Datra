@@ -5,29 +5,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   getTicketById,
   updateTicket,
-  requestTicketDeletion,
-  approveDeleteTicket,
 } from '@/api/tickets.api';
 
 import TicketForm from '@/components/Tickets/TicketForm';
 import TicketEditStatus from '@/components/Tickets/TicketEditStatus';
 
-import { useAuth } from '@/auth/useAuth';
-
-import type { Ticket, TicketFormValues, TicketStatus } from '@/types/ticket-types/ticket.types';
+import type { Ticket } from '@/types/ticket-types/ticket.types';
+import type { UpdateTicketDTO } from '@/types/ticket-types/ticket.dto';
+import { TicketStatus } from '@/types/enums';
 
 export default function TicketEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const isAdmin = user?.role === 'ADMIN';
 
   /* =============================
      LOAD TICKET
@@ -56,65 +50,29 @@ export default function TicketEdit() {
   if (!ticket) return null;
 
   /* =============================
-     INITIAL FORM VALUES
+     INITIAL VALUES (UpdateTicketDTO)
   ============================== */
-  const initialValues: TicketFormValues = {
-    requestedBy: ticket.requestedBy ?? '',
-    contact: ticket.contact ?? '',
-    clientType: ticket.clientType ?? 'EXTERNO',
-    impactLevel: ticket.impactLevel ?? undefined,
+  const initialValues: UpdateTicketDTO = {
+    requestedBy: ticket.requestedBy ?? undefined,
+    contactInfo: ticket.contactInfo ?? undefined,
 
-    client: ticket.client ?? undefined,
+    impactLevel: ticket.impactLevel,
+    problemDescription: ticket.problemDescription,
 
-    serviceAffected: ticket.serviceAffected ?? '',
-    problemDesc: ticket.problemDesc ?? '',
-    eventLocation: ticket.eventLocation ?? '',
+    eventLocation: ticket.eventLocation ?? undefined,
+    estimatedStart: ticket.estimatedStart ?? undefined,
 
-    initialFindings: ticket.initialFindings ?? '',
-    probableRootCause: ticket.probableRootCause ?? '',
+    initialFindings: ticket.initialFindings ?? undefined,
+    probableRootCause: ticket.probableRootCause ?? undefined,
 
-    actionsTaken: ticket.actionsTaken ?? '',
-    additionalNotes: ticket.additionalNotes ?? '',
-    correctiveAction: ticket.correctiveAction ?? false,
-    status: ticket.status ?? 'OPEN',
+    actionsTaken: ticket.actionsTaken ?? undefined,
+    additionalNotes: ticket.additionalNotes ?? undefined,
+    correctiveAction: ticket.correctiveAction ?? undefined,
   };
 
-  /* =============================
-     DELETE HANDLERS
-  ============================== */
-  async function handleRequestDelete() {
-    if (!id) return;
-    if (!confirm('¿Deseas solicitar la eliminación de este ticket?')) return;
-
-    try {
-      setDeleteLoading(true);
-      await requestTicketDeletion(Number(id));
-      setTicket(prev =>
-        prev ? { ...prev, deleteRequested: true } : prev,
-      );
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
-
-  async function handleApproveDelete() {
-    if (!id) return;
-    if (
-      !confirm(
-        '⚠️ Esta acción eliminará el ticket definitivamente. ¿Continuar?',
-      )
-    ) {
-      return;
-    }
-
-    try {
-      setDeleteLoading(true);
-      await approveDeleteTicket(Number(id));
-      navigate('/tickets');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
+  const isTerminal =
+    ticket.status === TicketStatus.CLOSED ||
+    ticket.status === TicketStatus.CANCELLED;
 
   /* =============================
      RENDER
@@ -123,7 +81,11 @@ export default function TicketEdit() {
     <Card className="p-4 shadow-sm">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>Editar Ticket {ticket.code}</h4>
-        <Button variant="outline-secondary" onClick={() => navigate(-1)}>
+
+        <Button
+          variant="outline-secondary"
+          onClick={() => navigate(-1)}
+        >
           Volver
         </Button>
       </div>
@@ -131,22 +93,23 @@ export default function TicketEdit() {
       {error && <Alert variant="danger">{error}</Alert>}
 
       {/* =============================
-          STATUS EDITOR
+          STATUS ACTIONS
       ============================== */}
-      <TicketEditStatus
-        ticketId={ticket.id}
-        currentStatus={ticket.status}
-        onStatusUpdated={(status: TicketStatus) =>
-          setTicket(prev => (prev ? { ...prev, status } : prev))
-        }
-      />
+      {!isTerminal && (
+        <TicketEditStatus
+          ticketId={ticket.id}
+          status={ticket.status}
+          onActionCompleted={() =>
+            getTicketById(ticket.id).then(setTicket)
+          }
+        />
+      )}
 
-      {/* =============================
-          DELETE WARNINGS
-      ============================== */}
-      {ticket.deleteRequested && (
-        <Alert variant="warning" className="mt-3">
-          ⚠️ Este ticket tiene una solicitud de eliminación pendiente.
+      {isTerminal && (
+        <Alert variant="secondary" className="mt-3">
+          Este ticket se encuentra en estado{' '}
+          <strong>{ticket.status}</strong> y no admite más
+          cambios de estado.
         </Alert>
       )}
 
@@ -156,58 +119,21 @@ export default function TicketEdit() {
       <TicketForm
         mode="edit"
         initialValues={initialValues}
-        submitting={submitting}
-        onSubmit={async values => {
-  try {
-    setSubmitting(true);
-    setError(null);
+        submitting={submitting || isTerminal}
+        onSubmit={async (values: UpdateTicketDTO) => {
+          try {
+            setSubmitting(true);
+            setError(null);
 
-    // 🔥 FILTRADO CRÍTICO
-    const {
-      client,     // ❌ backend no acepta
-      status,     // ❌ se maneja por endpoint separado
-      ...updatePayload
-    } = values;
-
-    await updateTicket(ticket.id, updatePayload);
-
-    navigate(`/tickets/${ticket.id}`);
-  } catch (err) {
-    console.error(err);
-    setError('No se pudo actualizar el ticket');
-  } finally {
-    setSubmitting(false);
-  }
-}}
-
+            await updateTicket(ticket.id, values);
+            navigate(`/tickets/${ticket.id}`);
+          } catch {
+            setError('No se pudo actualizar el ticket');
+          } finally {
+            setSubmitting(false);
+          }
+        }}
       />
-
-      {/* =============================
-          DELETE ACTIONS
-      ============================== */}
-      <hr />
-
-      <div className="d-flex justify-content-end gap-2">
-        {!ticket.deleteRequested && (
-          <Button
-            variant="outline-danger"
-            disabled={deleteLoading}
-            onClick={handleRequestDelete}
-          >
-            Solicitar eliminación
-          </Button>
-        )}
-
-        {isAdmin && ticket.deleteRequested && (
-          <Button
-            variant="danger"
-            disabled={deleteLoading}
-            onClick={handleApproveDelete}
-          >
-            Eliminar definitivamente
-          </Button>
-        )}
-      </div>
     </Card>
   );
 }

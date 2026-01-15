@@ -4,7 +4,11 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from 'axios';
-import type { HttpError } from '../types/http-error.types';
+
+import type { HttpError } from '@/types/http-error.types';
+import {
+  ACCESS_TOKEN_KEY,
+} from '@/auth/auth.storage';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -12,6 +16,9 @@ if (!API_URL) {
   throw new Error('VITE_API_URL no está definida en el entorno');
 }
 
+/* =============================
+   AXIOS INSTANCE
+============================= */
 const http: AxiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 10000,
@@ -20,31 +27,27 @@ const http: AxiosInstance = axios.create({
   },
 });
 
-/**
- * =============================
- * REQUEST INTERCEPTOR
- * Adjunta JWT automáticamente
- * =============================
- */
+/* =============================
+   REQUEST INTERCEPTOR
+   Adjunta JWT automáticamente
+============================= */
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
 
     if (token) {
-      config.headers.set('Authorization', `Bearer ${token}`);
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
   },
-  (error) => Promise.reject(error),
+  error => Promise.reject(error),
 );
 
-/**
- * =============================
- * RESPONSE INTERCEPTOR
- * HARDENED ERROR HANDLING
- * =============================
- */
+/* =============================
+   RESPONSE INTERCEPTOR
+   Error normalizado por dominio
+============================= */
 http.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
@@ -58,17 +61,11 @@ http.interceptors.response.use(
       raw: payload,
     };
 
-    // =============================
-    // Clasificación por HTTP STATUS
-    // =============================
     switch (status) {
       case 401:
         normalizedError.code = 'UNAUTHORIZED';
         normalizedError.message =
           payload?.message ?? 'Sesión inválida o expirada';
-
-        localStorage.clear();
-        window.location.replace('/login');
         break;
 
       case 403:

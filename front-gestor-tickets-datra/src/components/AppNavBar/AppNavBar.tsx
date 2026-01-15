@@ -12,10 +12,27 @@ import { MENU_ITEMS } from './menu.config';
 import './AppNavBar.css';
 
 export default function AppNavBar() {
-  const { user, logout } = useAuth();
+  const { user, logout, status } = useAuth();
   const navigate = useNavigate();
 
-  if (!user) return null;
+    console.log('[AppNavBar]', {
+    status,
+    user,
+  });
+
+  /**
+   * RequireAuth ya validó sesión.
+   * Mientras el user se hidrata, no rompemos layout.
+   */
+  if (status !== 'authenticated' || !user) {
+    return (
+      <Navbar
+        expand="lg"
+        className="app-navbar shadow-sm"
+        sticky="top"
+      />
+    );
+  }
 
   const handleLogout = () => {
     logout();
@@ -39,7 +56,7 @@ export default function AppNavBar() {
         >
           <span className="brand-title">DATRA</span>
           <span className="brand-subtitle">
-            Gestion de Tickets
+            Gestión de Tickets
           </span>
         </Navbar.Brand>
 
@@ -75,7 +92,10 @@ export default function AppNavBar() {
                 </span>
               }
             >
-              <NavDropdown.Item disabled className="user-email">
+              <NavDropdown.Item
+                disabled
+                className="user-email"
+              >
                 {user.email}
               </NavDropdown.Item>
 

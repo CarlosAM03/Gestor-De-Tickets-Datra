@@ -20,7 +20,7 @@ export default function Login() {
 
   /* =============================
      Background login
-  ============================= */
+     ============================= */
   useEffect(() => {
     document.body.classList.add('login-bg');
     return () => {
@@ -30,31 +30,34 @@ export default function Login() {
 
   /* =============================
      Submit
-  ============================= */
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+     ============================= */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (loading) return;
+    if (loading) return;
 
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  try {
-    await login(email, password);
+    try {
+      // AuthProvider es la única fuente de verdad
+      await login(email, password);
 
-    // ✔️ Guardar solo email
-    localStorage.setItem('login_email', email);
+      // UX: recordar último email
+      localStorage.setItem('login_email', email);
 
-    // ✔️ Navegar SOLO en éxito
-    navigate('/', { replace: true });
-  } catch (err) {
-    // ❗ NO re-lanzar el error
-    setError('Credenciales inválidas. Verifica tu email y contraseña.');
-  } finally {
-    setLoading(false);
-  }
-};
-
+      // Navegación declarativa SOLO en éxito
+      navigate('/', { replace: true });
+    } catch {
+      // El error ya fue normalizado por http.ts
+      // Aquí solo mostramos mensaje de UI
+      setError(
+        'Credenciales inválidas. Verifica tu email y contraseña.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="auth-page">

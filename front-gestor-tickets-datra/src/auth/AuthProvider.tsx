@@ -1,70 +1,86 @@
-import { useEffect, useState } from 'react';
-import { AuthContext, type AuthStatus } from './AuthContext';
+import { useEffect, useState, ReactNode } from 'react';
+import { AuthContext, AuthStatus } from './AuthContext';
 import { loginRequest } from '@/api/auth.api';
 import type { AuthUser } from '@/types/auth.types';
+import {
+  ACCESS_TOKEN_KEY,
+  AUTH_USER_KEY,
+} from './auth.storage';
 
-const USER_STORAGE_KEY = 'auth_user';
-const TOKEN_STORAGE_KEY = 'token';
+interface Props {
+  children: ReactNode;
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: Props) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<AuthStatus>('checking');
 
-  /**
-   * LOGIN
-   */
+  /* =============================
+     Bootstrap de sesión
+  ============================== */
+  useEffect(() => {
+    const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const storedUser = localStorage.getItem(AUTH_USER_KEY);
+
+    if (!storedToken || !storedUser) {
+      setStatus('unauthenticated');
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(storedUser) as AuthUser;
+
+      // Validación mínima de contrato
+      if (!parsedUser?.id || !parsedUser?.role) {
+        throw new Error('Invalid stored user');
+      }
+
+      setToken(storedToken);
+      setUser(parsedUser);
+      setStatus('authenticated');
+    } catch {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(AUTH_USER_KEY);
+      setStatus('unauthenticated');
+    }
+  }, []);
+
+  /* =============================
+     Login
+  ============================== */
   const login = async (email: string, password: string) => {
-    const data = await loginRequest(email, password);
+    setStatus('checking');
 
-    localStorage.setItem(TOKEN_STORAGE_KEY, data.access_token);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+    const response = await loginRequest(email, password);
 
-    setToken(data.access_token);
-    setUser(data.user);
+    console.log('[AuthProvider][LOGIN RESPONSE]', response);
+
+    localStorage.setItem(
+      ACCESS_TOKEN_KEY,
+      response.access_token,
+    );
+    localStorage.setItem(
+      AUTH_USER_KEY,
+      JSON.stringify(response.user),
+    );
+
+    setToken(response.access_token);
+    setUser(response.user);
     setStatus('authenticated');
   };
 
-  /**
-   * LOGOUT
-   * Limpieza declarativa (sin redirects duros)
-   */
+  /* =============================
+     Logout
+  ============================== */
   const logout = () => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
 
     setUser(null);
     setToken(null);
     setStatus('unauthenticated');
   };
-
-  /**
-   * RESTAURAR SESIÓN
-   */
-  useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-
-    if (storedToken && storedUser) {
-      try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        setStatus('authenticated');
-        return;
-      } catch {
-        localStorage.clear();
-      }
-    }
-
-    setStatus('unauthenticated');
-  }, []);
-
-  /**
-   * Evitar render prematuro mientras se verifica sesión
-   */
-  if (status === 'checking') {
-    return null; // luego <SplashScreen />
-  }
 
   return (
     <AuthContext.Provider

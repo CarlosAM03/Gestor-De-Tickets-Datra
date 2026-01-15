@@ -1,6 +1,20 @@
 import type { TicketEventType, TicketStatus } from '../enums';
-import type { User } from '../user.types';
+import type {
+  TicketHistoryMetadataDTO,
+} from './ticket-history.dto';
 
+/* =============================
+   USER REDUCIDO (UI)
+============================= */
+export interface TicketHistoryUser {
+  id: number;
+  name: string;
+  email: string;
+}
+
+/* =============================
+   HISTORY UI MODEL
+============================= */
 export interface TicketHistory {
   id: number;
 
@@ -12,9 +26,9 @@ export interface TicketHistory {
   toStatus: TicketStatus | null;
 
   performedById: number | null;
-  performedBy: User | null;
+  performedBy: TicketHistoryUser | null;
 
-  metadata: Record<string, unknown> | null;
+  metadata: TicketHistoryMetadataDTO | null;
 
   createdAt: string;
 }

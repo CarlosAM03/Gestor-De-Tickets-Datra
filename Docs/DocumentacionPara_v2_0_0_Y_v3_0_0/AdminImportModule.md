@@ -1,7 +1,3 @@
-Perfecto, gracias por pegar **el schema real v2.0.0**.
-Con esto ya no hablamos de propuestas sino de **diseño ejecutable y alineado 100% al modelo**.
-
-Voy a responder **exactamente lo que pediste**, en este orden:
 
 ---
 

@@ -11,8 +11,9 @@ import {
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-import { getUsers, deleteUser } from '@/api/users.api';
-import type { User, UserRole } from '@/types/user.types';
+import { getUsers, updateUserByAdmin } from '@/api/users.api';
+import type { User } from '@/types/user.types';
+import type { UserRole } from '@/types/enums';
 
 import './Users.css';
 
@@ -58,26 +59,27 @@ export default function Users() {
   }, []);
 
   /* =============================
-     Delete user (ADMIN)
+     Deactivate user (ADMIN)
+      v2.0.0
   ============================= */
-  const handleDelete = async (id: number) => {
+  const handleDeactivate = async (id: number) => {
     const confirm = window.confirm(
-      '¿Estás seguro de eliminar este usuario?',
+      '¿Desactivar este usuario? No podrá iniciar sesión.',
     );
 
     if (!confirm) return;
 
     try {
-      await deleteUser(id);
-      setSuccess('Usuario eliminado correctamente');
+      await updateUserByAdmin(id, { active: false });
+      setSuccess('Usuario desactivado correctamente');
       loadUsers();
     } catch {
-      setError('No fue posible eliminar el usuario');
+      setError('No fue posible desactivar el usuario');
     }
   };
 
   /* =============================
-     Filtro local (permitido)
+     Filtro local
   ============================= */
   const filteredUsers = users.filter(u => {
     const matchText =
@@ -162,18 +164,27 @@ export default function Users() {
               <th>Nombre</th>
               <th>Email</th>
               <th>Rol</th>
+              <th>Estado</th>
               <th></th>
             </tr>
           </thead>
 
           <tbody>
             {filteredUsers.map(user => (
-              <tr key={user.id}>
+              <tr
+                key={user.id}
+                className={!user.active ? 'table-secondary' : undefined}
+              >
                 <td>{user.name}</td>
                 <td>{user.email}</td>
                 <td>
                   <Badge bg={ROLE_VARIANTS[user.role]}>
                     {user.role}
+                  </Badge>
+                </td>
+                <td>
+                  <Badge bg={user.active ? 'success' : 'secondary'}>
+                    {user.active ? 'Activo' : 'Inactivo'}
                   </Badge>
                 </td>
 
@@ -189,13 +200,17 @@ export default function Users() {
                     Ver
                   </Button>
 
-                  <Button
-                    size="sm"
-                    variant="outline-danger"
-                    onClick={() => handleDelete(user.id)}
-                  >
-                    Eliminar
-                  </Button>
+                  {user.active && (
+                    <Button
+                      size="sm"
+                      variant="outline-danger"
+                      onClick={() =>
+                        handleDeactivate(user.id)
+                      }
+                    >
+                      Desactivar
+                    </Button>
+                  )}
                 </td>
               </tr>
             ))}

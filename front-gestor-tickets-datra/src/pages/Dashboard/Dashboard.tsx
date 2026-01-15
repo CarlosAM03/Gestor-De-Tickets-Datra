@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 import { getTickets } from '@/api/tickets.api';
 
-import type {
-  Ticket,
+import type { Ticket } from '@/types/ticket-types/ticket.types';
+import {
   TicketStatus,
   ImpactLevel,
-} from '@/types/ticket-types/ticket.types';
+} from '@/types/enums';
 
 import './Dashboard.css';
 import vacio from '@/assets/vacio.png';
@@ -20,8 +20,6 @@ import vacio from '@/assets/vacio.png';
 
 const STATUS_VARIANTS: Record<TicketStatus, string> = {
   OPEN: 'secondary',
-  IN_PROGRESS: 'warning',
-  ON_HOLD: 'info',
   RESOLVED: 'success',
   CLOSED: 'dark',
   CANCELLED: 'danger',
@@ -38,15 +36,15 @@ const IMPACT_VARIANTS: Record<ImpactLevel, string> = {
 type SortMode = 'recent' | 'oldest' | 'impact';
 
 const IMPACT_PRIORITY: ImpactLevel[] = [
-  'CRITICAL',
-  'HIGH',
-  'MEDIUM',
-  'LOW',
-  'INFO',
+  ImpactLevel.CRITICAL,
+  ImpactLevel.HIGH,
+  ImpactLevel.MEDIUM,
+  ImpactLevel.LOW,
+  ImpactLevel.INFO,
 ];
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, status } = useAuth();
   const navigate = useNavigate();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -56,14 +54,14 @@ export default function Dashboard() {
      FILTROS
   ============================== */
   const [rfc, setRfc] = useState('');
-  const [status, setStatus] = useState<TicketStatus | ''>('');
+  const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('');
   const [impactLevel, setImpactLevel] = useState<ImpactLevel | ''>('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('recent');
 
   useEffect(() => {
-    if (!user) return;
+    if (status !== 'authenticated' || !user) return;
 
     const loadTickets = async () => {
       try {
@@ -71,7 +69,7 @@ export default function Dashboard() {
 
         const data = await getTickets({
           search: rfc || undefined,
-          status: status || undefined,
+          status: statusFilter || undefined,
           impact: impactLevel || undefined,
           from: from || undefined,
           to: to || undefined,
@@ -112,12 +110,29 @@ export default function Dashboard() {
     };
 
     loadTickets();
-  }, [user, rfc, status, impactLevel, from, to, sortMode]);
+  }, [
+    status,
+    user,
+    rfc,
+    statusFilter,
+    impactLevel,
+    from,
+    to,
+    sortMode,
+  ]);
 
-  if (!user) return null;
+  /**
+   * Render neutro mientras se hidrata el usuario
+   * (NO return null)
+   */
+  if (status !== 'authenticated' || !user) {
+    return <div className="dashboard" />;
+  }
 
   const canViewHistory =
-    user.role === 'ADMIN' || user.role === 'INGENIERO' || user.role === 'TECNICO';
+    user.role === 'ADMIN' ||
+    user.role === 'INGENIERO' ||
+    user.role === 'TECNICO';
 
   return (
     <div className="dashboard">
@@ -155,15 +170,13 @@ export default function Dashboard() {
             <Form.Group className="mb-2">
               <Form.Label>Estado</Form.Label>
               <Form.Select
-                value={status}
+                value={statusFilter}
                 onChange={e =>
-                  setStatus(e.target.value as TicketStatus | '')
+                  setStatusFilter(e.target.value as TicketStatus | '')
                 }
               >
                 <option value="">Todos</option>
                 <option value="OPEN">Abierto</option>
-                <option value="IN_PROGRESS">En progreso</option>
-                <option value="ON_HOLD">En espera</option>
                 <option value="RESOLVED">Resuelto</option>
                 <option value="CLOSED">Cerrado</option>
                 <option value="CANCELLED">Cancelado</option>
@@ -254,12 +267,16 @@ export default function Dashboard() {
             )}
 
             {!loading && tickets.length === 0 && (
-              <><p className="text-muted">
-                No hay actividad reciente
-              </p><img
+              <>
+                <p className="text-muted">
+                  No hay actividad reciente
+                </p>
+                <img
                   src={vacio}
                   alt="Datra"
-                  className="ticket-vacio" /></>
+                  className="ticket-vacio"
+                />
+              </>
             )}
 
             {!loading && tickets.length > 0 && (
@@ -277,7 +294,7 @@ export default function Dashboard() {
                       <strong>{ticket.code}</strong>
                       <div className="text-muted small">
                         {ticket.client?.rfc || '-'} ·{' '}
-                        {ticket.createdBy.name}
+                        {ticket.createdBy?.name ?? 'Sistema'}
                       </div>
                     </div>
 

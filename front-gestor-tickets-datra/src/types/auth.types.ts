@@ -1,16 +1,20 @@
-import type { User } from './user.types';
+import type { UserRole } from './enums';
 
-/**
- * Usuario autenticado
- * (idéntico al User expuesto por backend)
- */
-export type AuthUser = User;
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+}
+
 
 /**
  * Respuesta de login
  */
 export interface LoginResponse {
+  message: string;
   access_token: string;
-  expires_in?: string;
+  expires_in: string;
   user: AuthUser;
 }
+

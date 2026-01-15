@@ -6,33 +6,23 @@ import {
   Badge,
   Form,
   Spinner,
-  Alert,
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  approveDeleteTicket,
-  rejectTicketDeletion,
-  getTickets,
-} from '@/api/tickets.api';
-
+import { getTickets } from '@/api/tickets.api';
 import { useAuth } from '@/auth/useAuth';
 
-import type {
-  Ticket,
-  TicketStatus,
-  ImpactLevel,
-} from '@/types/ticket-types/ticket.types';
+import type { Ticket } from '@/types/ticket-types/ticket.types';
+import type { TicketStatus, ImpactLevel } from '@/types/enums';
 
 import './TicketList.css';
 
 /* =============================
    Labels y colores
 ============================= */
+
 const STATUS_LABELS: Record<TicketStatus, string> = {
   OPEN: 'Abierto',
-  IN_PROGRESS: 'En progreso',
-  ON_HOLD: 'En espera',
   RESOLVED: 'Resuelto',
   CLOSED: 'Cerrado',
   CANCELLED: 'Cancelado',
@@ -40,8 +30,6 @@ const STATUS_LABELS: Record<TicketStatus, string> = {
 
 const STATUS_VARIANTS: Record<TicketStatus, string> = {
   OPEN: 'secondary',
-  IN_PROGRESS: 'warning',
-  ON_HOLD: 'info',
   RESOLVED: 'success',
   CLOSED: 'dark',
   CANCELLED: 'danger',
@@ -58,27 +46,27 @@ const IMPACT_VARIANTS: Record<ImpactLevel, string> = {
 /* =============================
    Componente
 ============================= */
+
 export default function TicketList() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, status } = useAuth();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   /* =============================
      Filtros
   ============================== */
   const [searchCode, setSearchCode] = useState('');
   const [searchRfc, setSearchRfc] = useState('');
-  const [status, setStatus] = useState<TicketStatus | ''>('');
+  const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('');
   const [impact, setImpact] = useState<ImpactLevel | ''>('');
 
   /* =============================
      Cargar tickets
   ============================== */
   const loadTickets = async () => {
-    if (!user) return;
+    if (status !== 'authenticated' || !user) return;
 
     try {
       setLoading(true);
@@ -87,19 +75,11 @@ export default function TicketList() {
         scope: user.role === 'ADMIN' ? 'all' : 'mine',
         code: searchCode || undefined,
         rfc: searchRfc || undefined,
-        status: status || undefined,
+        status: statusFilter || undefined,
         impact: impact || undefined,
       });
 
-      setTickets(
-        user.role === 'ADMIN'
-          ? data
-          : data.filter(
-              (t: Ticket) =>
-                !t.deleteRequested ||
-                t.createdBy.id === user.id,
-            ),
-      );
+      setTickets(data);
     } finally {
       setLoading(false);
     }
@@ -107,29 +87,22 @@ export default function TicketList() {
 
   useEffect(() => {
     loadTickets();
+    // dependencias explícitas para evitar loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchCode, searchRfc, status, impact]);
+  }, [status, user, searchCode, searchRfc, statusFilter, impact]);
 
-  /* =============================
-     Acciones ADMIN
-  ============================== */
-  const handleApprove = async (id: number) => {
-    await approveDeleteTicket(id);
-    setSuccessMsg('Solicitud de eliminación aprobada');
-    loadTickets();
-  };
-
-  const handleReject = async (id: number) => {
-    await rejectTicketDeletion(id);
-    setSuccessMsg('Solicitud de eliminación cancelada');
-    loadTickets();
-  };
-
-  if (!user) return null;
+  /**
+   * Render neutro mientras se valida sesión
+   */
+  if (status !== 'authenticated' || !user) {
+    return <div className="ticket-list" />;
+  }
 
   return (
     <Card className="ticket-list p-3 shadow-sm">
-      {/* Header */}
+      {/* ======================
+          HEADER
+      ====================== */}
       <div className="ticket-list-header">
         <h4 className="mb-0">
           {user.role === 'ADMIN'
@@ -141,6 +114,7 @@ export default function TicketList() {
           <Button
             variant="outline-secondary"
             onClick={loadTickets}
+            disabled={loading}
           >
             ⟳ Refrescar
           </Button>
@@ -151,17 +125,9 @@ export default function TicketList() {
         </div>
       </div>
 
-      {successMsg && (
-        <Alert
-          variant="success"
-          dismissible
-          onClose={() => setSuccessMsg(null)}
-        >
-          {successMsg}
-        </Alert>
-      )}
-
-      {/* Filtros */}
+      {/* ======================
+          FILTROS
+      ====================== */}
       <div className="row mb-3">
         <div className="col-md-3 mb-2">
           <Form.Control
@@ -183,9 +149,11 @@ export default function TicketList() {
 
         <div className="col-md-3 mb-2">
           <Form.Select
-            value={status}
+            value={statusFilter}
             onChange={(e) =>
-              setStatus(e.target.value as TicketStatus | '')
+              setStatusFilter(
+                e.target.value as TicketStatus | '',
+              )
             }
           >
             <option value="">Estado</option>
@@ -203,7 +171,9 @@ export default function TicketList() {
           <Form.Select
             value={impact}
             onChange={(e) =>
-              setImpact(e.target.value as ImpactLevel | '')
+              setImpact(
+                e.target.value as ImpactLevel | '',
+              )
             }
           >
             <option value="">Impacto</option>
@@ -216,7 +186,9 @@ export default function TicketList() {
         </div>
       </div>
 
-      {/* Tabla */}
+      {/* ======================
+          TABLA
+      ====================== */}
       {loading ? (
         <div className="text-center py-4">
           <Spinner animation="border" />
@@ -240,23 +212,15 @@ export default function TicketList() {
 
           <tbody>
             {tickets.map((ticket) => (
-              <tr
-                key={ticket.id}
-                data-impact={ticket.impactLevel || undefined}
-                className={
-                  ticket.deleteRequested
-                    ? 'row-delete-requested'
-                    : ''
-                }
-              >
+              <tr key={ticket.id}>
                 <td>
                   <strong>{ticket.code}</strong>
                 </td>
 
-                <td>{ticket.client?.rfc || '-'}</td>
+                <td>{ticket.client?.rfc ?? '-'}</td>
 
                 <td className="text-truncate">
-                  {ticket.problemDesc || 'Sin descripción'}
+                  {ticket.problemDescription}
                 </td>
 
                 <td>
@@ -268,58 +232,27 @@ export default function TicketList() {
                 </td>
 
                 <td>
-                  {ticket.impactLevel ? (
-                    <Badge
-                      bg={
-                        IMPACT_VARIANTS[
-                          ticket.impactLevel
-                        ]
-                      }
-                    >
-                      {ticket.impactLevel}
-                    </Badge>
-                  ) : (
-                    '-'
-                  )}
+                  <Badge
+                    bg={
+                      IMPACT_VARIANTS[
+                        ticket.impactLevel
+                      ]
+                    }
+                  >
+                    {ticket.impactLevel}
+                  </Badge>
                 </td>
 
                 <td className="text-end">
                   <Button
                     size="sm"
                     variant="outline-primary"
-                    className="me-2"
                     onClick={() =>
                       navigate(`/tickets/${ticket.id}`)
                     }
                   >
                     Ver
                   </Button>
-
-                  {user.role === 'ADMIN' &&
-                    ticket.deleteRequested && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline-success"
-                          className="me-1"
-                          onClick={() =>
-                            handleApprove(ticket.id)
-                          }
-                        >
-                          Aprobar
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="outline-danger"
-                          onClick={() =>
-                            handleReject(ticket.id)
-                          }
-                        >
-                          Cancelar
-                        </Button>
-                      </>
-                    )}
                 </td>
               </tr>
             ))}
@@ -329,4 +262,3 @@ export default function TicketList() {
     </Card>
   );
 }
-

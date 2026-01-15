@@ -8,16 +8,20 @@ interface Props {
   children: ReactNode;
 }
 
+/**
+ * Guard de autorización por rol
+ * Asume que RequireAuth ya validó autenticación
+ */
 export function RequireRole({ allowedRoles, children }: Props) {
   const { user } = useAuth();
 
   // Auth ya fue validado por RequireAuth
-  // Si no hay usuario aún, no renderizamos nada
+  // Mientras el user aún no está disponible, no renderizamos nada
   if (!user) {
     return null;
   }
 
-  // Usuario autenticado pero sin permisos
+  // Usuario autenticado pero sin permisos suficientes
   if (!allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }

@@ -1,16 +1,34 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
+/**
+ * Guard de autenticación
+ *
+ * Responsabilidad:
+ * - Bloquear acceso si no hay sesión
+ * - NO validar roles
+ * - NO hacer redirects imperativos
+ * - NO renderizar layout
+ *
+ * Fuente de verdad: AuthContext
+ */
 export default function RequireAuth() {
   const { status } = useAuth();
   const location = useLocation();
 
-  // Aún no sabemos si está autenticado o no
+  /**
+   * Estado intermedio:
+   * Aún se está restaurando sesión (bootstrap)
+   * No renderizamos nada para evitar parpadeos
+   */
   if (status === 'checking') {
-    return null; // luego <SplashScreen />
+    return null; // futuro: <SplashScreen />
   }
 
-  // No autenticado
+  /**
+   * Usuario NO autenticado
+   * Redirige a login preservando ruta original
+   */
   if (status === 'unauthenticated') {
     return (
       <Navigate
@@ -21,6 +39,9 @@ export default function RequireAuth() {
     );
   }
 
-  // Autenticado
+  /**
+   * Usuario autenticado
+   * Renderiza el árbol protegido
+   */
   return <Outlet />;
 }

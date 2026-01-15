@@ -10,9 +10,10 @@ import {
 } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { getUserById, deleteUser } from '@/api/users.api';
+import { getUserById, updateUserByAdmin } from '@/api/users.api';
 import { useAuth } from '@/auth/useAuth';
-import type { User, UserRole } from '@/types/user.types';
+import type { User } from '@/types/user.types';
+import type { UserRole } from '@/types/enums';
 
 /* =============================
    Visual role mapping
@@ -24,13 +25,13 @@ const ROLE_VARIANTS: Record<UserRole, string> = {
 };
 
 export default function UserView() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /* =============================
@@ -40,7 +41,7 @@ export default function UserView() {
   const isSelf = authUser?.id === Number(id);
 
   /* =============================
-     Load user
+     Load user (ADMIN o propio)
   ============================= */
   useEffect(() => {
     if (!id) return;
@@ -63,25 +64,26 @@ export default function UserView() {
   }, [id]);
 
   /* =============================
-     Delete user (ADMIN)
+     Deactivate user (ADMIN)
+     Soft delete v2.0.0
   ============================= */
-  const handleDelete = async () => {
+  const handleDeactivate = async () => {
     if (!user) return;
 
     const confirmed = window.confirm(
-      `¿Eliminar definitivamente al usuario "${user.name}"?`,
+      `¿Desactivar al usuario "${user.name}"?\nNo podrá iniciar sesión.`,
     );
 
     if (!confirmed) return;
 
     try {
-      setDeleting(true);
-      await deleteUser(user.id);
+      setUpdating(true);
+      await updateUserByAdmin(user.id, { active: false });
       navigate('/users');
     } catch {
-      setError('No fue posible eliminar el usuario');
+      setError('No fue posible desactivar el usuario');
     } finally {
-      setDeleting(false);
+      setUpdating(false);
     }
   };
 
@@ -115,9 +117,15 @@ export default function UserView() {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h4 className="mb-0">Perfil de usuario</h4>
 
-          <Badge bg={ROLE_VARIANTS[user.role]}>
-            {user.role}
-          </Badge>
+          <div className="d-flex gap-2">
+            <Badge bg={ROLE_VARIANTS[user.role]}>
+              {user.role}
+            </Badge>
+
+            <Badge bg={user.active ? 'success' : 'secondary'}>
+              {user.active ? 'Activo' : 'Inactivo'}
+            </Badge>
+          </div>
         </div>
 
         {/* =============================
@@ -141,14 +149,6 @@ export default function UserView() {
 
           <Alert variant="info">
             La edición de usuarios aún no está habilitada.
-            <br />
-            <small>
-              Próximamente:
-              <ul className="mb-0">
-                <li>ADMIN podrá editar todos los campos</li>
-                <li>Usuario podrá editar nombre y contraseña</li>
-              </ul>
-            </small>
           </Alert>
 
           {/* =============================
@@ -164,15 +164,15 @@ export default function UserView() {
               Volver
             </Button>
 
-            {isAdmin && !isSelf && (
+            {isAdmin && !isSelf && user.active && (
               <Button
-                variant="danger"
-                onClick={handleDelete}
-                disabled={deleting}
+                variant="outline-danger"
+                onClick={handleDeactivate}
+                disabled={updating}
               >
-                {deleting
-                  ? 'Eliminando...'
-                  : 'Eliminar usuario'}
+                {updating
+                  ? 'Desactivando...'
+                  : 'Desactivar usuario'}
               </Button>
             )}
           </div>
