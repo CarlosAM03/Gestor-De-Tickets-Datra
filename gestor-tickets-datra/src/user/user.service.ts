@@ -64,6 +64,20 @@ export class UserService {
       orderBy: { createdAt: 'asc' },
     });
   }
+  // ======================================================
+  // FIND ME (SELF)
+  // ======================================================
+  async findMe(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.active) {
+      throw new ForbiddenException('Usuario inactivo o inválido');
+    }
+
+    return user;
+  }
 
   // ======================================================
   // FIND ONE

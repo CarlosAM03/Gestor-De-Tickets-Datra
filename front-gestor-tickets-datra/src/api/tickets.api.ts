@@ -76,11 +76,20 @@ export interface UpdateTicketPayload {
 export const getTickets = async (
   params?: GetTicketsParams,
 ): Promise<Ticket[]> => {
-  const { data } = await http.get<Ticket[]>('/tickets', {
-    params,
-  });
-  return data;
+  const response = await http.get('/tickets', { params });
+
+  // Normalización defensiva
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (Array.isArray(response.data?.data)) {
+    return response.data.data;
+  }
+
+  return [];
 };
+
 
 export const getTicketById = async (id: number): Promise<Ticket> => {
   const { data } = await http.get<Ticket>(`/tickets/${id}`);

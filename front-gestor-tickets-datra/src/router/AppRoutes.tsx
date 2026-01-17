@@ -6,6 +6,7 @@ import TicketsAnalyticsDashboard from '@/pages/Dashboard/TicketsAnalyticsDashboa
 
 import Users from '@/pages/Users/Users';
 import UserCreate from '@/pages/Users/UserCreate';
+import UserEdit from '@/pages/Users/UserEdit';
 import UserView from '@/pages/Users/UserView';
 
 import TicketsList from '@/pages/Tickets/TicketsList';
@@ -23,135 +24,106 @@ import { UserRole } from '@/types/enums';
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      {/* =======================
-          PUBLIC
-      ======================= */}
-      <Route path="/login" element={<Login />} />
+<Routes>
+  {/* PUBLIC */}
+  <Route path="/login" element={<Login />} />
 
-      {/* =======================
-          PROTECTED
-      ======================= */}
-      <Route element={<RequireAuth />}>
-        <Route element={<MainLayout />}>
-          {/* Entry */}
-          <Route index element={<Navigate to="/dashboard" replace />} />
+  {/* AUTHENTICATED */}
+  <Route element={<RequireAuth />}>
+    <Route element={<MainLayout />}>
+      <Route index element={<Navigate to="/dashboard" replace />} />
 
-          {/* Dashboard */}
-          <Route path="dashboard" element={<Dashboard />} />
+      {/* DASHBOARD */}
+      <Route path="dashboard">
+        <Route index element={<Dashboard />} />
 
-          {/* Analytics Dashboard */}
-          <Route
-            path="dashboard/analytics"
-            element={
-              <RequireRole
-                allowedRoles={[
-                  UserRole.ADMIN,
-                  UserRole.INGENIERO,
-                ]}
-              >
-                <TicketsAnalyticsDashboard />
-              </RequireRole>
-            }
-          />
-
-          {/* =======================
-              USERS (ADMIN ONLY)
-          ======================= */}
-          <Route
-            path="users"
-            element={
-              <RequireRole allowedRoles={[UserRole.ADMIN]}>
-                <Users />
-              </RequireRole>
-            }
-          />
-
-          <Route
-            path="users/create"
-            element={
-              <RequireRole allowedRoles={[UserRole.ADMIN]}>
-                <UserCreate />
-              </RequireRole>
-            }
-          />
-
-          {/* Vista de usuario (admin o self → validación fina en módulo) */}
-          <Route
-            path="users/:id"
-            element={
-              <RequireRole
-                allowedRoles={[
-                  UserRole.ADMIN,
-                  UserRole.INGENIERO,
-                  UserRole.TECNICO,
-                ]}
-              >
-                <UserView />
-              </RequireRole>
-            }
-          />
-
-          {/* =======================
-              TICKETS
-          ======================= */}
-          <Route path="tickets" element={<TicketsList />} />
-
-          <Route
-            path="tickets/create"
-            element={
-              <RequireRole
-                allowedRoles={[
-                  UserRole.ADMIN,
-                  UserRole.INGENIERO,
-                  UserRole.TECNICO,
-                ]}
-              >
-                <TicketCreate />
-              </RequireRole>
-            }
-          />
-
-          <Route path="tickets/:id" element={<TicketView />} />
-
-          <Route
-            path="tickets/:id/edit"
-            element={
-              <RequireRole
-                allowedRoles={[
-                  UserRole.ADMIN,
-                  UserRole.INGENIERO,
-                  UserRole.TECNICO,
-                ]}
-              >
-                <TicketEdit />
-              </RequireRole>
-            }
-          />
-
-          {/* =======================
-              HISTORY
-          ======================= */}
-          <Route
-            path="historial"
-            element={
-              <RequireRole
-                allowedRoles={[
-                  UserRole.ADMIN,
-                  UserRole.INGENIERO,
-                ]}
-              >
-                <History />
-              </RequireRole>
-            }
-          />
-        </Route>
+        <Route
+          path="analytics"
+          element={
+            <RequireRole allowedRoles={[UserRole.ADMIN, UserRole.INGENIERO]}>
+              <TicketsAnalyticsDashboard />
+            </RequireRole>
+          }
+        />
       </Route>
 
-      {/* =======================
-          FALLBACK
-      ======================= */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+      {/* USERS */}
+      <Route
+        path="users"
+        element={
+          <RequireRole allowedRoles={[UserRole.ADMIN]}>
+            <Users />
+          </RequireRole>
+        }
+      />
+
+      <Route
+        path="users/create"
+        element={
+          <RequireRole allowedRoles={[UserRole.ADMIN]}>
+            <UserCreate />
+          </RequireRole>
+        }
+      />
+      
+      <Route
+        path="users/:id/edit"
+        element={
+          <RequireRole allowedRoles={[UserRole.ADMIN]}>
+            <UserEdit />
+          </RequireRole>
+        }
+      />
+
+      <Route
+        path="users/:id"
+        element={
+          <RequireRole allowedRoles={[UserRole.ADMIN, UserRole.INGENIERO, UserRole.TECNICO]}>
+            <UserView />
+          </RequireRole>
+        }
+      />
+
+      {/* TICKETS */}
+      <Route path="tickets">
+        <Route index element={<TicketsList />} />
+
+        <Route
+          path="create"
+          element={
+            <RequireRole allowedRoles={[UserRole.ADMIN, UserRole.INGENIERO, UserRole.TECNICO]}>
+              <TicketCreate />
+            </RequireRole>
+          }
+        />
+
+        <Route path=":id" element={<TicketView />} />
+
+        <Route
+          path=":id/edit"
+          element={
+            <RequireRole allowedRoles={[UserRole.ADMIN, UserRole.INGENIERO, UserRole.TECNICO]}>
+              <TicketEdit />
+            </RequireRole>
+          }
+        />
+      </Route>
+
+      {/* HISTORY */}
+      <Route
+        path="historial"
+        element={
+          <RequireRole allowedRoles={[UserRole.ADMIN, UserRole.INGENIERO]}>
+            <History />
+          </RequireRole>
+        }
+      />
+    </Route>
+  </Route>
+
+  {/* FALLBACK */}
+  <Route path="*" element={<Navigate to="/login" replace />} />
+</Routes>
+
   );
 }

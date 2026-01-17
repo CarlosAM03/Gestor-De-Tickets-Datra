@@ -47,6 +47,15 @@ export class UserController {
   async findAll() {
     return this.userService.findAll();
   }
+  // ======================================================
+  // GET /users/me
+  // Obtener perfil propio (SELF)
+  // ======================================================
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  async findMe(@Req() req: RequestWithUser) {
+    return this.userService.findMe(req.user.id);
+  }
 
   // ======================================================
   // GET /users/:id

@@ -13,10 +13,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getUserById, updateUserByAdmin } from '@/api/users.api';
 import { useAuth } from '@/auth/useAuth';
 import type { User } from '@/types/user.types';
-import type { UserRole } from '@/types/enums';
+import { UserRole } from '@/types/enums';
 
 /* =============================
-   Visual role mapping
+   Roles visuales
 ============================= */
 const ROLE_VARIANTS: Record<UserRole, string> = {
   ADMIN: 'danger',
@@ -34,14 +34,12 @@ export default function UserView() {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* =============================
-     Permissions
-  ============================= */
-  const isAdmin = authUser?.role === 'ADMIN';
+  const isAdmin = authUser?.role === UserRole.ADMIN;
   const isSelf = authUser?.id === Number(id);
 
   /* =============================
-     Load user (ADMIN o propio)
+     Load user (SINGLE SOURCE OF TRUTH)
+     🔒 Siempre /users/:id
   ============================= */
   useEffect(() => {
     if (!id) return;
@@ -64,24 +62,33 @@ export default function UserView() {
   }, [id]);
 
   /* =============================
-     Deactivate user (ADMIN)
-     Soft delete v2.0.0
+     Activate / Deactivate (ADMIN)
   ============================= */
-  const handleDeactivate = async () => {
+  const toggleActive = async () => {
     if (!user) return;
 
     const confirmed = window.confirm(
-      `¿Desactivar al usuario "${user.name}"?\nNo podrá iniciar sesión.`,
+      user.active
+        ? `¿Desactivar al usuario "${user.name}"?`
+        : `¿Reactivar al usuario "${user.name}"?`,
     );
 
     if (!confirmed) return;
 
     try {
       setUpdating(true);
-      await updateUserByAdmin(user.id, { active: false });
-      navigate('/users');
+
+      await updateUserByAdmin(user.id, {
+        active: !user.active,
+      });
+
+      // Optimistic update
+      setUser({
+        ...user,
+        active: !user.active,
+      });
     } catch {
-      setError('No fue posible desactivar el usuario');
+      setError('No fue posible actualizar el estado del usuario');
     } finally {
       setUpdating(false);
     }
@@ -103,11 +110,7 @@ export default function UserView() {
   }
 
   if (!user) {
-    return (
-      <Alert variant="warning">
-        Usuario no encontrado
-      </Alert>
-    );
+    return <Alert variant="warning">Usuario no encontrado</Alert>;
   }
 
   return (
@@ -128,9 +131,7 @@ export default function UserView() {
           </div>
         </div>
 
-        {/* =============================
-            Read-only form
-        ============================= */}
+        {/* Info */}
         <Form>
           <Form.Group className="mb-3">
             <Form.Label>Nombre</Form.Label>
@@ -147,13 +148,7 @@ export default function UserView() {
             <Form.Control value={user.role} disabled />
           </Form.Group>
 
-          <Alert variant="info">
-            La edición de usuarios aún no está habilitada.
-          </Alert>
-
-          {/* =============================
-              Actions
-          ============================= */}
+          {/* Actions */}
           <div className="d-flex justify-content-between mt-4">
             <Button
               variant="secondary"
@@ -164,17 +159,36 @@ export default function UserView() {
               Volver
             </Button>
 
-            {isAdmin && !isSelf && user.active && (
-              <Button
-                variant="outline-danger"
-                onClick={handleDeactivate}
-                disabled={updating}
-              >
-                {updating
-                  ? 'Desactivando...'
-                  : 'Desactivar usuario'}
-              </Button>
-            )}
+            <div className="d-flex gap-2">
+              {(isSelf || isAdmin) && (
+                <Button
+                  variant="outline-primary"
+                  onClick={() =>
+                    navigate(`/users/${user.id}/edit`)
+                  }
+                >
+                  Editar
+                </Button>
+              )}
+
+              {isAdmin && !isSelf && (
+                <Button
+                  variant={
+                    user.active
+                      ? 'outline-danger'
+                      : 'outline-success'
+                  }
+                  disabled={updating}
+                  onClick={toggleActive}
+                >
+                  {updating
+                    ? 'Actualizando...'
+                    : user.active
+                    ? 'Desactivar'
+                    : 'Reactivar'}
+                </Button>
+              )}
+            </div>
           </div>
         </Form>
       </Card.Body>

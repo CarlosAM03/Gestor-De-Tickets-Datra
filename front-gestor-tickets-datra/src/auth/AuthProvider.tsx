@@ -54,7 +54,6 @@ export function AuthProvider({ children }: Props) {
 
     const response = await loginRequest(email, password);
 
-    console.log('[AuthProvider][LOGIN RESPONSE]', response);
 
     localStorage.setItem(
       ACCESS_TOKEN_KEY,
