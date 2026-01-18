@@ -1,3 +1,4 @@
+// src/layouts/AppNavBar/AppNavBar.tsx
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Navbar,
@@ -15,7 +16,7 @@ export default function AppNavBar() {
   const { user, logout, status } = useAuth();
   const navigate = useNavigate();
 
-    console.log('[AppNavBar]', {
+  console.log('[AppNavBar]', {
     status,
     user,
   });
@@ -67,17 +68,19 @@ export default function AppNavBar() {
               MENÚ PRINCIPAL
           ====================== */}
           <Nav className="me-auto nav-main">
-            {MENU_ITEMS.filter(item =>
-              item.roles.includes(user.role),
-            ).map(item => (
-              <Nav.Link
-                key={item.path}
-                as={Link}
-                to={item.path}
-              >
-                {item.label}
-              </Nav.Link>
-            ))}
+            {MENU_ITEMS
+              .filter(item =>
+                item.roles.includes(user.role),
+              )
+              .map(item => (
+                <Nav.Link
+                  key={item.path}
+                  as={Link}
+                  to={item.path}
+                >
+                  {item.label}
+                </Nav.Link>
+              ))}
           </Nav>
 
           {/* ======================

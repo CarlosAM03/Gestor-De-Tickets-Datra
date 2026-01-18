@@ -15,9 +15,12 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '@prisma/client';
+
 import { toClientResponseDto } from './mappers/clients.mapper';
 import { ClientResponseDto } from './dto/client-response.dto';
 import { CreateClientDto } from './dto/create-client.dto';
+import { UpdateClientDto } from './dto/update-client.dto';
+
 @Controller('clients')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ClientsController {
@@ -36,6 +39,38 @@ export class ClientsController {
   }
 
   // ======================================================
+  // GET /clients/all
+  // ADMIN: todos
+  // TECNICO / INGENIERO: solo activos
+  // ======================================================
+  @Get('all')
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
+  @HttpCode(HttpStatus.OK)
+  async findAll(
+    @Query('includeInactive') includeInactive?: string,
+  ): Promise<ClientResponseDto[]> {
+    const activeOnly = includeInactive !== 'true';
+    const clients = await this.clientsService.findAll(activeOnly);
+    return clients.map(toClientResponseDto);
+  }
+
+  // ======================================================
+  // GET /clients/search?q=ABC
+  // Autocomplete (solo activos)
+  // ======================================================
+  @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
+  @HttpCode(HttpStatus.OK)
+  async search(@Query('q') query?: string): Promise<ClientResponseDto[]> {
+    if (!query) {
+      return [];
+    }
+
+    const clients = await this.clientsService.search(query);
+    return clients.map(toClientResponseDto);
+  }
+
+  // ======================================================
   // GET /clients/:rfc
   // Roles: ADMIN / TECNICO / INGENIERO
   // ======================================================
@@ -48,19 +83,18 @@ export class ClientsController {
   }
 
   // ======================================================
-  // GET /clients?q=ABC
-  // Autocomplete (solo activos)
+  // PATCH /clients/:rfc
+  // ADMIN ONLY
   // ======================================================
-  @Get()
-  @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
+  @Patch(':rfc')
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
-  async search(@Query('q') query?: string): Promise<ClientResponseDto[]> {
-    if (!query) {
-      return [];
-    }
-
-    const clients = await this.clientsService.search(query);
-    return clients.map(toClientResponseDto);
+  async update(
+    @Param('rfc') rfc: string,
+    @Body() dto: UpdateClientDto,
+  ): Promise<ClientResponseDto> {
+    const client = await this.clientsService.update(rfc.toUpperCase(), dto);
+    return toClientResponseDto(client);
   }
 
   // ======================================================

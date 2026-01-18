@@ -37,6 +37,19 @@ export class ClientsService {
   }
 
   // ======================================================
+  // Lista Completa de Clientes activos
+  // Usado por ClientList
+  // ======================================================
+  async findAll(activeOnly = true) {
+    return this.prisma.client.findMany({
+      where: activeOnly ? { active: true } : undefined,
+      orderBy: {
+        companyName: 'asc',
+      },
+    });
+  }
+
+  // ======================================================
   // READ — ACTIVE CLIENT (PUBLIC DOMAIN CONTRACT)
   // Usado por Tickets y Frontend
   // ======================================================

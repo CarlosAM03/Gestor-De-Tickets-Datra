@@ -1,3 +1,4 @@
+// src/layouts/AppNavBar/menu.config.ts
 import { UserRole } from '@/types/enums';
 
 export interface MenuItem {
@@ -29,5 +30,10 @@ export const MENU_ITEMS: MenuItem[] = [
     label: 'Usuarios',
     path: '/users',
     roles: [UserRole.ADMIN],
+  },
+  {
+    label: 'Clientes',
+    path: '/clients',
+    roles: [UserRole.ADMIN], 
   },
 ];
