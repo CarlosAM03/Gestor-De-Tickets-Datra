@@ -26,41 +26,45 @@ import type { RequestWithUser } from '../types/request-with-user';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  // ======================================================
-  // POST /users
-  // Crear usuario (ADMIN)
-  // ======================================================
+  /* ======================================================
+     POST /users
+     Crear usuario (ADMIN)
+  ====================================================== */
   @Post()
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateUserDto) {
-    return this.userService.create(dto);
+    const user = await this.userService.create(dto);
+    return { success: true, data: user };
   }
 
-  // ======================================================
-  // GET /users
-  // Obtener todos los usuarios (ADMIN)
-  // ======================================================
+  /* ======================================================
+     GET /users
+     Obtener todos los usuarios (ADMIN)
+  ====================================================== */
   @Get()
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   async findAll() {
-    return this.userService.findAll();
+    const users = await this.userService.findAll();
+    return { success: true, data: users };
   }
-  // ======================================================
-  // GET /users/me
-  // Obtener perfil propio (SELF)
-  // ======================================================
+
+  /* ======================================================
+     GET /users/me
+     Obtener perfil propio (SELF)
+  ====================================================== */
   @Get('me')
   @HttpCode(HttpStatus.OK)
   async findMe(@Req() req: RequestWithUser) {
-    return this.userService.findMe(req.user.id);
+    const user = await this.userService.findMe(req.user.id);
+    return { success: true, data: user };
   }
 
-  // ======================================================
-  // GET /users/:id
-  // ADMIN o el mismo usuario
-  // ======================================================
+  /* ======================================================
+     GET /users/:id
+     ADMIN o el mismo usuario
+  ====================================================== */
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
@@ -74,26 +78,28 @@ export class UserController {
       throw new ForbiddenException('No tienes permiso para ver este usuario');
     }
 
-    return this.userService.findOne(userId);
+    const user = await this.userService.findOne(userId);
+    return { success: true, data: user };
   }
 
-  // ======================================================
-  // PATCH /users/me
-  // Actualizar datos propios (SELF)
-  // ======================================================
+  /* ======================================================
+     PATCH /users/me
+     Actualizar datos propios (SELF)
+  ====================================================== */
   @Patch('me')
   @HttpCode(HttpStatus.OK)
   async updateSelf(
     @Req() req: RequestWithUser,
     @Body() dto: UpdateSelfUserDto,
   ) {
-    return this.userService.updateSelf(req.user.id, dto);
+    const user = await this.userService.updateSelf(req.user.id, dto);
+    return { success: true, data: user };
   }
 
-  // ======================================================
-  // PATCH /users/:id
-  // Admin update (rol / email / estado)
-  // ======================================================
+  /* ======================================================
+     PATCH /users/:id
+     Admin update (rol / email / estado)
+  ====================================================== */
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
@@ -104,6 +110,7 @@ export class UserController {
       throw new ForbiddenException('Identificador de usuario inválido');
     }
 
-    return this.userService.adminUpdate(userId, dto);
+    const user = await this.userService.adminUpdate(userId, dto);
+    return { success: true, data: user };
   }
 }

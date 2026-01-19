@@ -12,7 +12,12 @@ import {
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-import { getAllClients } from '@/api/clients.api';
+import {
+  getAllClients,
+  activateClient,
+  deactivateClient,
+} from '@/api/clients.api';
+
 import type { Client } from '@/types/clients-types/clients.types';
 import { useAuth } from '@/auth/useAuth';
 import { UserRole } from '@/types/enums';
@@ -26,6 +31,7 @@ export default function ClientsList() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingRfc, setUpdatingRfc] = useState<string | null>(null);
 
   /* ===== Filters ===== */
   const [includeInactive, setIncludeInactive] = useState(false);
@@ -67,7 +73,6 @@ export default function ClientsList() {
   ============================= */
   const filteredClients = useMemo(() => {
     const q = search.trim().toLowerCase();
-
     if (!q) return clients;
 
     return clients.filter(c =>
@@ -83,6 +88,36 @@ export default function ClientsList() {
         ),
     );
   }, [clients, search]);
+
+  /* =============================
+     Activate / Deactivate
+  ============================= */
+  const toggleClientStatus = async (client: Client) => {
+    const confirmed = window.confirm(
+      client.active
+        ? `¿Desactivar al cliente ${client.rfc}?`
+        : `¿Reactivar al cliente ${client.rfc}?`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setUpdatingRfc(client.rfc);
+
+      if (client.active) {
+        await deactivateClient(client.rfc);
+      } else {
+        await activateClient(client.rfc);
+      }
+
+      await loadClients();
+    } catch (err) {
+      console.error('[ClientsList] toggle error', err);
+      alert('No fue posible actualizar el estado del cliente');
+    } finally {
+      setUpdatingRfc(null);
+    }
+  };
 
   return (
     <Card className="p-3 shadow-sm">
@@ -172,7 +207,7 @@ export default function ClientsList() {
                   </Badge>
                 </td>
 
-                <td className="text-end">
+                <td className="text-end d-flex gap-2 justify-content-end">
                   <Button
                     size="sm"
                     variant="outline-primary"
@@ -182,6 +217,25 @@ export default function ClientsList() {
                   >
                     Ver
                   </Button>
+
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant={
+                        client.active
+                          ? 'outline-danger'
+                          : 'outline-success'
+                      }
+                      disabled={updatingRfc === client.rfc}
+                      onClick={() =>
+                        toggleClientStatus(client)
+                      }
+                    >
+                      {client.active
+                        ? 'Desactivar'
+                        : 'Activar'}
+                    </Button>
+                  )}
                 </td>
               </tr>
             ))}

@@ -1,66 +1,115 @@
-// src/api/service-contract.api.ts
+// src/api/service-contracts.api.ts
 import http from './http';
+
 import type { ServiceContract } from '@/types/service-contract-types/service-contract.types';
 import type {
   CreateServiceContractPayload,
   UpdateServiceContractPayload,
 } from '@/types/service-contract-types/service-contract.dto';
 
-// READ ALL
+/* ================================
+   API RESPONSE WRAPPER
+================================ */
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+}
+
+/* ======================================================
+   GET /service-contracts
+   ADMIN: todos
+   OTROS: según permisos backend
+====================================================== */
 export const getServiceContracts = async (): Promise<ServiceContract[]> => {
-  const { data } = await http.get<ServiceContract[]>('/service-contracts');
-  return data;
+  const { data } = await http.get<ApiResponse<ServiceContract[]>>(
+    '/service-contracts',
+  );
+
+  return data.data;
 };
 
-// READ BY CLIENT
+/* ======================================================
+   GET /service-contracts/client/:rfc
+   Contratos por cliente (activos e inactivos)
+====================================================== */
 export const getServiceContractsByClient = async (
   rfc: string,
 ): Promise<ServiceContract[]> => {
-  const { data } = await http.get<ServiceContract[]>(
+  const { data } = await http.get<ApiResponse<ServiceContract[]>>(
     `/service-contracts/client/${rfc}`,
   );
-  return data;
+
+  return data.data;
 };
 
-// READ ONE
+/* ======================================================
+   GET /service-contracts/:id
+====================================================== */
 export const getServiceContractById = async (
   id: number,
 ): Promise<ServiceContract> => {
-  const { data } = await http.get<ServiceContract>(
+  const { data } = await http.get<ApiResponse<ServiceContract>>(
     `/service-contracts/${id}`,
   );
-  return data;
+
+  return data.data;
 };
 
-// CREATE (ADMIN)
+/* ======================================================
+   POST /service-contracts
+   CREATE (ADMIN)
+====================================================== */
 export const createServiceContract = async (
   payload: CreateServiceContractPayload,
 ): Promise<ServiceContract> => {
-  const { data } = await http.post<ServiceContract>(
+  const { data } = await http.post<ApiResponse<ServiceContract>>(
     '/service-contracts',
     payload,
   );
-  return data;
+
+  return data.data;
 };
 
-// UPDATE (ADMIN)
+/* ======================================================
+   PATCH /service-contracts/:id
+   UPDATE (ADMIN)
+====================================================== */
 export const updateServiceContract = async (
   id: number,
   payload: UpdateServiceContractPayload,
 ): Promise<ServiceContract> => {
-  const { data } = await http.patch<ServiceContract>(
+  const { data } = await http.patch<ApiResponse<ServiceContract>>(
     `/service-contracts/${id}`,
     payload,
   );
-  return data;
+
+  return data.data;
 };
 
-// DEACTIVATE (ADMIN)
+/* ======================================================
+   PATCH /service-contracts/:id/deactivate
+   DEACTIVATE (ADMIN)
+====================================================== */
 export const deactivateServiceContract = async (
   id: number,
 ): Promise<ServiceContract> => {
-  const { data } = await http.patch<ServiceContract>(
+  const { data } = await http.patch<ApiResponse<ServiceContract>>(
     `/service-contracts/${id}/deactivate`,
   );
-  return data;
+
+  return data.data;
+};
+
+/* ======================================================
+   PATCH /service-contracts/:id/activate
+   ACTIVATE (ADMIN)
+====================================================== */
+export const activateServiceContract = async (
+  id: number,
+): Promise<ServiceContract> => {
+  const { data } = await http.patch<ApiResponse<ServiceContract>>(
+    `/service-contracts/${id}/activate`,
+  );
+
+  return data.data;
 };

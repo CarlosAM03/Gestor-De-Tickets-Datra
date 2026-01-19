@@ -42,11 +42,14 @@ export class ServiceContractService {
     });
   }
 
+  /**
+   * Devuelve TODOS los contratos del cliente
+   * (activos e inactivos)
+   */
   async findByClient(clientRfc: string) {
     return this.prisma.serviceContract.findMany({
       where: {
         clientRfc,
-        active: true,
       },
       orderBy: { priorityLevel: 'asc' },
     });
@@ -91,6 +94,25 @@ export class ServiceContractService {
       data: {
         active: false,
         deactivatedAt: new Date(),
+      },
+    });
+  }
+
+  // =========================
+  // ACTIVATE
+  // =========================
+  async activate(id: number) {
+    const contract = await this.findOne(id);
+
+    if (contract.active) {
+      return contract;
+    }
+
+    return this.prisma.serviceContract.update({
+      where: { id },
+      data: {
+        active: true,
+        deactivatedAt: null,
       },
     });
   }

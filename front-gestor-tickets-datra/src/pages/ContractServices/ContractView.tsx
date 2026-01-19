@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   getServiceContractById,
   deactivateServiceContract,
+  activateServiceContract,
 } from '@/api/service-contracts.api';
 
 import type { ServiceContract } from '@/types/service-contract-types/service-contract.types';
@@ -22,6 +23,8 @@ export default function ContractView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   const [contract, setContract] =
     useState<ServiceContract | null>(null);
@@ -41,9 +44,7 @@ export default function ContractView() {
       }
 
       try {
-        const data = await getServiceContractById(
-          Number(id),
-        );
+        const data = await getServiceContractById(Number(id));
         setContract(data);
       } catch (err: any) {
         setError(
@@ -67,21 +68,40 @@ export default function ContractView() {
     const confirm = window.confirm(
       '¿Deseas desactivar este contrato?',
     );
-
     if (!confirm) return;
 
     setProcessing(true);
 
     try {
-      const updated =
-        await deactivateServiceContract(
-          contract.id,
-        );
+      const updated = await deactivateServiceContract(contract.id);
       setContract(updated);
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
           'No se pudo desactivar el contrato',
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleActivate = async () => {
+    if (!contract) return;
+
+    const confirm = window.confirm(
+      '¿Deseas reactivar este contrato?',
+    );
+    if (!confirm) return;
+
+    setProcessing(true);
+
+    try {
+      const updated = await activateServiceContract(contract.id);
+      setContract(updated);
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          'No se pudo activar el contrato',
       );
     } finally {
       setProcessing(false);
@@ -134,71 +154,71 @@ export default function ContractView() {
 
         {/* DETAILS */}
         <dl className="row mb-4">
-          <dt className="col-sm-4">
-            RFC del cliente
-          </dt>
+          <dt className="col-sm-4">RFC del cliente</dt>
+          <dd className="col-sm-8">{contract.clientRfc}</dd>
+
+          <dt className="col-sm-4">Prioridad</dt>
+          <dd className="col-sm-8">{contract.priorityLevel}</dd>
+
+          <dt className="col-sm-4">SLA (horas)</dt>
+          <dd className="col-sm-8">{contract.slaHours}</dd>
+
+          <dt className="col-sm-4">Creado</dt>
           <dd className="col-sm-8">
-            {contract.clientRfc}
+            {new Date(contract.createdAt).toLocaleString()}
           </dd>
 
-          <dt className="col-sm-4">
-            Prioridad
-          </dt>
+          <dt className="col-sm-4">Última actualización</dt>
           <dd className="col-sm-8">
-            {contract.priorityLevel}
-          </dd>
-
-          <dt className="col-sm-4">
-            SLA (horas)
-          </dt>
-          <dd className="col-sm-8">
-            {contract.slaHours}
-          </dd>
-
-          <dt className="col-sm-4">
-            Creado
-          </dt>
-          <dd className="col-sm-8">
-            {new Date(
-              contract.createdAt,
-            ).toLocaleString()}
-          </dd>
-
-          <dt className="col-sm-4">
-            Última actualización
-          </dt>
-          <dd className="col-sm-8">
-            {new Date(
-              contract.updatedAt,
-            ).toLocaleString()}
+            {new Date(contract.updatedAt).toLocaleString()}
           </dd>
         </dl>
 
         {/* ACTIONS */}
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 flex-wrap">
           <Button
             variant="secondary"
             onClick={() =>
-              navigate(
-                `/clients/${contract.clientRfc}`,
-              )
+              navigate(`/clients/${contract.clientRfc}`)
             }
           >
             Volver al cliente
           </Button>
 
-          {user?.role === UserRole.ADMIN &&
-            contract.active && (
-              <Button
-                variant="danger"
-                onClick={handleDeactivate}
-                disabled={processing}
-              >
-                {processing
-                  ? 'Procesando...'
-                  : 'Desactivar contrato'}
-              </Button>
-            )}
+          {isAdmin && (
+            <Button
+              variant="outline-primary"
+              onClick={() =>
+                navigate(`/contracts/${contract.id}/edit`)
+              }
+            >
+              Editar
+            </Button>
+          )}
+
+          {isAdmin && contract.active && (
+            <Button
+              variant="danger"
+              onClick={handleDeactivate}
+              disabled={processing}
+            >
+              {processing
+                ? 'Procesando...'
+                : 'Desactivar contrato'}
+            </Button>
+          )}
+
+          {isAdmin && !contract.active && (
+            <Button
+              variant="success"
+              onClick={handleActivate}
+              disabled={processing}
+            >
+              {processing
+                ? 'Procesando...'
+                : 'Reactivar contrato'}
+            </Button>
+          )}
         </div>
       </Card.Body>
     </Card>

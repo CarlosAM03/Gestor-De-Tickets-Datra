@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateSelfUserDto } from './dto/update-self-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
-import { Prisma, UserRole } from '@prisma/client';
+import { Prisma, User, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -16,39 +16,50 @@ export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
   // ======================================================
-  // INTERNAL
+  // INTERNAL HELPERS
   // ======================================================
   private hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 10);
   }
 
+  private toUserResponse(user: User) {
+    const { password, ...safeUser } = user;
+
+    // Marca uso intencional para ESLint (NO runtime effect)
+    void password;
+
+    return safeUser;
+  }
+
   // ======================================================
   // CREATE (ADMIN)
   // ======================================================
-  async create(data: CreateUserDto) {
+  async create(dto: CreateUserDto) {
     const existing = await this.prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email: dto.email },
     });
 
     if (existing) {
       throw new BadRequestException('El email ya está registrado');
     }
 
-    const hashedPassword = await this.hashPassword(data.password);
+    const hashedPassword = await this.hashPassword(dto.password);
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
-        name: data.name,
-        email: data.email,
+        name: dto.name,
+        email: dto.email,
         password: hashedPassword,
-        role: data.role ?? UserRole.TECNICO,
+        role: dto.role ?? UserRole.TECNICO,
         active: true,
       },
     });
+
+    return this.toUserResponse(user);
   }
 
   // ======================================================
-  // FIND BY EMAIL (AUTH)
+  // FIND BY EMAIL (AUTH ONLY)
   // ======================================================
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
@@ -60,10 +71,13 @@ export class UserService {
   // FIND ALL (ADMIN)
   // ======================================================
   async findAll() {
-    return this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       orderBy: { createdAt: 'asc' },
     });
+
+    return users.map((u) => this.toUserResponse(u));
   }
+
   // ======================================================
   // FIND ME (SELF)
   // ======================================================
@@ -76,11 +90,11 @@ export class UserService {
       throw new ForbiddenException('Usuario inactivo o inválido');
     }
 
-    return user;
+    return this.toUserResponse(user);
   }
 
   // ======================================================
-  // FIND ONE
+  // FIND ONE (ADMIN)
   // ======================================================
   async findOne(id: number) {
     const user = await this.prisma.user.findUnique({
@@ -91,13 +105,13 @@ export class UserService {
       throw new NotFoundException(`Usuario con id ${id} no encontrado`);
     }
 
-    return user;
+    return this.toUserResponse(user);
   }
 
   // ======================================================
   // UPDATE SELF (NAME / PASSWORD)
   // ======================================================
-  async updateSelf(userId: number, data: UpdateSelfUserDto) {
+  async updateSelf(userId: number, dto: UpdateSelfUserDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -108,24 +122,26 @@ export class UserService {
 
     const updateData: Prisma.UserUpdateInput = {};
 
-    if (data.name !== undefined) {
-      updateData.name = data.name;
+    if (dto.name !== undefined) {
+      updateData.name = dto.name;
     }
 
-    if (data.password !== undefined) {
-      updateData.password = await this.hashPassword(data.password);
+    if (dto.password !== undefined) {
+      updateData.password = await this.hashPassword(dto.password);
     }
 
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: updateData,
     });
+
+    return this.toUserResponse(updated);
   }
 
   // ======================================================
   // ADMIN UPDATE (NO PASSWORD)
   // ======================================================
-  async adminUpdate(userId: number, data: AdminUpdateUserDto) {
+  async adminUpdate(userId: number, dto: AdminUpdateUserDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -136,31 +152,33 @@ export class UserService {
 
     const updateData: Prisma.UserUpdateInput = {};
 
-    if (data.name !== undefined) {
-      updateData.name = data.name;
+    if (dto.name !== undefined) {
+      updateData.name = dto.name;
     }
 
-    if (data.email !== undefined) {
-      updateData.email = data.email;
+    if (dto.email !== undefined) {
+      updateData.email = dto.email;
     }
 
-    if (data.role !== undefined) {
-      updateData.role = data.role;
+    if (dto.role !== undefined) {
+      updateData.role = dto.role;
     }
 
-    if (data.active === false && user.active === true) {
+    if (dto.active === false && user.active === true) {
       updateData.active = false;
       updateData.deactivatedAt = new Date();
     }
 
-    if (data.active === true && user.active === false) {
+    if (dto.active === true && user.active === false) {
       updateData.active = true;
       updateData.deactivatedAt = null;
     }
 
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: updateData,
     });
+
+    return this.toUserResponse(updated);
   }
 }

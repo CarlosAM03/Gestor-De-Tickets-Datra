@@ -36,6 +36,7 @@ export default function ClientView() {
   const { user } = useAuth();
 
   const isAdmin = user?.role === UserRole.ADMIN;
+  const normalizedRfc = rfc?.toUpperCase();
 
   const [client, setClient] = useState<Client | null>(null);
   const [contracts, setContracts] = useState<ServiceContract[]>([]);
@@ -49,7 +50,7 @@ export default function ClientView() {
 
   const [contractForm, setContractForm] =
     useState<CreateServiceContractPayload>({
-      clientRfc: rfc ?? '',
+      clientRfc: normalizedRfc ?? '',
       name: ServiceContractName.INTERNET_DEDICADO_100_MB,
       priorityLevel: 1,
       slaHours: 24,
@@ -59,23 +60,20 @@ export default function ClientView() {
      LOAD DATA
   ============================= */
   const loadData = async () => {
-    if (!rfc) return;
+    if (!normalizedRfc) return;
 
     try {
       setLoading(true);
       setError(null);
 
-      const clientData = await getClientByRfc(rfc);
-      const contractsData = await getServiceContractsByClient(rfc);
+      const clientData = await getClientByRfc(normalizedRfc);
+      const contractsData =
+        await getServiceContractsByClient(normalizedRfc);
 
       setClient(clientData);
-      setContracts(
-        Array.isArray(contractsData) ? contractsData : [],
-      );
+      setContracts(contractsData);
     } catch {
-      setError(
-        'No fue posible cargar la información del cliente',
-      );
+      setError('No fue posible cargar la información del cliente');
       setContracts([]);
     } finally {
       setLoading(false);
@@ -84,10 +82,10 @@ export default function ClientView() {
 
   useEffect(() => {
     loadData();
-  }, [rfc]);
+  }, [normalizedRfc]);
 
   /* =============================
-     ACTIVATE / DEACTIVATE
+     ACTIVATE / DEACTIVATE CLIENT
   ============================= */
   const toggleActive = async () => {
     if (!client) return;
@@ -108,9 +106,7 @@ export default function ClientView() {
 
       setClient(updated);
     } catch {
-      setError(
-        'No fue posible actualizar el estado del cliente',
-      );
+      setError('No fue posible actualizar el estado del cliente');
     } finally {
       setUpdating(false);
     }
@@ -119,9 +115,7 @@ export default function ClientView() {
   /* =============================
      CONTRACT CREATE
   ============================= */
-  const handleContractChange: React.ChangeEventHandler<any> = (
-    e,
-  ) => {
+  const handleContractChange: React.ChangeEventHandler<any> = e => {
     const { name, value } = e.target;
 
     setContractForm(prev => ({
@@ -134,11 +128,14 @@ export default function ClientView() {
   };
 
   const handleCreateContract = async () => {
-    if (!rfc) return;
+    if (!normalizedRfc) return;
 
     try {
       setSavingContract(true);
-      await createServiceContract(contractForm);
+      await createServiceContract({
+        ...contractForm,
+        clientRfc: normalizedRfc,
+      });
       setShowModal(false);
       await loadData();
     } catch {
@@ -179,14 +176,10 @@ export default function ClientView() {
                   client.businessName ||
                   'Cliente'}
               </h4>
-              <div className="text-muted">
-                RFC: {client.rfc}
-              </div>
+              <div className="text-muted">RFC: {client.rfc}</div>
             </div>
 
-            <Badge
-              bg={client.active ? 'success' : 'secondary'}
-            >
+            <Badge bg={client.active ? 'success' : 'secondary'}>
               {client.active ? 'Activo' : 'Inactivo'}
             </Badge>
           </div>
@@ -196,8 +189,7 @@ export default function ClientView() {
           </div>
 
           <div className="mb-3">
-            <strong>Ubicación:</strong>{' '}
-            {client.location || '—'}
+            <strong>Ubicación:</strong> {client.location || '—'}
           </div>
 
           <div className="d-flex gap-2">
@@ -243,10 +235,7 @@ export default function ClientView() {
             <h5>Contratos de servicio</h5>
 
             {isAdmin && (
-              <Button
-                size="sm"
-                onClick={() => setShowModal(true)}
-              >
+              <Button size="sm" onClick={() => setShowModal(true)}>
                 Agregar servicio
               </Button>
             )}
@@ -257,26 +246,36 @@ export default function ClientView() {
               No hay contratos asociados
             </Alert>
           ) : (
-            <Table bordered hover responsive>
+            <Table hover responsive>
               <thead>
                 <tr>
-                  <th>Nombre</th>
+                  <th>Servicio</th>
                   <th>Prioridad</th>
                   <th>SLA</th>
                   <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                {contracts.map(c => (
-                  <tr key={c.id}>
-                    <td>{c.name}</td>
-                    <td>{c.priorityLevel}</td>
-                    <td>{c.slaHours}</td>
+                {contracts.map(contract => (
+                  <tr
+                    key={contract.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() =>
+                      navigate(`/contracts/${contract.id}`)
+                    }
+                  >
+                    <td>{contract.name.replace(/_/g, ' ')}</td>
+                    <td>{contract.priorityLevel}</td>
+                    <td>{contract.slaHours}</td>
                     <td>
                       <Badge
-                        bg={c.active ? 'success' : 'secondary'}
+                        bg={
+                          contract.active
+                            ? 'success'
+                            : 'secondary'
+                        }
                       >
-                        {c.active ? 'Activo' : 'Inactivo'}
+                        {contract.active ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </td>
                   </tr>

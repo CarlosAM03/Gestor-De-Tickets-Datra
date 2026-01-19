@@ -30,7 +30,7 @@ export class ServiceContractController {
   }
 
   // =========================
-  // READ (OPERATIVO)
+  // READ
   // =========================
   @Get()
   @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
@@ -46,7 +46,7 @@ export class ServiceContractController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.TECNICO, UserRole.INGENIERO)
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id') id: string) {
     return this.service.findOne(Number(id));
   }
 
@@ -55,7 +55,7 @@ export class ServiceContractController {
   // =========================
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  update(@Param('id') id: number, @Body() dto: UpdateServiceContractDto) {
+  update(@Param('id') id: string, @Body() dto: UpdateServiceContractDto) {
     return this.service.update(Number(id), dto);
   }
 
@@ -64,7 +64,16 @@ export class ServiceContractController {
   // =========================
   @Patch(':id/deactivate')
   @Roles(UserRole.ADMIN)
-  deactivate(@Param('id') id: number) {
+  deactivate(@Param('id') id: string) {
     return this.service.deactivate(Number(id));
+  }
+
+  // =========================
+  // ACTIVATE (ADMIN)
+  // =========================
+  @Patch(':id/activate')
+  @Roles(UserRole.ADMIN)
+  activate(@Param('id') id: string) {
+    return this.service.activate(Number(id));
   }
 }

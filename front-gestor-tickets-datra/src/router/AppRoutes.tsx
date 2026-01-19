@@ -16,6 +16,7 @@ import ClientEdit from '@/pages/Clients/ClientEdit';
 
 import ContractCreate from '@/pages/ContractServices/ContractCreate';
 import ContractView from '@/pages/ContractServices/ContractView';
+import ContractEdit from '@/pages/ContractServices/ContractEdit';
 
 import TicketsList from '@/pages/Tickets/TicketsList';
 import TicketView from '@/pages/Tickets/TicketView';
@@ -148,6 +149,15 @@ export default function AppRoutes() {
           </RequireRole>
         }
       />
+      <Route
+        path="contracts/:id/edit"
+        element={
+          <RequireRole allowedRoles={[UserRole.ADMIN]}>
+            <ContractEdit />
+          </RequireRole>
+        }
+      />
+
 
 
       {/* TICKETS */}

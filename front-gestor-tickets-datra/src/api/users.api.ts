@@ -3,6 +3,28 @@ import http from './http';
 import type { User } from '@/types/user.types';
 import type { UserRole } from '@/types/enums';
 
+/* ================================
+   API RESPONSE NORMALIZATION
+================================ */
+interface ApiResponse<T> {
+  data: T;
+}
+
+/* ================================
+   Helpers
+================================ */
+function unwrapResponse<T>(response: any): T {
+  if (response?.data?.data !== undefined) {
+    return response.data.data;
+  }
+
+  if (response?.data !== undefined) {
+    return response.data;
+  }
+
+  return response;
+}
+
 /* =====================================================
    CREATE USER (ADMIN)
    POST /users
@@ -17,8 +39,12 @@ export interface CreateUserPayload {
 export const createUser = async (
   payload: CreateUserPayload,
 ): Promise<User> => {
-  const { data } = await http.post<User>('/users', payload);
-  return data;
+  const response = await http.post<User | ApiResponse<User>>(
+    '/users',
+    payload,
+  );
+
+  return unwrapResponse<User>(response);
 };
 
 /* =====================================================
@@ -26,18 +52,11 @@ export const createUser = async (
    GET /users
 ===================================================== */
 export const getUsers = async (): Promise<User[]> => {
-  const response = await http.get('/users');
+  const response = await http.get<User[] | ApiResponse<User[]>>(
+    '/users',
+  );
 
-  // Defensa contra envoltorios futuros
-  if (Array.isArray(response.data)) {
-    return response.data;
-  }
-
-  if (Array.isArray(response.data?.data)) {
-    return response.data.data;
-  }
-
-  return [];
+  return unwrapResponse<User[]>(response);
 };
 
 /* =====================================================
@@ -45,17 +64,25 @@ export const getUsers = async (): Promise<User[]> => {
    GET /users/me
 ===================================================== */
 export const getMyProfile = async (): Promise<User> => {
-  const { data } = await http.get<User>('/users/me');
-  return data;
+  const response = await http.get<User | ApiResponse<User>>(
+    '/users/me',
+  );
+
+  return unwrapResponse<User>(response);
 };
 
 /* =====================================================
    GET USER BY ID (ADMIN o SELF)
    GET /users/:id
 ===================================================== */
-export const getUserById = async (id: number): Promise<User> => {
-  const { data } = await http.get<User>(`/users/${id}`);
-  return data;
+export const getUserById = async (
+  id: number,
+): Promise<User> => {
+  const response = await http.get<User | ApiResponse<User>>(
+    `/users/${id}`,
+  );
+
+  return unwrapResponse<User>(response);
 };
 
 /* =====================================================
@@ -71,8 +98,12 @@ export interface UpdateSelfPayload {
 export const updateMyProfile = async (
   payload: UpdateSelfPayload,
 ): Promise<User> => {
-  const { data } = await http.patch<User>('/users/me', payload);
-  return data;
+  const response = await http.patch<User | ApiResponse<User>>(
+    '/users/me',
+    payload,
+  );
+
+  return unwrapResponse<User>(response);
 };
 
 /* =====================================================
@@ -91,6 +122,10 @@ export const updateUserByAdmin = async (
   id: number,
   payload: AdminUpdateUserPayload,
 ): Promise<User> => {
-  const { data } = await http.patch<User>(`/users/${id}`, payload);
-  return data;
+  const response = await http.patch<User | ApiResponse<User>>(
+    `/users/${id}`,
+    payload,
+  );
+
+  return unwrapResponse<User>(response);
 };
